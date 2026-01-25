@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
-import { Alert, StyleSheet, View, TextInput, Button, Text } from 'react-native';
+import { useState } from "react";
+import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function TabOneScreen() {
   const [email, setEmail] = useState('');
@@ -63,6 +63,7 @@ export default function TabOneScreen() {
           onChangeText={(text) => setUsername(text)}
           value={username}
           placeholder="Username"
+          placeholderTextColor="black"
           style={styles.input}
         />
       </View>
@@ -72,6 +73,7 @@ export default function TabOneScreen() {
           onChangeText={(text) => setFullName(text)}
           value={full_name}
           placeholder="Full name"
+          placeholderTextColor="black"
           style={styles.input}
         />
       </View>
@@ -81,6 +83,7 @@ export default function TabOneScreen() {
           onChangeText={(text) => setEmail(text)}
           value={email}
           placeholder="email@address.com"
+          placeholderTextColor="black"
           autoCapitalize={'none'}
           style={styles.input}
         />
@@ -92,6 +95,7 @@ export default function TabOneScreen() {
           value={password}
           secureTextEntry={true}
           placeholder="Password"
+          placeholderTextColor="black"
           autoCapitalize={'none'}
           style={styles.input}
         />
