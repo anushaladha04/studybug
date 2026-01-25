@@ -54,6 +54,15 @@ export default function TabOneScreen() {
     setLoading(false);
   }
 
+  async function onSignOutButtonPress() {
+  const { error } = await supabase.auth.signOut()
+  if (error) {
+    console.error('Error signing out:', error)
+  } else {
+    Alert.alert("Successfully signed out!");
+  }
+}
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Studybug Login</Text>
@@ -108,6 +117,11 @@ export default function TabOneScreen() {
       <View style={styles.verticallySpaced}>
         <Button title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
       </View>
+
+      <View style={styles.verticallySpaced}>
+        <Button title="Sign out" onPress={onSignOutButtonPress} />
+      </View>
+
     </View>
   );
 }
