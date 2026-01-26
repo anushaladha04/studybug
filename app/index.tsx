@@ -1,3 +1,4 @@
+import SignOutButton from "@/components/sign-out-button";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -16,6 +17,7 @@ export default function Home() {
         <Text>Full name</Text>
         <Text>{profile?.full_name}</Text>
       </View>
+      <SignOutButton />
     </View>
   );
 }
