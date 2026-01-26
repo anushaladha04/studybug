@@ -40,8 +40,15 @@ export default function LoginScreen() {
                 onChangeText={setPassword} 
                 placeholder="Password" 
                 secureTextEntry/>
+            <View style={styles.forgotPasswordContainer}>
+                <Button title="Forgot Password?" onPress={() => router.push('/forgot-password')} />
+            </View>
             <View style={styles.buttonContainer}>
                 <Button title="Sign in" onPress={signInWithEmail} disabled={loading} />
+            </View>
+            <Text style={styles.or}>or</Text>
+            <View style={styles.buttonContainer}>
+                <Button title="Sign in with Google" onPress={() => Alert.alert('Google OAuth')} />
             </View>
 
             <View style={styles.buttonContainer}>
@@ -52,9 +59,11 @@ export default function LoginScreen() {
 }
 
     const styles = StyleSheet.create({
-        container: {marginTop: 60,
+    container: {
+        marginTop: 60,
         padding: 12,
         backgroundColor: "white",
+        marginBottom: 10,
     },
     title: {
         fontSize: 24,
@@ -71,10 +80,17 @@ export default function LoginScreen() {
         marginVertical: 5,
     },
     buttonContainer: {
-        marginTop: 20,
-    },
-    verticallySpace: {
         marginTop: 10,
         marginBottom: 10,
     },
+    or: {
+        textAlign: "center",
+        marginTop: 10,
+        marginBottom: 10,
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    forgotPasswordContainer: {
+        alignItems: 'flex-end',
+    }
 })
