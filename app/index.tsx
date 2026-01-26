@@ -3,7 +3,7 @@ import { useAuthContext } from "@/hooks/use-auth-context";
 import { StyleSheet, Text, View } from 'react-native';
 
 
-export default function Home() {
+export default function HomeScreen() {
   const { profile } = useAuthContext();
 
   return (

@@ -3,7 +3,7 @@ import { Link } from 'expo-router';
 import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 
-export default function TabOneScreen() {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

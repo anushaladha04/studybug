@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 
-export default function TabOneScreen() {
+export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
