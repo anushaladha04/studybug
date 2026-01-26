@@ -10,13 +10,12 @@ export default function Home() {
       <View style={styles.container}>
           <Text style={styles.title}>Welcome!</Text>
       </View>
-        <View style={styles.container}>
-          <Text>Username</Text>
-          <Text>{profile?.username}</Text>
-          <Text>Full name</Text>
-          <Text>{profile?.full_name}</Text>
-        </View>
-
+      <View style={styles.container}>
+        <Text>Username</Text>
+        <Text>{profile?.username}</Text>
+        <Text>Full name</Text>
+        <Text>{profile?.full_name}</Text>
+      </View>
     </View>
   );
 }
