@@ -6,6 +6,7 @@ import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function signInWithEmail() {
@@ -16,7 +17,8 @@ export default function LoginScreen() {
     });
 
     if (authError) {
-      console.error(authError);
+      setErrorMessage(authError.message); 
+      setLoading(false);
       return;
     }
 
@@ -28,7 +30,9 @@ export default function LoginScreen() {
       .single(); // .single() returns one object instead of an array
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError);
+      setErrorMessage(profileError.message); 
+      setLoading(false);
+      return;
     } else {
       Alert.alert("Profile found! Username: " + profileData.username + ", display name: " + profileData.full_name);
     }
@@ -61,6 +65,8 @@ export default function LoginScreen() {
           style={styles.input}
         />
       </View>
+
+      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
@@ -99,5 +105,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
-  }
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
 });
