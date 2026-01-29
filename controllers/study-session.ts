@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(startTime: Date, userId: string, isPublic: Boolean, subject: string) {
+export async function startStudySession(userId: string, startTime: Date, isPublic: Boolean, subject: string) {
     const { data, error } = await supabase
         .from('study_sessions')
         .insert([
