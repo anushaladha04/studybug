@@ -33,26 +33,38 @@ export default function LoginScreen() {
                 style={styles.input}
                 value={email} 
                 onChangeText={setEmail} 
-                placeholder="Email" />
+                keyboardType="email-address" 
+                autoCapitalize="none" 
+                placeholder="Email" 
+                placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={password} 
                 onChangeText={setPassword} 
                 placeholder="Password" 
+                placeholderTextColor='#1d2422'
                 secureTextEntry/>
             <View style={styles.forgotPasswordContainer}>
-                <Button title="Forgot Password?" onPress={() => router.push('/forgot-password')} />
+                <Button 
+                    title="Forgot Password?" 
+                    onPress={() => router.push('/forgot-password')} />
             </View>
             <View style={styles.buttonContainer}>
-                <Button title="Sign in" onPress={signInWithEmail} disabled={loading} />
+                <Button 
+                    title="Sign in" 
+                    onPress={signInWithEmail} disabled={loading} />
             </View>
             <Text style={styles.or}>or</Text>
             <View style={styles.buttonContainer}>
-                <Button title="Sign in with Google" onPress={() => Alert.alert('Google OAuth')} />
+                <Button 
+                    title="Sign in with Google" 
+                    onPress={() => Alert.alert('Google OAuth')} />
             </View>
 
             <View style={styles.buttonContainer}>
-                <Button title='No account? Register here' onPress={() => router.push('/register')} />
+                <Button 
+                    title='No account? Register here' 
+                    onPress={() => router.push('/register')} />
             </View>
         </View>
     )
@@ -60,37 +72,43 @@ export default function LoginScreen() {
 
     const styles = StyleSheet.create({
     container: {
-        marginTop: 60,
-        padding: 12,
+        flex: 1,
+        padding: 20,
         backgroundColor: "white",
-        marginBottom: 10,
+        justifyContent: "center",
     },
     title: {
-        fontSize: 24,
+        fontSize: 32,
         fontWeight: "bold",
         textAlign: "center",
-        marginBottom: 20,
+        marginBottom: 160,
+        marginTop: 100,
+        color: "#000",
     },
     input: {
         height: 50,
-        borderColor: "gray",
-        borderWidth: 1,
+        backgroundColor: "#52bb97",
         borderRadius: 5,
-        paddingHorizontal: 10,
-        marginVertical: 5,
+        paddingHorizontal: 15,
+        marginBottom: 15,
+        marginHorizontal: 20,
+        fontSize: 16,
     },
     buttonContainer: {
-        marginTop: 10,
-        marginBottom: 10,
+        marginTop: 20,
+        alignItems: "center",
     },
     or: {
         textAlign: "center",
-        marginTop: 10,
-        marginBottom: 10,
-        fontWeight: '600',
-        fontSize: 16,
+        marginTop: 30,
+        marginBottom: 20,
+        fontWeight: '400',
+        fontSize: 14,
+        color: "#666",
     },
     forgotPasswordContainer: {
         alignItems: 'flex-end',
+        marginBottom: 10,
     }
-})
+});
+

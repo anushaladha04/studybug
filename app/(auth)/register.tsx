@@ -48,28 +48,33 @@ export default function RegisterScreen() {
                 style={styles.input}
                 value={full_name} 
                 onChangeText={setFullName} 
-                placeholder='Full Name' />
+                placeholder='Full Name' 
+                placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={email} 
                 onChangeText={setEmail} 
-                placeholder='Email' />
+                placeholder='Email' 
+                placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={username} 
                 onChangeText={setUsername} 
-                placeholder='Username' />
+                placeholder='Username' 
+                placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={password} 
                 onChangeText={setPassword} 
                 placeholder='Password' 
+                placeholderTextColor='#151619'
                 secureTextEntry />
             <TextInput 
                 style={styles.input}
                 value={confirmPassword} 
                 onChangeText={setConfirmPassword} 
                 placeholder='Confirm Password' 
+                placeholderTextColor='#151619'
                 secureTextEntry />
             <View style={styles.buttonContainer}>
                 <Button title='Sign Up' onPress={signUpWithEmail} disabled={loading} />
@@ -79,29 +84,40 @@ export default function RegisterScreen() {
 }
 
     const styles = StyleSheet.create({
-        container: {
-            padding: 12,
-            backgroundColor: 'white',
-        },
-        title: {
-            fontSize: 24,
-            fontWeight: "bold",
+    container: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: "white",
+        justifyContent: "center",
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "bold",
         textAlign: "center",
+        marginBottom: 80,
+        marginTop: 0,
+        color: "#000",
+    },
+    input: {
+        height: 50,
+        backgroundColor: "#52bb97",
+        borderRadius: 5,
+        paddingHorizontal: 15,
+        marginBottom: 15,
+        marginHorizontal: 30,
+        fontSize: 16,
+        borderWidth: 0,
+    },
+    buttonContainer: {
+        marginTop: 20,
+        alignItems: "center",
+    },
+    or: {
+        textAlign: "center",
+        marginTop: 30,
         marginBottom: 20,
-        },
-        input: {
-            height: 50,
-            borderColor: "gray",
-            borderWidth: 1,
-            borderRadius: 5,
-            paddingHorizontal: 10,
-            marginVertical: 5,
-        },
-        buttonContainer: {
-            marginTop: 20,
-        },
-        verticallySpace: {
-            marginTop: 10,
-            marginBottom: 10,
-            }
-    })
+        fontWeight: '400',
+        fontSize: 14,
+        color: "#666",
+    }
+})
