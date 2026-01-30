@@ -1,12 +1,13 @@
-import SignOutButton from "@/components/sign-out-button";
-import { useAuthContext } from "@/hooks/use-auth-context";
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, Switch, TouchableOpacity, View, Alert, Button } from 'react-native';
+import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+import SignOutButton from "@/components/sign-out-button";
+import { startStudySession } from "@/controllers/study-session";
 
 export default function HomeScreen() {
-  const [popup, setPopup] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(true);
 
+  const [popup, setPopup] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const [subject, setSubject] = useState('');
 
   const handlePressStart = () => {
@@ -14,27 +15,40 @@ export default function HomeScreen() {
     setPopup(true);
   };
 
+  const handleStartSession = (isPublic: boolean, subject: string) => {
+    const date = new Date();
+
+    startStudySession(date, isPublic, subject);
+
+    console.log('Starting session...')
+  };
+
   return (
     <View style={styles.container}>
       {!popup && (
-        <TouchableOpacity 
-          style={styles.startButton} 
-          onPress={handlePressStart}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.startIcon}>▶</Text>
-        </TouchableOpacity>)}
+        <View>
+          <TouchableOpacity 
+            style={styles.startButton} 
+            onPress={handlePressStart}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.startIcon}>▶</Text>
+          </TouchableOpacity>
+          <SignOutButton />
+        </View>
+      )}
+        
       {popup && (
         <View style={styles.popupCard}>
           <View style={styles.section}>
             <Text>Visibility</Text>
             <Button 
               title="Private" 
-              onPress={() => setIsPrivate(true)} 
+              onPress={() => setIsPublic(false)} 
             />
             <Button 
               title="Public" 
-              onPress={() => setIsPrivate(false)} 
+              onPress={() => setIsPublic(true)} 
             />
           </View>
 
@@ -49,7 +63,7 @@ export default function HomeScreen() {
 
           <Button 
             title="Begin Study Session" 
-            onPress={() => console.log('Starting session...')} 
+            onPress={() => handleStartSession(isPublic, subject)} 
           />
         </View>
       )}
