@@ -1,13 +1,24 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuthContext } from "@/hooks/use-auth-context";
+import AuthProvider from '@/providers/auth-provider';
+
+function RootNavigator() {
+  const { isLoggedIn } = useAuthContext();
+
+  return (
+    <Stack>
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!isLoggedIn}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+      </Stack.Protected>
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>

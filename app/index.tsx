@@ -1,20 +1,36 @@
+import SignOutButton from "@/components/sign-out-button";
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { StyleSheet, Text, View } from 'react-native';
 
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 
-export default function Index() {
-  const router = useRouter();
+export default function HomeScreen() {
+  const { profile } = useAuthContext();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.replace('/(auth)/login');
-      } else {
-        router.replace('/(auth)/login');
-      }
-    });
-  }, []);
-
-  return null; 
+  return (
+    <View> 
+      <View style={styles.container}>
+          <Text style={styles.title}>Welcome!</Text>
+      </View>
+      <View style={styles.container}>
+        <Text>Username</Text>
+        <Text>{profile?.username}</Text>
+        <Text>Full name</Text>
+        <Text>{profile?.full_name}</Text>
+      </View>
+      <SignOutButton />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 40,
+    padding: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  }
+});
