@@ -1,6 +1,36 @@
-import { Redirect } from 'expo-router';
+import SignOutButton from "@/components/sign-out-button";
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { StyleSheet, Text, View } from 'react-native';
 
-export default function Index() {
-    // Auth flow in _layout.tsx will redirect to login if not authenticated
-    return <Redirect href="/(tabs)" />;
+
+export default function HomeScreen() {
+  const { profile } = useAuthContext();
+
+  return (
+    <View> 
+      <View style={styles.container}>
+          <Text style={styles.title}>Welcome!</Text>
+      </View>
+      <View style={styles.container}>
+        <Text>Username</Text>
+        <Text>{profile?.username}</Text>
+        <Text>Full name</Text>
+        <Text>{profile?.full_name}</Text>
+      </View>
+      <SignOutButton />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 40,
+    padding: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  }
+});
