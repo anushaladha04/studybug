@@ -2,26 +2,45 @@ import { useState } from "react";
 import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import SignOutButton from "@/components/sign-out-button";
-import { startStudySession } from "@/controllers/study-session";
+import { endStudySession, startStudySession } from "@/controllers/study-session";
 
 export default function HomeScreen() {
 
   const [popup, setPopup] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
   const [subject, setSubject] = useState('');
+  const [ currentSessionId, setCurrentSessionId ] = useState('');
 
   const handlePressStart = () => {
     console.log("button pressed!");
     setPopup(true);
   };
 
-  const handleStartSession = (isPublic: boolean, subject: string) => {
-    const date = new Date();
+  const handleStartSession = async (isPublic: boolean, subject: string) => {
+    const startTime = new Date();
 
-    startStudySession(date, isPublic, subject);
+    const newStudySessionId = await startStudySession(startTime, isPublic, subject);
+    setCurrentSessionId(newStudySessionId);
+
     setPopup(false);
-    console.log('Starting session...')
+
+    console.log(`Starting session: ${newStudySessionId}`);
   };
+
+  const handleEndSession = async () => {
+    if (! currentSessionId) {
+      console.log('No study session found.')
+      return;
+    }
+    
+    const endTime = new Date();
+
+    await endStudySession(currentSessionId, endTime);
+    setCurrentSessionId('');
+
+    console.log('Ending session...');
+
+  }
 
   return (
     <View style={styles.container}>
@@ -34,6 +53,12 @@ export default function HomeScreen() {
           >
             <Text style={styles.startIcon}>▶</Text>
           </TouchableOpacity>
+          {currentSessionId && (
+            <Button
+              title="End Study Session"
+              onPress={() => handleEndSession()}
+            />
+          )}
           <SignOutButton />
         </View>
       )}

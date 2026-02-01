@@ -22,6 +22,22 @@ export async function startStudySession(startTime: Date, isPublic: boolean, subj
         return null;
     } else {
         console.log('Successfully added todo:', data);
+        return data[0].session_id;
+    }
+}
+
+export async function endStudySession(sessionId: string, endTime: Date) {    
+    const { data, error } = await supabase
+        .from('study_sessions')
+        .update({end_time: endTime.toISOString()})
+        .eq('session_id', sessionId)
+        .select();
+
+    if (error) {
+        console.error('Error updating data:', error.message);
+        return null;
+    } else {
+        console.log('Successfully updated end time:', data);
         return data;
     }
 }
