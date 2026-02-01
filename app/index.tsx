@@ -19,7 +19,7 @@ export default function HomeScreen() {
     const date = new Date();
 
     startStudySession(date, isPublic, subject);
-
+    setPopup(false);
     console.log('Starting session...')
   };
 

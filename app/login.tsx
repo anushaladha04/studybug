@@ -69,7 +69,10 @@ export default function LoginScreen() {
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
+        <Button 
+          title="Sign in" 
+          disabled={loading} 
+          onPress={() => signInWithEmail()} />
       </View>
 
       <Link href="./signup">
