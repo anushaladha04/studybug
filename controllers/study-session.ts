@@ -29,7 +29,10 @@ export async function startStudySession(startTime: Date, isPublic: boolean, subj
 export async function endStudySession(sessionId: string, endTime: Date) {    
     const { data, error } = await supabase
         .from('study_sessions')
-        .update({end_time: endTime.toISOString()})
+        .update({
+            end_time: endTime.toISOString(),
+            is_active: false
+        })
         .eq('session_id', sessionId)
         .select();
 
