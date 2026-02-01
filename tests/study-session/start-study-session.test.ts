@@ -41,12 +41,31 @@ describe('startStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await startStudySession(
-            new Date('2025-01-01T00:00:00Z'),
-            true,
-            'test-subject'
-        );
-        
+        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject');
+
+        expect(supabase.auth.getUser).toHaveBeenCalled();
+        expect(supabase.from).toHaveBeenCalledWith('study_sessions');
         expect(result).toBe('test-study-session-id');
+    });
+
+    it('should return null if insert fails', async () => {
+        const mockInsert = jest.fn().mockReturnThis()
+        const mockSelect = jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'db error' },
+        });
+        
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: 'user1' } },
+        });
+        
+        (supabase.from as jest.Mock).mockReturnValue({
+            insert: mockInsert,
+            select: mockSelect,
+        })
+
+        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject')
+
+        expect(result).toBeNull()
     });
 });
