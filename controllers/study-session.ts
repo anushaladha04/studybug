@@ -2,6 +2,11 @@ import { supabase } from "@/lib/supabase";
 
 export async function startStudySession(startTime: Date, isPublic: boolean, subject: string) {
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
+    }
     
     const { data, error } = await supabase
         .from('study_sessions')

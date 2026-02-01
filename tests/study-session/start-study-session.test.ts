@@ -56,7 +56,7 @@ describe('startStudySession', () => {
         });
         
         (supabase.auth.getUser as jest.Mock).mockResolvedValue({
-            data: { user: { id: 'user1' } },
+            data: { user: { id: 'test-user-id' } },
         });
         
         (supabase.from as jest.Mock).mockReturnValue({
@@ -66,6 +66,59 @@ describe('startStudySession', () => {
 
         const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject')
 
-        expect(result).toBeNull()
+        expect(result).toBeNull();
     });
+
+    it('should handle missing user gracefully', async () => {
+        const mockInsert = jest.fn().mockReturnThis()
+        const mockSelect = jest.fn().mockResolvedValue({
+            data: [{ session_id: 'test-study-session-id' }],
+            error: null,
+        });
+
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: null },
+        });
+
+        (supabase.from as jest.Mock).mockReturnValue({
+            insert: mockInsert,
+            select: mockSelect,
+        });
+
+        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject');
+        expect(result).toBeNull();
+    });
+
+    test('sends correct data to supabase', async () => {
+        const mockInsert = jest.fn().mockReturnThis()
+        const mockSelect = jest.fn().mockResolvedValue({
+            data: [{ session_id: 'test-study-session-id' }],
+            error: null,
+        });
+
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: 'test-user-id' } },
+        });
+        
+        (supabase.from as jest.Mock).mockReturnValue({
+            insert: mockInsert,
+            select: mockSelect,
+        });
+
+        const startTime = new Date('2025-01-01T00:00:00Z');
+
+        await startStudySession(startTime, true, 'test-subject')
+
+        expect(mockInsert).toHaveBeenCalledWith([
+            {
+            user_id: 'test-user-id',
+            start_time: startTime.toISOString(),
+            end_time: null,
+            is_active: true,
+            is_public: true,
+            subject: 'test-subject',
+            },
+        ]);
+    });
+
 });
