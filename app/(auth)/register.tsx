@@ -52,20 +52,23 @@ export default function RegisterScreen() {
                 placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
+                autoCapitalize="none"
                 value={email} 
                 onChangeText={setEmail} 
-                placeholder='Email' 
+                placeholder='Enter Email' 
                 placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={username} 
                 onChangeText={setUsername} 
+                autoCapitalize="none"
                 placeholder='Username' 
                 placeholderTextColor='#151619'/>
             <TextInput 
                 style={styles.input}
                 value={password} 
                 onChangeText={setPassword} 
+                autoCapitalize="none"
                 placeholder='Password' 
                 placeholderTextColor='#151619'
                 secureTextEntry />
