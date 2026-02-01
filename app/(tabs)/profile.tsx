@@ -1,9 +1,9 @@
-import { useAuth } from '@/contexts/auth-context';
+import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function ProfileScreen() {
-  const { session } = useAuth();
+  const { session } = useAuthContext();
 
   return (
     <View style={styles.container}>
