@@ -7,7 +7,7 @@ export default function Homepage() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Welcome to the Homepage!</Text>
-            <Button title="Testing" onPress={() => router.push('/session_details')} />
+            <Button title="Testing" onPress={() => router.push('./session_details')} />
         </View>
     );
 }
