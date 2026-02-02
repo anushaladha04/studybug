@@ -18,12 +18,12 @@ describe('startStudySession', () => {
     it('should return session_id on successful insertion of new row with authenticated user ID', async () => {
         const mockStudySession = [{
             session_id: 'test-study-session-id',
-            user_id: "test-user-id",
-            start_time: "2025-01-01T00:00:00Z",
+            user_id: 'test-user-id',
+            start_time: '2025-01-01T00:00:00Z',
             end_time: null,
             is_active: true,
             is_public: true, 
-            subject: "test-subject"
+            subject: 'test-subject'
         }];
 
         const mockInsert = jest.fn().mockReturnThis();
@@ -111,14 +111,13 @@ describe('startStudySession', () => {
 
         expect(mockInsert).toHaveBeenCalledWith([
             {
-            user_id: 'test-user-id',
-            start_time: startTime.toISOString(),
-            end_time: null,
-            is_active: true,
-            is_public: true,
-            subject: 'test-subject',
+                user_id: 'test-user-id',
+                start_time: startTime.toISOString(),
+                end_time: null,
+                is_active: true,
+                is_public: true,
+                subject: 'test-subject',
             },
         ]);
     });
-
 });
