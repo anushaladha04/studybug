@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { Float } from "react-native/Libraries/Types/CodegenTypes";
 
 export async function startStudySession(startTime: Date, isPublic: boolean, subject: string) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,12 +27,13 @@ export async function startStudySession(startTime: Date, isPublic: boolean, subj
     }
 }
 
-export async function endStudySession(sessionId: string, endTime: Date) {    
+export async function endStudySession(sessionId: string, endTime: Date, duration: Float) {    
     const { data, error } = await supabase
         .from('study_sessions')
         .update({
             end_time: endTime.toISOString(),
-            is_active: false
+            is_active: false,
+            duration: duration
         })
         .eq('session_id', sessionId)
         .select();
