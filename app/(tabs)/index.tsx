@@ -1,15 +1,36 @@
-import { useAuth } from '@/contexts/auth-context';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
-  const { session } = useAuth();
+  const [isPublic, setIsPublic] = useState(false);
+  const [isSessionActive, setIsSessionActive] = useState(false);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to StudyBug! 🐞</Text>
-      <Text style={styles.subtitle}>
-        Logged in as: {session?.user?.email}
-      </Text>
+      {/* Toggle */}
+      <Pressable
+        style={styles.toggle}
+        onPress={() => setIsPublic(!isPublic)}
+      >
+        <Text style={styles.toggleText}>
+          [ {isPublic ? 'PUBLIC' : 'PRIVATE'} ]
+        </Text>
+      </Pressable>
+
+      {/* Big Button */}
+      <Pressable
+        style={styles.button}
+        onPress={() => setIsSessionActive(!isSessionActive)}
+      >
+        <Text style={styles.buttonText}>
+          {isSessionActive ? 'STOP' : 'Start!'}
+        </Text>
+      </Pressable>
+
+      {/* Timer */}
+      <View style={styles.timer}>
+        <Text style={styles.timerText}>00:00:00</Text>
+      </View>
     </View>
   );
 }
@@ -17,17 +38,44 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    gap: 40,
   },
-  title: {
+  toggle: {
+    borderWidth: 2,
+    borderColor: '#000',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+  },
+  toggleText: {
+    fontSize: 16,
+    fontFamily: 'monospace',
+  },
+  button: {
+    width: 150,
+    height: 150,
+    borderWidth: 3,
+    borderColor: '#000',
+    borderRadius: 75,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    fontFamily: 'monospace',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+  timer: {
+    borderWidth: 2,
+    borderColor: '#000',
+    borderStyle: 'dashed',
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+  },
+  timerText: {
+    fontSize: 40,
+    fontFamily: 'monospace',
   },
 });
