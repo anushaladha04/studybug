@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { useAuthContext } from '@/hooks/use-auth-context';
 
 export async function fetchByUsername(searchPattern: string) {
     const { data, error } = await supabase
@@ -19,7 +20,9 @@ export async function requestFriend(friendId: string) {
 }
 
 export async function fetchFriendRequests() {
-
+    const { session } = useAuthContext();
+    const id = session?.user?.id?;
+    
 }
 
 export async function acceptFriendRequest(fromId: string) {
