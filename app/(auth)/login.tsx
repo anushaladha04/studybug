@@ -23,7 +23,7 @@ export default function LoginScreen() {
             return;
         }
     
-        router.replace('/session_details');
+        router.replace('/(tabs)');
 }
 
     return (

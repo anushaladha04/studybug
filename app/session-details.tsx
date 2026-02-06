@@ -16,6 +16,8 @@ export default function TimerConfig() {
             alert('Please fill in all fields.');
             return;
         }
+
+        // backend logic
     };
 
     return (
