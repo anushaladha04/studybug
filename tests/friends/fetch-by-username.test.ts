@@ -14,7 +14,7 @@ beforeEach(() => {
 })
 
 describe('fetchByUsername', () => {
-    it('should return return all rows from profiles where the username matches the search pattern', async () => {
+    it('should return all rows from profiles where the username matches the search pattern', async () => {
         const mockProfiles = [
             {
                 id: 'test-user-id-1',
@@ -56,7 +56,7 @@ describe('fetchByUsername', () => {
         ]);
     });
 
-    it('should return return no rows from profiles if no username matches the search pattern', async () => {
+    it('should return no rows from profiles if no username matches the search pattern', async () => {
         const mockProfiles = [{}];
 
         (supabase.from('profiles').select('*').ilike as jest.Mock).mockResolvedValue({
@@ -74,6 +74,17 @@ describe('fetchByUsername', () => {
         );
 
         expect(result).toEqual([{}]);
+    });
+
+    it('should return an error message if select failed', async () => {
+        (supabase.from('profiles').select('*').ilike as jest.Mock).mockResolvedValue({
+            data: null,
+            error: { message: 'db error'},
+        });
+
+        const result = await fetchByUsername('test');
+
+        expect(result).toBeNull();
     });
 
 });
