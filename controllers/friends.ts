@@ -4,7 +4,7 @@ export async function fetchByUsername(searchPattern: string) {
     const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', searchPattern);
+        .ilike('username', `${searchPattern}%`);
     
     if (error) {
         console.error('Error fetching users:', error.message);
