@@ -56,4 +56,24 @@ describe('fetchByUsername', () => {
         ]);
     });
 
+    it('should return return no rows from profiles if no username matches the search pattern', async () => {
+        const mockProfiles = [{}];
+
+        (supabase.from('profiles').select('*').ilike as jest.Mock).mockResolvedValue({
+            data: mockProfiles,
+            error: null,
+        });
+
+        const result = await fetchByUsername('test');
+
+        expect(supabase.from).toHaveBeenCalledWith('profiles');
+
+        expect(supabase.from('profiles').select('*').ilike).toHaveBeenCalledWith(
+            'username', 
+            'test%'
+        );
+
+        expect(result).toEqual([{}]);
+    });
+
 });
