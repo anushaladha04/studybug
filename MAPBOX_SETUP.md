@@ -20,7 +20,32 @@ EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_token_here
 
 **⚠️ Important:** Never commit `.env` to git. Add it to `.gitignore` (already done).
 
-## 3. Configure Mapbox for iOS (Native Build)
+## 3. Configure Mapbox for Android (Native Build)
+
+For Android builds, you need a **Mapbox Downloads Token** (different from your access token):
+
+1. Go to [mapbox.com/account](https://account.mapbox.com/)
+2. Navigate to **Tokens** → **Secret tokens** (or **Downloads**)
+3. Create a new **Downloads token** with `DOWNLOADS:READ` scope
+4. Copy the token
+
+### Add Downloads Token
+
+**Option 1: Environment Variable (Recommended)**
+```bash
+# Add to your .env file (or set as system environment variable)
+MAPBOX_DOWNLOADS_TOKEN=your_downloads_token_here
+```
+
+**Option 2: Gradle Property**
+Create or update `android/gradle.properties`:
+```properties
+MAPBOX_DOWNLOADS_TOKEN=your_downloads_token_here
+```
+
+**Note:** The `android/build.gradle` file has been configured to use this token automatically.
+
+## 4. Configure Mapbox for iOS (Native Build)
 
 If you're planning to build for iOS, you may need additional setup:
 
@@ -28,7 +53,7 @@ If you're planning to build for iOS, you may need additional setup:
 npx expo prebuild
 ```
 
-## 4. Integrating the Map into Your App
+## 5. Integrating the Map into Your App
 
 ### Basic Usage
 
@@ -104,7 +129,7 @@ useEffect(() => {
 }, []);
 ```
 
-## 5. Database Schema
+## 6. Database Schema
 
 Add these fields to your `users` table in Supabase:
 
@@ -119,7 +144,7 @@ ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
 CREATE INDEX idx_users_location ON users(latitude, longitude);
 ```
 
-## 6. Permissions
+## 7. Permissions
 
 The map component automatically requests location permissions. Users will be prompted when the map opens.
 
@@ -131,7 +156,7 @@ Already handled by Expo. Location permission prompt will appear.
 
 Already handled by Expo's permissions system.
 
-## 7. Testing
+## 8. Testing
 
 The map screen is available in the tab navigator. Navigate to it to test:
 - Your location appears as a blue dot
@@ -152,3 +177,8 @@ The map screen is available in the tab navigator. Navigate to it to test:
 - Ensure you're on a physical device or iOS simulator (Android emulator may have issues)
 - Check Mapbox token validity
 - Verify internet connection
+
+**Android Build Errors: "Could not find com.mapbox.maps"**
+- Ensure `MAPBOX_DOWNLOADS_TOKEN` is set in `.env` or `android/gradle.properties`
+- The token must have `DOWNLOADS:READ` scope
+- Restart the build after adding the token

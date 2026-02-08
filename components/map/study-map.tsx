@@ -1,12 +1,25 @@
-import { Colors } from '@/constants/theme';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import MapboxGL from '@rnmapbox/maps';
-import * as Location from 'expo-location';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-import { UserPin } from './user-pin';
+import { isMapboxEnabled } from '@/lib/mapbox-config';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
-MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
+// Try to import Mapbox - will fail gracefully in Expo Go
+let MapboxGL: any = null;
+try {
+  // Only attempt to load if Mapbox should be enabled
+  if (isMapboxEnabled()) {
+    MapboxGL = require('@rnmapbox/maps').default;
+    // Set Mapbox access token
+    const token = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1Ijoia3Vrc3RlcjkzIiwiYSI6ImNta3VkZjhhdjF5MnAzZHBzd3o5amFkOWQifQ.u0dyXONcMJbWcG5F_e1uvw';
+    MapboxGL.setAccessToken(token);
+  }
+} catch (error) {
+  // Mapbox not available (e.g., in Expo Go or not installed)
+  // This is expected when running in Expo Go
+  MapboxGL = null;
+}
 
 export interface LocationUser {
   id: string;
@@ -18,156 +31,128 @@ export interface LocationUser {
 }
 
 interface StudyMapProps {
-  users: LocationUser[];
+  users?: LocationUser[];
   onUserPress?: (user: LocationUser) => void;
   showUserLocation?: boolean;
 }
 
+// Default location (San Francisco) - works well for testing
+const DEFAULT_LOCATION = {
+  latitude: 37.7749,
+  longitude: -122.4194,
+};
+
 export function StudyMap({
-  users,
+  users = [],
   onUserPress,
   showUserLocation = true,
 }: StudyMapProps) {
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const theme = useColorScheme() ?? 'light';
-  const cameraRef = React.useRef<MapboxGL.Camera>(null);
+  const mapboxEnabled = isMapboxEnabled() && MapboxGL !== null;
 
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  // Center camera on user location when it's available
-  useEffect(() => {
-    if (userLocation && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 14,
-        animationDuration: 1000,
-      });
-    }
-  }, [userLocation]);
-
-  const requestLocationPermission = async () => {
-    try {
-      setLoading(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== 'granted') {
-        setError('Location permission denied');
-        setLoading(false);
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get location');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  // Fallback UI when Mapbox is disabled (e.g., in Expo Go)
+  if (!mapboxEnabled) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: Colors[theme].background,
-        }}>
-        <ActivityIndicator size="large" color={Colors[theme].tint} />
-      </View>
+      <ThemedView style={styles.container}>
+        <View style={styles.fallbackContainer}>
+          <ThemedText type="title" style={styles.fallbackTitle}>
+            🗺️ Map View
+          </ThemedText>
+          <ThemedText style={styles.fallbackMessage}>
+            Mapbox doesn't work with Expo Go. Use a development build to see the interactive map.
+          </ThemedText>
+        </View>
+      </ThemedView>
     );
   }
 
-  if (error) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: Colors[theme].background,
-          padding: 16,
-        }}>
-        <Text style={{ color: Colors[theme].text, textAlign: 'center' }}>
-          {error}
-        </Text>
-      </View>
-    );
-  }
-
-  if (!userLocation) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: Colors[theme].background,
-        }}>
-        <Text style={{ color: Colors[theme].text }}>Unable to get location</Text>
-      </View>
-    );
-  }
-
+  // Mapbox-enabled view
   return (
-    <MapboxGL.MapView
-      style={{ flex: 1 }}
-      styleURL={
-        theme === 'dark'
-          ? MapboxGL.StyleURL.Dark
-          : MapboxGL.StyleURL.Light
-      }>
-      <MapboxGL.Camera
-        ref={cameraRef}
-        centerCoordinate={[userLocation.longitude, userLocation.latitude]}
-        zoomLevel={14}
-        animationMode="flyTo"
-        animationDuration={1000}
-      />
+    <View style={styles.container}>
+      <MapboxGL.MapView
+        style={styles.map}
+        styleURL={
+          theme === 'dark'
+            ? MapboxGL.StyleURL.Dark
+            : MapboxGL.StyleURL.Street
+        }>
+        <MapboxGL.Camera
+          defaultSettings={{
+            centerCoordinate: [DEFAULT_LOCATION.longitude, DEFAULT_LOCATION.latitude],
+            zoomLevel: 12,
+          }}
+        />
 
-      {/* User's own location */}
-      {showUserLocation && (
-        <MapboxGL.PointAnnotation
-          id="user-location"
-          coordinate={[userLocation.longitude, userLocation.latitude]}>
-          <View
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: 6,
-              backgroundColor: Colors[theme].tint,
-              borderWidth: 3,
-              borderColor: '#fff',
-            }}
-          />
-        </MapboxGL.PointAnnotation>
-      )}
+        {/* User's location marker */}
+        {showUserLocation && (
+          <MapboxGL.PointAnnotation
+            id="user-location"
+            coordinate={[DEFAULT_LOCATION.longitude, DEFAULT_LOCATION.latitude]}>
+            <View style={styles.userMarker} />
+          </MapboxGL.PointAnnotation>
+        )}
 
-      {/* Other users' pins */}
-      {users.map((user) => (
-        <MapboxGL.PointAnnotation
-          key={user.id}
-          id={user.id}
-          coordinate={[user.longitude, user.latitude]}
-          onSelected={() => onUserPress?.(user)}>
-          <UserPin user={user} />
-        </MapboxGL.PointAnnotation>
-      ))}
-    </MapboxGL.MapView>
+        {/* Other users' markers */}
+        {users.map((user) => (
+          <MapboxGL.PointAnnotation
+            key={user.id}
+            id={user.id}
+            coordinate={[user.longitude, user.latitude]}
+            onSelected={() => onUserPress?.(user)}>
+            <View style={styles.userPin}>
+              <View style={styles.pinDot} />
+            </View>
+          </MapboxGL.PointAnnotation>
+        ))}
+      </MapboxGL.MapView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  userMarker: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  userPin: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FF3B30',
+    borderWidth: 2,
+    borderColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pinDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+  },
+  // Fallback styles
+  fallbackContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fallbackTitle: {
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  fallbackMessage: {
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+});
