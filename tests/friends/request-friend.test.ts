@@ -53,4 +53,21 @@ describe(('requestFriend'), () => {
         );
         expect(result).toEqual(mockFriends);
     });
+
+    it('should return null if receiver does not exist', async () => {
+
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: 'test-user-id-1' } },
+        });
+        
+        (supabase.rpc as jest.Mock).mockResolvedValue({
+            data: null,
+            error: { message: 'db error'},
+        });
+
+        const result = await requestFriend('test-user-id-2');
+        expect(result).toBeNull();
+    });
+
+
 });
