@@ -1,7 +1,6 @@
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { LocationUser } from './study-map';
 
 interface UserPinProps {
@@ -9,7 +8,8 @@ interface UserPinProps {
 }
 
 export function UserPin({ user }: UserPinProps) {
-  const theme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? 'light';
 
   return (
     <View style={styles.container}>
@@ -55,7 +55,7 @@ export function UserPin({ user }: UserPinProps) {
         <Text
           style={[
             styles.studyingText,
-            { color: Colors[theme].icon },
+            { color: Colors[theme].tabIconDefault },
           ]}
           numberOfLines={2}>
           📚 {user.studying}

@@ -1,6 +1,6 @@
 import { isMapboxEnabled } from '@/lib/mapbox-config';
 import React from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 // Try to import Mapbox - will fail gracefully in Expo Go
 let MapboxGL: any = null;
@@ -31,6 +31,7 @@ interface StudyMapProps {
   users?: LocationUser[];
   onUserPress?: (user: LocationUser) => void;
   showUserLocation?: boolean;
+  userLocation?: { latitude: number; longitude: number } | null;
 }
 
 // Default location (San Francisco) - works well for testing
@@ -43,10 +44,47 @@ export function StudyMap({
   users = [],
   onUserPress,
   showUserLocation = true,
+  userLocation,
 }: StudyMapProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
   const mapboxEnabled = isMapboxEnabled() && MapboxGL !== null;
+  const cameraRef = React.useRef<any>(null);
+  const [zoomLevel, setZoomLevel] = React.useState(14);
+
+  // Use user location if available, otherwise fall back to default
+  const centerLocation = userLocation || DEFAULT_LOCATION;
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoomLevel + 1, 20);
+    setZoomLevel(newZoom);
+    // Get current center from camera and zoom in
+    cameraRef.current?.setCamera({
+      zoomLevel: newZoom,
+      animationDuration: 300,
+    });
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoomLevel - 1, 0);
+    setZoomLevel(newZoom);
+    // Get current center from camera and zoom out
+    cameraRef.current?.setCamera({
+      zoomLevel: newZoom,
+      animationDuration: 300,
+    });
+  };
+
+  const handleCenterOnUser = () => {
+    if (userLocation) {
+      cameraRef.current?.setCamera({
+        centerCoordinate: [userLocation.longitude, userLocation.latitude],
+        zoomLevel: 14,
+        animationDuration: 1000,
+      });
+      setZoomLevel(14);
+    }
+  };
 
   // Fallback UI when Mapbox is disabled (e.g., in Expo Go)
   if (!mapboxEnabled) {
@@ -73,19 +111,38 @@ export function StudyMap({
           theme === 'dark'
             ? MapboxGL.StyleURL.Dark
             : MapboxGL.StyleURL.Street
-        }>
+        }
+        zoomEnabled={true}
+        scrollEnabled={true}
+        pitchEnabled={true}
+        rotateEnabled={true}
+        logoEnabled={true}
+        attributionEnabled={true}>
         <MapboxGL.Camera
+          ref={cameraRef}
           defaultSettings={{
-            centerCoordinate: [DEFAULT_LOCATION.longitude, DEFAULT_LOCATION.latitude],
-            zoomLevel: 12,
+            centerCoordinate: [centerLocation.longitude, centerLocation.latitude],
+            zoomLevel: 14,
           }}
+          animationMode="flyTo"
+          animationDuration={2000}
         />
 
-        {/* User's location marker */}
-        {showUserLocation && (
+        {/* User's location - use Mapbox's built-in UserLocation for better accuracy */}
+        {showUserLocation && userLocation && (
+          <MapboxGL.UserLocation
+            visible={true}
+            animated={true}
+            showsUserHeadingIndicator={true}
+            androidRenderMode="gps"
+          />
+        )}
+
+        {/* Fallback user marker if UserLocation not available */}
+        {showUserLocation && !userLocation && (
           <MapboxGL.PointAnnotation
             id="user-location"
-            coordinate={[DEFAULT_LOCATION.longitude, DEFAULT_LOCATION.latitude]}>
+            coordinate={[centerLocation.longitude, centerLocation.latitude]}>
             <View style={styles.userMarker} />
           </MapboxGL.PointAnnotation>
         )}
@@ -103,6 +160,32 @@ export function StudyMap({
           </MapboxGL.PointAnnotation>
         ))}
       </MapboxGL.MapView>
+
+      {/* Mapbox indicator badge */}
+      <View style={styles.mapboxBadge}>
+        <Text style={styles.mapboxBadgeText}>🗺️ Mapbox</Text>
+      </View>
+
+      {/* Zoom controls */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity
+          style={styles.zoomButton}
+          onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.zoomButton}
+          onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </TouchableOpacity>
+        {userLocation && (
+          <TouchableOpacity
+            style={[styles.zoomButton, styles.centerButton]}
+            onPress={handleCenterOnUser}>
+            <Text style={styles.zoomButtonText}>📍</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -156,5 +239,52 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7,
     color: '#000',
+  },
+  // Mapbox indicator badge
+  mapboxBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  mapboxBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  // Zoom controls
+  zoomControls: {
+    position: 'absolute',
+    right: 10,
+    bottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  zoomButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  centerButton: {
+    borderBottomWidth: 0,
+  },
+  zoomButtonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
   },
 });

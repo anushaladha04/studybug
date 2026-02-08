@@ -1,5 +1,6 @@
 import { LocationUser, StudyMap } from '@/components/map';
 import { Colors } from '@/constants/theme';
+import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
@@ -31,8 +32,121 @@ const MOCK_USERS: LocationUser[] = [
 export default function MapScreen() {
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
   const [users, setUsers] = useState<LocationUser[]>(MOCK_USERS);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
+
+  // Get user's location
+  useEffect(() => {
+    let subscription: Location.LocationSubscription | null = null;
+    
+    (async () => {
+      try {
+        // Request location permissions
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationError('Location permission denied');
+          // Don't show alert on first load, just silently fail
+          // The map will use default location
+          return;
+        }
+
+        // Check if location services are enabled
+        const enabled = await Location.hasServicesEnabledAsync();
+        if (!enabled) {
+          setLocationError('Location services are disabled');
+          // Map will use default location
+          return;
+        }
+
+        // Get current location with timeout - try multiple accuracy levels
+        try {
+          let location: Location.LocationObject | null = null;
+          
+          // Try with different accuracy levels, starting with less accurate (faster)
+          const accuracyLevels = [
+            Location.Accuracy.Low,
+            Location.Accuracy.Balanced,
+            Location.Accuracy.High,
+          ];
+          
+          for (const accuracy of accuracyLevels) {
+            try {
+              location = await Promise.race([
+                Location.getCurrentPositionAsync({
+                  accuracy: accuracy,
+                }),
+                new Promise<never>((_, reject) => 
+                  setTimeout(() => reject(new Error('Location timeout')), 8000)
+                ),
+              ]);
+              break; // Success, exit loop
+            } catch (err) {
+              // Try next accuracy level
+              console.log(`Location request failed with accuracy ${accuracy}, trying next...`);
+              continue;
+            }
+          }
+          
+          if (!location) {
+            throw new Error('All location accuracy attempts failed');
+          }
+          
+          setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+          setLocationError(null);
+          console.log('Location obtained:', location.coords.latitude, location.coords.longitude);
+
+          // Watch location updates (only if we got initial location)
+          try {
+            subscription = await Location.watchPositionAsync(
+              {
+                accuracy: Location.Accuracy.Low, // Use lower accuracy for watching to save battery
+                timeInterval: 5000, // Update every 5 seconds
+                distanceInterval: 10, // Update every 10 meters
+              },
+              (location) => {
+                setUserLocation({
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                });
+                setLocationError(null);
+                console.log('Location updated:', location.coords.latitude, location.coords.longitude);
+              }
+            );
+          } catch (watchError) {
+            // If watching fails, that's okay - we still have the initial location
+            console.log('Location watching not available:', watchError);
+          }
+        } catch (locationError: any) {
+          // Handle specific location errors
+          if (locationError.message?.includes('timeout') || 
+              locationError.message?.includes('unavailable') ||
+              locationError.code === 'E_LOCATION_UNAVAILABLE') {
+            setLocationError('Location services unavailable. Using default location.');
+            // This is common on emulators - just use default location
+          } else {
+            setLocationError('Failed to get location');
+            console.error('Error getting location:', locationError);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error in location setup:', error);
+        setLocationError('Location unavailable');
+        // Map will use default location
+      }
+    })();
+
+    // Cleanup
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []);
 
   // In a real app, you would fetch users from Supabase periodically
   useEffect(() => {
@@ -48,7 +162,21 @@ export default function MapScreen() {
         users={users}
         onUserPress={setSelectedUser}
         showUserLocation
+        userLocation={userLocation}
       />
+
+      {/* Location status indicator */}
+      {locationError && (
+        <View style={styles.locationStatus}>
+          <Text style={styles.locationStatusText}>
+            {locationError.includes('permission') 
+              ? '📍 Location permission needed'
+              : locationError.includes('services')
+              ? '📍 Enable location services'
+              : '📍 Using default location'}
+          </Text>
+        </View>
+      )}
 
       {/* User Info Modal */}
       {selectedUser && (
@@ -122,5 +250,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  locationStatus: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: 'rgba(255, 193, 7, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#fff',
+    maxWidth: '70%',
+  },
+  locationStatusText: {
+    color: '#000',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
