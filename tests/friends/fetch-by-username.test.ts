@@ -39,7 +39,7 @@ describe('fetchByUsername', () => {
 
         expect(supabase.from('profiles').select('*').ilike).toHaveBeenCalledWith(
             'username', 
-            'test%'
+            '%test%'
         );
 
         expect(result).toEqual([
@@ -70,7 +70,7 @@ describe('fetchByUsername', () => {
 
         expect(supabase.from('profiles').select('*').ilike).toHaveBeenCalledWith(
             'username', 
-            'test%'
+            '%test%'
         );
 
         expect(result).toEqual([{}]);

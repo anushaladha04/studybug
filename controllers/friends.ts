@@ -15,7 +15,16 @@ export async function fetchByUsername(searchPattern: string) {
 }
 
 export async function requestFriend(friendId: string) {
+    const { data, error } = await supabase
+        .from('friends')
+        .select('*');
+    
+    if (error) {
+        console.error('Error requesting friend: ', error.message);
+        return null;
+    }
 
+    return data;
 }
 
 export async function fetchFriendRequests() {
