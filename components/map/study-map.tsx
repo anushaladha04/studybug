@@ -1,9 +1,6 @@
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { isMapboxEnabled } from '@/lib/mapbox-config';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 // Try to import Mapbox - will fail gracefully in Expo Go
 let MapboxGL: any = null;
@@ -47,22 +44,23 @@ export function StudyMap({
   onUserPress,
   showUserLocation = true,
 }: StudyMapProps) {
-  const theme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? 'light';
   const mapboxEnabled = isMapboxEnabled() && MapboxGL !== null;
 
   // Fallback UI when Mapbox is disabled (e.g., in Expo Go)
   if (!mapboxEnabled) {
     return (
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.fallbackContainer}>
-          <ThemedText type="title" style={styles.fallbackTitle}>
+          <Text style={styles.fallbackTitle}>
             🗺️ Map View
-          </ThemedText>
-          <ThemedText style={styles.fallbackMessage}>
+          </Text>
+          <Text style={styles.fallbackMessage}>
             Mapbox doesn't work with Expo Go. Use a development build to see the interactive map.
-          </ThemedText>
+          </Text>
         </View>
-      </ThemedView>
+      </View>
     );
   }
 
@@ -148,11 +146,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fallbackTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
+    color: '#000',
   },
   fallbackMessage: {
     textAlign: 'center',
     opacity: 0.7,
+    color: '#000',
   },
 });

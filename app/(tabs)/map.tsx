@@ -1,10 +1,7 @@
 import { LocationUser, StudyMap } from '@/components/map';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 // Mock data - in a real app, this would come from Supabase
 const MOCK_USERS: LocationUser[] = [
@@ -34,7 +31,8 @@ const MOCK_USERS: LocationUser[] = [
 export default function MapScreen() {
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
   const [users, setUsers] = useState<LocationUser[]>(MOCK_USERS);
-  const theme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? 'light';
 
   // In a real app, you would fetch users from Supabase periodically
   useEffect(() => {
@@ -45,7 +43,7 @@ export default function MapScreen() {
   }, []);
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       <StudyMap
         users={users}
         onUserPress={setSelectedUser}
@@ -63,15 +61,15 @@ export default function MapScreen() {
                 borderColor: Colors[theme].tint,
               },
             ]}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>
+            <Text style={styles.modalTitle}>
               {selectedUser.name}
-            </ThemedText>
-            <ThemedText style={styles.modalStudying}>
+            </Text>
+            <Text style={styles.modalStudying}>
               📚 Studying: {selectedUser.studying}
-            </ThemedText>
-            <ThemedText style={styles.modalLocation}>
+            </Text>
+            <Text style={styles.modalLocation}>
               📍 {selectedUser.latitude.toFixed(4)}, {selectedUser.longitude.toFixed(4)}
-            </ThemedText>
+            </Text>
 
             <TouchableOpacity
               style={[
@@ -84,7 +82,7 @@ export default function MapScreen() {
           </View>
         </View>
       )}
-    </ThemedView>
+    </View>
   );
 }
 
@@ -104,16 +102,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
   },
   modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 12,
+    color: '#000',
   },
   modalStudying: {
     marginBottom: 8,
     fontSize: 14,
+    color: '#000',
   },
   modalLocation: {
     marginBottom: 16,
     fontSize: 12,
     opacity: 0.7,
+    color: '#000',
   },
   closeButton: {
     paddingVertical: 12,
