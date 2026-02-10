@@ -23,10 +23,10 @@ export default function FriendsScreen() {
 
   const isSearching = searchQuery.length > 0;
 
-  const handleRequest = async (to: string) => {
+  const handleRequest = async (to: string, username: string) => {
     try {
       await requestFriend(to);
-      Alert.alert(`Alert sent to ${to}`)
+      Alert.alert(`Alert sent to ${username}`)
     } catch (error) {
       console.error(error);
     }
@@ -81,7 +81,7 @@ export default function FriendsScreen() {
                   </View>
                   <Pressable 
                     style={styles.addButton}
-                    onPress={() => handleRequest(item.id)}
+                    onPress={() => handleRequest(item.id, item.username)}
                   >
                     <Text style={styles.addButtonText}>Add</Text>
                   </Pressable>
