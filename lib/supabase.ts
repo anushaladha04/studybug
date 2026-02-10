@@ -1,4 +1,8 @@
-import 'react-native-url-polyfill/auto';
+// Only load the URL polyfill on native platforms (not during SSR)
+// Must be before other imports that might use URL
+if (typeof window !== 'undefined' && typeof window.URL === 'undefined') {
+    require('react-native-url-polyfill/auto');
+}
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
