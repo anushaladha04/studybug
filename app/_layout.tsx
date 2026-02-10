@@ -1,50 +1,42 @@
-import { AuthProvider, useAuth } from '@/contexts/auth-context';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Slot, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import 'react-native-reanimated';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "react-native";
+import "react-native-reanimated";
 
-function RootLayoutNav() {
-  const { session, isLoading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+import { useAuthContext } from "@/hooks/use-auth-context";
+import AuthProvider from "@/providers/auth-provider";
 
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!session && !inAuthGroup) {
-      // Not logged in, redirect to login
-      router.replace('/(auth)/login');
-    } else if (session && inAuthGroup) {
-      // Logged in but on auth page, redirect to home
-      router.replace('/(tabs)');
-    }
-  }, [session, isLoading, segments]);
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
+function RootNavigator() {
+  const { isLoggedIn } = useAuthContext();
 
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <Slot />
-      <StatusBar style="dark" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isLoggedIn}>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      </Stack.Protected>
+
+      <Stack.Screen
+        name="modal"
+        options={{ presentation: "modal", title: "Modal" }}
+      />
+    </Stack>
   );
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
+      <StatusBar style="auto" />
+    </ThemeProvider>
   );
 }
