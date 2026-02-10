@@ -59,11 +59,11 @@ describe(('acceptFriendRequest'), () => {
         });
                 
         (supabase.rpc as jest.Mock).mockResolvedValue({
-            data: null,
+            data: [],
             error: { message: 'db error'},
         });
         
         const result = await acceptFriendRequest('test-user-id-1');
-        expect(result).toBeNull();
+        expect(result).toEqual([]);
     });
 });

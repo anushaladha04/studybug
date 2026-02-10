@@ -78,13 +78,13 @@ describe('fetchByUsername', () => {
 
     it('should return an error message if select failed', async () => {
         (supabase.from('profiles').select('*').ilike as jest.Mock).mockResolvedValue({
-            data: null,
+            data: [],
             error: { message: 'db error'},
         });
 
         const result = await fetchByUsername('test');
 
-        expect(result).toBeNull();
+        expect(result).toEqual([]);
     });
 
 });

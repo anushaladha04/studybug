@@ -1,8 +1,27 @@
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { fetchByUsername } from '@/controllers/friends';
+import { useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function FriendsScreen() {
-  const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
+
+  const [ searchQuery, setSearchQuery ] = useState('');
+  const [ searchResults, setSearchResults ] = useState<any[]>([]);
+
+  useEffect(() => {
+    const searchUsers = async (query: string) => {
+      try {
+        const data = await fetchByUsername(query);        
+        setSearchResults(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    searchUsers(searchQuery);
+  }, [searchQuery]);
+
+  const isSearching = searchQuery.length > 0;
 
   return (
     <View style={styles.container}>
@@ -12,28 +31,67 @@ export default function FriendsScreen() {
         style={styles.searchBar}
         placeholder="Search friends..."
         placeholderTextColor="#999"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
       />
 
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[styles.tab, activeTab === 'active' && styles.activeTab]}
-          onPress={() => setActiveTab('active')}
-        >
-          <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>Active</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-          onPress={() => setActiveTab('all')}
-        >
-          <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Friends</Text>
-        </Pressable>
-      </View>
+      { !isSearching && (
+        <View style={styles.tabBar}>
+          <Pressable
+            style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+            onPress={() => setActiveTab('active')}
+          >
+            <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>Active</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+            onPress={() => setActiveTab('all')}
+          >
+            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Friends</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
+            onPress={() => setActiveTab('requests')}
+          >
+            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Requests</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.content}>
-        {activeTab === 'active' ? (
-          <Text style={styles.emptyText}>No active friends right now</Text>
-        ) : (
-          <Text style={styles.emptyText}>No friends added yet</Text>
+        {isSearching ? (
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item) => item.id}
+              style={{ width: '100%' }}
+              renderItem={({ item }) => (
+                <View style={styles.resultItem}>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.fullNameText}>{item.full_name}</Text>
+                    <Text style={styles.usernameText}>@{item.username}</Text>
+                  </View>
+                  <Pressable 
+                    style={styles.addButton}
+                  >
+                    <Text style={styles.addButtonText}>Add</Text>
+                  </Pressable>
+                </View>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No users found</Text>
+              }
+            />
+          ) : (
+          <View style={styles.content}>
+            {activeTab === 'active' ? (
+              <Text style={styles.emptyText}>No active friends right now</Text>
+            ) : ( activeTab === 'all' ? (
+                <Text style={styles.emptyText}>No friends added yet</Text>
+              ) : (
+                <Text style={styles.emptyText}>No requests yet</Text>
+              )
+            )}
+          </View>
         )}
       </View>
     </View>
@@ -97,5 +155,39 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: '#999',
+  },
+  resultItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    width: '100%',
+  },
+  userInfo: {
+    flexDirection: 'column',
+    flex: 1,
+  },
+  fullNameText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  usernameText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  addButton: {
+    backgroundColor: '#0a7ea4',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
