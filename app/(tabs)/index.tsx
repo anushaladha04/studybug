@@ -6,10 +6,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to StudyBug! 🐞</Text>
-      <Text style={styles.subtitle}>
-        Logged in as: {session?.user?.email}
-      </Text>
+      <Text style={styles.text}>[ HOME ]</Text>
     </View>
   );
 } 
@@ -17,17 +14,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
   },
-  title: {
+  text: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontFamily: 'monospace',
   },
 });

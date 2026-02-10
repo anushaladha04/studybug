@@ -46,3 +46,5 @@ app-example
 # generated native folders
 /ios
 /android
+
+fix-ngrok-arm64.js
