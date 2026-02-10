@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { useAuthContext } from '@/hooks/use-auth-context';
 
 export async function fetchByUsername(searchPattern: string) {
     const { data, error } = await supabase
