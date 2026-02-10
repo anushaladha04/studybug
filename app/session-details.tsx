@@ -27,14 +27,14 @@ export default function TimerConfig() {
                 style={styles.input}
                 value={subject}
                 onChangeText={setSubject}
-                placeholder='test' />
+                placeholder='' />
 
             <Text style={styles.title}>Location</Text>
             <TextInput 
                 style={styles.input}
                 value={location}
                 onChangeText={setLocation}
-                placeholder='test' />
+                placeholder='' />
                 
             <Text style={styles.title}>Level of Focus</Text>
             <View style={styles.toggleRow}>
@@ -74,7 +74,7 @@ export default function TimerConfig() {
                 style={styles.input}
                 value={feeling}
                 onChangeText={setFeeling}
-                placeholder='test' />
+                placeholder='' />
 
             <Text style={styles.title}>Private/Public</Text>
             <View style={styles.toggleRow}>

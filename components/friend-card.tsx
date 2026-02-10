@@ -1,8 +1,21 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function FriendCard() {
+export default function FriendCard({ location }: { location: string }) {
+
+    //dynamic coloring based on location, needs to fetch data from 
+    // last session of each user on friend's profile
+    const colorStyles = {
+        backgroundColor: location === 'The Study' ? '#c07cc0'
+                        : location === 'Powell Library' ? '#de8787' 
+                        : location === 'Canopy' ? '#65c8f2'
+                        : location === 'Understory' ? '#757ee2'
+                        : location === 'YRL' ? '#f2b065'
+                        : '#52bb97',
+       
+    };
+
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, colorStyles]}>
             <View style={styles.avatar} />
 
             <View style={styles.info}>
