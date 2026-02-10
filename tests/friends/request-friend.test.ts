@@ -16,7 +16,7 @@ beforeEach(() => {
 
 describe(('requestFriend'), () => {
     it('should update the sender\'s to_ids and receiver\'s from_ids', async () => {
-        const mockFriends = [
+        const mockRequest = [
             {
                 user_id: 'test-user-id-1',
                 friends_ids: [],
@@ -29,7 +29,6 @@ describe(('requestFriend'), () => {
                 from_ids: ['test-user-id-1'],
                 to_ids: [],
             },
-
         ];
 
         (supabase.auth.getUser as jest.Mock).mockResolvedValue({
@@ -37,7 +36,7 @@ describe(('requestFriend'), () => {
         });
         
         (supabase.rpc as jest.Mock).mockResolvedValue({
-            data: mockFriends,
+            data: mockRequest,
             error: null,
         });
 
@@ -51,7 +50,7 @@ describe(('requestFriend'), () => {
                 receiver_id: 'test-user-id-2'
             }
         );
-        expect(result).toEqual(mockFriends);
+        expect(result).toEqual(mockRequest);
     });
 
     it('should return null if receiver does not exist', async () => {
@@ -68,6 +67,4 @@ describe(('requestFriend'), () => {
         const result = await requestFriend('test-user-id-2');
         expect(result).toBeNull();
     });
-
-
 });

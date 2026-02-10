@@ -36,7 +36,20 @@ export async function fetchFriendRequests() {
 }
 
 export async function acceptFriendRequest(fromId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { data, error } = await supabase
+        .rpc('accept_friend_request', { 
+            original_sender_id: fromId, 
+            curr_user_id: user?.id 
+        });
+            
+    if (error) {
+        console.error('Error requesting friend: ', error.message);
+        return null;
+    }
 
+    return data;
 }
 
 export async function fetchFriends() {
