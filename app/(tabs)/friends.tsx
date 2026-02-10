@@ -1,6 +1,6 @@
-import { fetchByUsername } from '@/controllers/friends';
+import { fetchByUsername, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
@@ -22,6 +22,15 @@ export default function FriendsScreen() {
   }, [searchQuery]);
 
   const isSearching = searchQuery.length > 0;
+
+  const handleRequest = async (to: string) => {
+    try {
+      await requestFriend(to);
+      Alert.alert(`Alert sent to ${to}`)
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -72,6 +81,7 @@ export default function FriendsScreen() {
                   </View>
                   <Pressable 
                     style={styles.addButton}
+                    onPress={() => handleRequest(item.id)}
                   >
                     <Text style={styles.addButtonText}>Add</Text>
                   </Pressable>

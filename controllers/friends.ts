@@ -18,9 +18,19 @@ export async function fetchByUsername(searchPattern: string) {
 export async function requestFriend(friendId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     
+    if (! user) {
+       console.error('Not authenticated');
+       return [];
+    }
+
+    if (! friendId) {
+        console.error('Cannot find friend');
+        return [];
+    }
+
     const { data, error } = await supabase
         .rpc('send_friend_request', { 
-            sender_id: user?.id, 
+            sender_id: user.id, 
             receiver_id: friendId
         });
             
