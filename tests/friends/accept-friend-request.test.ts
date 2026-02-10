@@ -52,4 +52,18 @@ describe(('acceptFriendRequest'), () => {
         );
         expect(result).toEqual(mockFriends);
     });
+
+    it('should return null if request is invalid', async () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: 'test-user-id-2' } },
+        });
+                
+        (supabase.rpc as jest.Mock).mockResolvedValue({
+            data: null,
+            error: { message: 'db error'},
+        });
+        
+        const result = await acceptFriendRequest('test-user-id-1');
+        expect(result).toBeNull();
+    });
 });
