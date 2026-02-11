@@ -1,4 +1,4 @@
-import { fetchByUsername, requestFriend } from '@/controllers/friends';
+import { fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -7,6 +7,7 @@ export default function FriendsScreen() {
 
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
+  const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
 
   useEffect(() => {
     const searchUsers = async (query: string) => {
@@ -31,6 +32,19 @@ export default function FriendsScreen() {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const data = await fetchFriendRequests();        
+        setFriendRequests(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    fetchRequests();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -98,7 +112,22 @@ export default function FriendsScreen() {
             ) : ( activeTab === 'all' ? (
                 <Text style={styles.emptyText}>No friends added yet</Text>
               ) : (
-                <Text style={styles.emptyText}>No requests yet</Text>
+                <FlatList
+                  data={friendRequests}
+                  keyExtractor={(item) => item.id}
+                  style={{ width: '100%' }}
+                  renderItem={({ item }) => (
+                    <View style={styles.resultItem}>
+                      <View style={styles.userInfo}>
+                        <Text style={styles.fullNameText}>{item.full_name}</Text>
+                        <Text style={styles.usernameText}>@{item.username}</Text>
+                      </View>
+                    </View>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyText}>No users found</Text>
+                  }
+                />
               )
             )}
           </View>

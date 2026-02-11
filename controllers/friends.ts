@@ -61,7 +61,21 @@ export async function fetchFriendRequests() {
         return [];
     }
 
-    return data?.from_ids || [];
+    if (data?.from_ids) {
+        const { data: friend_profiles, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', data.from_ids);
+
+        if (error) {
+            console.error('Error fetching profiles of friend requests');
+            return [];
+        }
+
+        return friend_profiles;
+    }
+
+    return [];
 }
 
 export async function acceptFriendRequest(fromId: string) {
