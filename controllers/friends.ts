@@ -54,7 +54,7 @@ export async function fetchFriendRequests() {
         .from('friends')
         .select('from_ids')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error fetching friend requests:', error.message);
@@ -80,6 +80,11 @@ export async function fetchFriendRequests() {
 
 export async function acceptFriendRequest(fromId: string) {
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+       console.error('Not authenticated');
+       return [];
+    }
     
     const { data, error } = await supabase
         .rpc('accept_friend_request', { 
@@ -88,7 +93,7 @@ export async function acceptFriendRequest(fromId: string) {
         });
             
     if (error) {
-        console.error('Error requesting friend: ', error.message);
+        console.error('Error accepting friend: ', error.message);
         return [];
     }
 

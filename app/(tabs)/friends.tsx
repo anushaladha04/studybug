@@ -1,4 +1,4 @@
-import { fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -44,7 +44,15 @@ export default function FriendsScreen() {
     };
     
     fetchRequests();
-  }, []);
+  }, [friendRequests]);
+
+  const acceptRequest = async (from: string) => {
+    try {
+      await acceptFriendRequest(from);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -122,6 +130,12 @@ export default function FriendsScreen() {
                         <Text style={styles.fullNameText}>{item.full_name}</Text>
                         <Text style={styles.usernameText}>@{item.username}</Text>
                       </View>
+                      <Pressable 
+                        style={styles.addButton}
+                        onPress={() => acceptRequest(item.id)}
+                      >
+                        <Text style={styles.addButtonText}>Accept</Text>
+                      </Pressable>
                     </View>
                   )}
                   ListEmptyComponent={
