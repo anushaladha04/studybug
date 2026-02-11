@@ -62,7 +62,7 @@ export async function fetchFriendRequests() {
     }
 
     if (data?.from_ids) {
-        const { data: friend_profiles, error } = await supabase
+        const { data: requested_profiles, error } = await supabase
             .from('profiles')
             .select('*')
             .in('id', data.from_ids);
@@ -72,7 +72,7 @@ export async function fetchFriendRequests() {
             return [];
         }
 
-        return friend_profiles;
+        return requested_profiles;
     }
 
     return [];
@@ -112,12 +112,26 @@ export async function fetchFriends() {
         .from('friends')
         .select('friends_ids')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error fetching friends:', error.message);
         return [];
     }
 
-    return data?.friends_ids || [];
+    if (data?.friends_ids) {
+        const { data: friend_profiles, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', data.friends_ids);
+
+        if (error) {
+            console.error('Error fetching profiles of friends');
+            return [];
+        }
+
+        return friend_profiles;
+    }
+
+    return [];
 }

@@ -1,4 +1,4 @@
-import { acceptFriendRequest, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchByUsername, fetchFriendRequests, fetchFriends, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -8,6 +8,7 @@ export default function FriendsScreen() {
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
   const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
+  const [ friends, setFriends ] = useState<any[]>([]);
 
   useEffect(() => {
     const searchUsers = async (query: string) => {
@@ -53,6 +54,19 @@ export default function FriendsScreen() {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    const fetchAllFriends = async () => {
+      try {
+        const data = await fetchFriends();        
+        setFriends(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    fetchAllFriends();
+  }, [friends]);
 
   return (
     <View style={styles.container}>
@@ -118,30 +132,45 @@ export default function FriendsScreen() {
             {activeTab === 'active' ? (
               <Text style={styles.emptyText}>No active friends right now</Text>
             ) : ( activeTab === 'all' ? (
-                <Text style={styles.emptyText}>No friends added yet</Text>
-              ) : (
                 <FlatList
-                  data={friendRequests}
-                  keyExtractor={(item) => item.id}
-                  style={{ width: '100%' }}
-                  renderItem={({ item }) => (
-                    <View style={styles.resultItem}>
-                      <View style={styles.userInfo}>
-                        <Text style={styles.fullNameText}>{item.full_name}</Text>
-                        <Text style={styles.usernameText}>@{item.username}</Text>
-                      </View>
-                      <Pressable 
-                        style={styles.addButton}
-                        onPress={() => acceptRequest(item.id)}
-                      >
-                        <Text style={styles.addButtonText}>Accept</Text>
-                      </Pressable>
+                data={friends}
+                keyExtractor={(item) => item.id}
+                style={{ width: '100%' }}
+                renderItem={({ item }) => (
+                  <View style={styles.resultItem}>
+                    <View style={styles.userInfo}>
+                      <Text style={styles.fullNameText}>{item.full_name}</Text>
+                      <Text style={styles.usernameText}>@{item.username}</Text>
                     </View>
-                  )}
-                  ListEmptyComponent={
-                    <Text style={styles.emptyText}>No users found</Text>
-                  }
-                />
+                  </View>
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No friends added yet </Text>
+                }
+              />
+              ) : (
+              <FlatList
+                data={friendRequests}
+                keyExtractor={(item) => item.id}
+                style={{ width: '100%' }}
+                renderItem={({ item }) => (
+                  <View style={styles.resultItem}>
+                    <View style={styles.userInfo}>
+                      <Text style={styles.fullNameText}>{item.full_name}</Text>
+                      <Text style={styles.usernameText}>@{item.username}</Text>
+                    </View>
+                    <Pressable 
+                      style={styles.addButton}
+                      onPress={() => acceptRequest(item.id)}
+                    >
+                      <Text style={styles.addButtonText}>Accept</Text>
+                    </Pressable>
+                  </View>
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No friend requests </Text>
+                }
+              />
               )
             )}
           </View>
