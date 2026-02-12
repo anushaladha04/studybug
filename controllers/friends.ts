@@ -61,21 +61,7 @@ export async function fetchFriendRequests() {
         return [];
     }
 
-    if (data?.from_ids) {
-        const { data: requested_profiles, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', data.from_ids);
-
-        if (error) {
-            console.error('Error fetching profiles of friend requests');
-            return [];
-        }
-
-        return requested_profiles;
-    }
-
-    return [];
+    return data?.from_ids || [];
 }
 
 export async function acceptFriendRequest(fromId: string) {
@@ -119,19 +105,36 @@ export async function fetchFriends() {
         return [];
     }
 
-    if (data?.friends_ids) {
-        const { data: friend_profiles, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', data.friends_ids);
+    return data?.friends_ids || [];
+}
 
-        if (error) {
-            console.error('Error fetching profiles of friends');
-            return [];
-        }
+export async function fetchFriendsProfiles(ids: string[]) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', ids);
 
-        return friend_profiles;
+    if (error) {
+        console.error("Error fetching friends profiles: ", error.message);
+        return [];
     }
 
-    return [];
+    return data;
+}
+
+export async function fetchActiveFriendIds() {
+    const friendIds = await fetchFriends();
+
+    const { data, error } = await supabase
+        .from('study_sessions')
+        .select('*')
+        .in('user_id', friendIds)
+        .eq('is_active', true);
+
+    if (error) {
+        console.error("Error fetching active friends: ", error.message);
+        return [];
+    }
+
+    return data.map(session => session.user_id);
 }

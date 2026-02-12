@@ -1,5 +1,5 @@
 import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchByUsername, fetchFriendRequests, fetchFriends, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchActiveFriendIds, fetchByUsername, fetchFriendRequests, fetchFriends, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -10,6 +10,7 @@ export default function FriendsScreen() {
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
   const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
   const [ friends, setFriends ] = useState<any[]>([]);
+  const [ activeFriends, setActiveFriends ] = useState<any[]>([]);
 
   useEffect(() => {
     const searchUsers = async (query: string) => {
@@ -38,8 +39,9 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const data = await fetchFriendRequests();        
-        setFriendRequests(data); 
+        const data = await fetchFriendRequests();
+        const profiles = await fetchFriendsProfiles(data);        
+        setFriendRequests(profiles); 
       } catch (error) {
         console.error(error);
       }
@@ -59,8 +61,9 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchAllFriends = async () => {
       try {
-        const data = await fetchFriends();        
-        setFriends(data); 
+        const data = await fetchFriends();  
+        const profiles = await fetchFriendsProfiles(data);      
+        setFriends(profiles); 
       } catch (error) {
         console.error(error);
       }
@@ -68,6 +71,34 @@ export default function FriendsScreen() {
     
     fetchAllFriends();
   }, [friends]);
+
+  useEffect(() => {
+    const fetchAllFriends = async () => {
+      try {
+        const data = await fetchFriends();  
+        const profiles = await fetchFriendsProfiles(data);      
+        setFriends(profiles); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    fetchAllFriends();
+  }, [friends]);
+
+  useEffect(() => {
+    const fetchActiveFriends = async() => {
+      try {
+        const data = await fetchActiveFriendIds();
+        const active = friends.filter((friend) => data.includes(friend.id));
+        setActiveFriends(active);
+      } catch (error) {
+        console.error(error);
+      }
+
+      fetchActiveFriends();
+    };
+  }, [friends, activeFriends]);
 
   return (
     <View style={styles.container}>
@@ -139,21 +170,21 @@ export default function FriendsScreen() {
               </>
             ) : ( activeTab === 'all' ? (
                 <FlatList
-                data={friends}
-                keyExtractor={(item) => item.id}
-                style={{ width: '100%' }}
-                renderItem={({ item }) => (
-                  <View style={styles.resultItem}>
-                    <View style={styles.userInfo}>
-                      <Text style={styles.fullNameText}>{item.full_name}</Text>
-                      <Text style={styles.usernameText}>@{item.username}</Text>
+                  data={friends}
+                  keyExtractor={(item) => item.id}
+                  style={{ width: '100%' }}
+                  renderItem={({ item }) => (
+                    <View style={styles.resultItem}>
+                      <View style={styles.userInfo}>
+                        <Text style={styles.fullNameText}>{item.full_name}</Text>
+                        <Text style={styles.usernameText}>@{item.username}</Text>
+                      </View>
                     </View>
-                  </View>
-                )}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No friends added yet </Text>
-                }
-              />
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyText}>No friends added yet </Text>
+                  }
+                />
               ) : (
               <FlatList
                 data={friendRequests}
