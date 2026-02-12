@@ -1,3 +1,4 @@
+import FriendCard from '@/components/friend-card';
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -6,7 +7,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>[ HOME ]</Text>
+      <Text style={styles.title}>Welcome to StudyBug! 🐞</Text>
+      <Text style={styles.subtitle}>
+        Logged in as: {session?.user?.email}
+      </Text>
+      <FriendCard />
+      <FriendCard />
     </View>
   );
 } 

@@ -1,3 +1,4 @@
+import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchByUsername, fetchFriendRequests, fetchFriends, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -130,7 +131,12 @@ export default function FriendsScreen() {
           ) : (
           <View style={styles.content}>
             {activeTab === 'active' ? (
-              <Text style={styles.emptyText}>No active friends right now</Text>
+              <>
+                <FriendCard location='The Study' />
+                <FriendCard location='Understory' />
+                <FriendCard location='YRL' />
+                <FriendCard location='Canopy' />
+              </>
             ) : ( activeTab === 'all' ? (
                 <FlatList
                 data={friends}
