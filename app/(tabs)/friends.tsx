@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Friends</Text>
+      <View style={styles.headerRow}>
+        <Pressable onPress={() => { /*TODO: Add friend flow */ }}>
+          <Ionicons name="person-add-outline" size={24} color="#333" />
+        </Pressable>
+        <Text style={styles.title}>Friends</Text>
+        <Pressable onPress={() => { /* TODO: Notifications flow */ }}>
+          <Ionicons name="notifications-outline" size={24} color="#333" />
+        </Pressable>
+      </View>
 
       <TextInput
         style={styles.searchBar}
@@ -46,6 +55,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingTop: 60,
     alignItems: 'center',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '90%',
   },
   title: {
     fontSize: 20,
