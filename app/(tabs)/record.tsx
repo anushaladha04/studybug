@@ -18,6 +18,22 @@ export default function RecordScreen() {
 
   const [isPublic, setIsPublic] = useState(false);
 
+  const startSessionTrigger = async () => {
+    const startTime = new Date();
+    const sessionId = await startStudySession(startTime, isPublic, "General");
+    if (sessionId) {
+      setCurrentSessionId(sessionId);
+      setIsSessionActive(true);
+      setTimerIsActive(true);
+    }
+  };
+
+  const endSessionTrigger = async () => {
+    const endTime = new Date();
+    endStudySession(currentSessionId, endTime, seconds);
+    setTimerIsActive(false);
+  }
+
   const formatTime = (totalSeconds: number) => {
     const hrs = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -70,20 +86,41 @@ export default function RecordScreen() {
         </Text>
       </Pressable>
 
-      {/* Big Button */}
-      <Pressable
-        style={styles.button}
-        onPress={() => setTimerIsActive(!timerIsActive)}
-      >
-        <Text style={styles.buttonText}>
-          {isSessionActive ? 'STOP' : 'Start!'}
-        </Text>
-      </Pressable>
+      {!isSessionActive ? (
+        <Pressable
+          style={styles.button}
+          onPress={startSessionTrigger}
+        >
+          <Text style={styles.buttonText}>Start</Text>
+        </Pressable>
+      ) : (
+        <>
+          {/* Big Button */}
+          <Pressable
+            style={styles.button}
+            onPress={() => setTimerIsActive(!timerIsActive)}
+          >
+            <Text style={styles.buttonText}>
+              {timerIsActive ? 'Pause' : 'Resume'}
+            </Text>
+          </Pressable>
 
-      {/* Timer */}
-      <View style={styles.timer}>
-        <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-      </View>
+          {/* Timer */}
+          <View style={styles.timer}>
+            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
+          </View>
+
+          {/* End Session button */}
+          <Pressable
+            style={styles.button}
+            onPress={() => endSessionTrigger()}
+          >
+            <Text style={styles.buttonText}>
+              End Session
+            </Text>
+          </Pressable>
+        </>
+      )}
     </View>
   );
 }
@@ -124,11 +161,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#000',
     borderStyle: 'dashed',
-    paddingHorizontal: 30,
+    width: 250,
+    alignItems: 'center',
     paddingVertical: 20,
   },
   timerText: {
     fontSize: 40,
     fontFamily: 'monospace',
+    fontVariant: ['tabular-nums'],
   },
 });
