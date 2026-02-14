@@ -86,7 +86,7 @@ export async function acceptFriendRequest(fromId: string) {
     return data;
 }
 
-export async function fetchFriends() {
+export async function fetchFriendIds() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -122,13 +122,11 @@ export async function fetchFriendsProfiles(ids: string[]) {
     return data;
 }
 
-export async function fetchActiveFriendIds() {
-    const friendIds = await fetchFriends();
-
+export async function fetchActiveFriendIds(ids: string[]) {
     const { data, error } = await supabase
         .from('study_sessions')
         .select('*')
-        .in('user_id', friendIds)
+        .in('user_id', ids)
         .eq('is_active', true);
 
     if (error) {

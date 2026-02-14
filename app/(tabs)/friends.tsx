@@ -1,5 +1,4 @@
-import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchActiveFriendIds, fetchByUsername, fetchFriendRequests, fetchFriends, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchActiveFriendIds, fetchByUsername, fetchFriendIds, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -61,7 +60,7 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchAllFriends = async () => {
       try {
-        const data = await fetchFriends();  
+        const data = await fetchFriendIds();  
         const profiles = await fetchFriendsProfiles(data);      
         setFriends(profiles); 
       } catch (error) {
@@ -75,7 +74,7 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchAllFriends = async () => {
       try {
-        const data = await fetchFriends();  
+        const data = await fetchFriendIds();  
         const profiles = await fetchFriendsProfiles(data);      
         setFriends(profiles); 
       } catch (error) {
@@ -89,16 +88,19 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchActiveFriends = async() => {
       try {
-        const data = await fetchActiveFriendIds();
+        const ids = friends.map(f => f.id);
+        const data = await fetchActiveFriendIds(ids);
+
         const active = friends.filter((friend) => data.includes(friend.id));
+
         setActiveFriends(active);
       } catch (error) {
         console.error(error);
       }
-
-      fetchActiveFriends();
     };
-  }, [friends, activeFriends]);
+
+    fetchActiveFriends();
+  }, [friends]);
 
   return (
     <View style={styles.container}>
@@ -162,12 +164,22 @@ export default function FriendsScreen() {
           ) : (
           <View style={styles.content}>
             {activeTab === 'active' ? (
-              <>
-                <FriendCard location='The Study' />
-                <FriendCard location='Understory' />
-                <FriendCard location='YRL' />
-                <FriendCard location='Canopy' />
-              </>
+              <FlatList
+                  data={activeFriends}
+                  keyExtractor={(item) => item.id}
+                  style={{ width: '100%' }}
+                  renderItem={({ item }) => (
+                    <View style={styles.resultItem}>
+                      <View style={styles.userInfo}>
+                        <Text style={styles.fullNameText}>{item.full_name}</Text>
+                        <Text style={styles.usernameText}>@{item.username}</Text>
+                      </View>
+                    </View>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyText}>No friends added yet </Text>
+                  }
+                />
             ) : ( activeTab === 'all' ? (
                 <FlatList
                   data={friends}
