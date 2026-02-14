@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to StudyBug! ??</Text>
+      <Text style={styles.title}>Welcome to StudyBug!</Text>
       <Text style={styles.subtitle}>Logged in as: {session?.user?.email}</Text>
 
       {!popup && (
@@ -54,7 +54,7 @@ export default function HomeScreen() {
             onPress={handlePressStart}
             activeOpacity={0.7}
           >
-            <Text style={styles.startIcon}>?</Text>
+            <Text style={styles.startIcon}>{'\u25B6'}</Text>
           </TouchableOpacity>
           {currentSessionId && (
             <Button
@@ -143,3 +143,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+
+
