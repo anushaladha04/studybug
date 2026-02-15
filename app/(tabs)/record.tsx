@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, AppState } from 'react-native';
 import { endStudySession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import {  useRef, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
@@ -18,6 +19,26 @@ export default function RecordScreen() {
 
   const [isPublic, setIsPublic] = useState(false);
 
+  // Check for incomplete session on mount
+  useEffect(() => {
+    const checkIncompleteSession = async () => {
+      const sessionId = await AsyncStorage.getItem('activeSessionId');
+      if (sessionId) {
+        // Found an incomplete session - end it automatically
+        const endTime = new Date();
+        const savedSeconds = await AsyncStorage.getItem('sessionSeconds');
+        const duration = savedSeconds ? parseInt(savedSeconds, 10) : 0;
+        await endStudySession(sessionId, endTime, duration);
+        // Clear AsyncStorage
+        await AsyncStorage.removeItem('activeSessionId');
+        await AsyncStorage.removeItem('sessionStartTime');
+        await AsyncStorage.removeItem('sessionSeconds');
+        console.log('Ended incomplete session from previous app run');
+      }
+    };
+    checkIncompleteSession();
+  }, []);
+
   const startSessionTrigger = async () => {
     const startTime = new Date();
     const sessionId = await startStudySession(startTime, isPublic, "General");
@@ -25,10 +46,19 @@ export default function RecordScreen() {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
       setTimerIsActive(true);
+      // Save session state to AsyncStorage
+      await AsyncStorage.setItem('activeSessionId', sessionId);
+      await AsyncStorage.setItem('sessionStartTime', startTime.toISOString());
     }
   };
 
   const endSessionTrigger = async () => {
+    setIsSessionActive(false);
+    setSeconds(0);
+    // Clear session state from AsyncStorage
+    await AsyncStorage.removeItem('activeSessionId');
+    await AsyncStorage.removeItem('sessionStartTime');
+    await AsyncStorage.removeItem('sessionSeconds');
     const endTime = new Date();
     endStudySession(currentSessionId, endTime, seconds);
     setTimerIsActive(false);
@@ -54,10 +84,13 @@ export default function RecordScreen() {
     }
 
     // Handle background app running
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
       if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
-        // app went to background -> save current time
+        // app went to background -> save current time and seconds
         backgroundTime.current = Date.now();
+        if (isSessionActive) {
+          await AsyncStorage.setItem('sessionSeconds', seconds.toString());
+        }
       } else if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // app returned to foreground: calculate elapsed time
         if (backgroundTime.current && timerIsActive) {
