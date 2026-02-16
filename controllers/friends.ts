@@ -51,17 +51,16 @@ export async function fetchFriendRequests() {
     }
 
     const { data, error } = await supabase
-        .from('friends')
-        .select('from_ids')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .from('friend_request_profiles_view')
+        .select('*')
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error fetching friend requests:', error.message);
         return [];
     }
 
-    return data?.from_ids || [];
+    return data;
 }
 
 export async function acceptFriendRequest(fromId: string) {
@@ -101,20 +100,6 @@ export async function fetchAllFriends() {
 
     if (error) {
         console.error('Error fetching friends:', error.message);
-        return [];
-    }
-
-    return data;
-}
-
-export async function fetchFriendsProfiles(ids: string[]) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', ids);
-
-    if (error) {
-        console.error("Error fetching friends profiles: ", error.message);
         return [];
     }
 

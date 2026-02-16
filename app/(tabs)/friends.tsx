@@ -1,5 +1,5 @@
 import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -28,6 +28,8 @@ export default function FriendsScreen() {
     } catch (error) {
       console.error(error);
     }
+
+    setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
   };
 
   useEffect(() => {
@@ -46,9 +48,8 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const data = await fetchFriendRequests();
-        const profiles = await fetchFriendsProfiles(data);        
-        setFriendRequests(profiles); 
+        const data = await fetchFriendRequests();       
+        setFriendRequests(data); 
       } catch (error) {
         console.error(error);
       }
@@ -166,7 +167,7 @@ export default function FriendsScreen() {
               ) : (
               <FlatList
                 data={friendRequests}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
                 renderItem={({ item }) => (
                   <View style={styles.resultItem}>
@@ -176,7 +177,7 @@ export default function FriendsScreen() {
                     </View>
                     <Pressable 
                       style={styles.addButton}
-                      onPress={() => acceptRequest(item.id)}
+                      onPress={() => acceptRequest(item.friend_id)}
                     >
                       <Text style={styles.addButtonText}>Accept</Text>
                     </Pressable>
