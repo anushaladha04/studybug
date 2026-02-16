@@ -86,7 +86,7 @@ export async function acceptFriendRequest(fromId: string) {
     return data;
 }
 
-export async function fetchFriendIds() {
+export async function fetchAllFriends() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -95,17 +95,16 @@ export async function fetchFriendIds() {
     }
 
     const { data, error } = await supabase
-        .from('friends')
-        .select('friends_ids')
+        .from('friend_profiles_view')
+        .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
 
     if (error) {
         console.error('Error fetching friends:', error.message);
         return [];
     }
 
-    return data?.friends_ids || [];
+    return data;
 }
 
 export async function fetchFriendsProfiles(ids: string[]) {
@@ -116,21 +115,6 @@ export async function fetchFriendsProfiles(ids: string[]) {
 
     if (error) {
         console.error("Error fetching friends profiles: ", error.message);
-        return [];
-    }
-
-    return data;
-}
-
-export async function fetchActiveFriendSessions(ids: string[]) {
-    const { data, error } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .in('user_id', ids)
-        .eq('is_active', true);
-
-    if (error) {
-        console.error("Error fetching active friends: ", error.message);
         return [];
     }
 

@@ -1,5 +1,5 @@
 import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchActiveFriendSessions, fetchByUsername, fetchFriendIds, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -10,20 +10,6 @@ export default function FriendsScreen() {
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
   const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
   const [ friends, setFriends ] = useState<any[]>([]);
-  const [ activeFriends, setActiveFriends ] = useState<any[]>([]);
-
-  useEffect(() => {
-    const searchUsers = async (query: string) => {
-      try {
-        const data = await fetchByUsername(query);        
-        setSearchResults(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    searchUsers(searchQuery);
-  }, [searchQuery]);
 
   const isSearching = searchQuery.length > 0;
 
@@ -45,6 +31,19 @@ export default function FriendsScreen() {
   };
 
   useEffect(() => {
+    const searchUsers = async (query: string) => {
+      try {
+        const data = await fetchByUsername(query);        
+        setSearchResults(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    searchUsers(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
     const fetchRequests = async () => {
       try {
         const data = await fetchFriendRequests();
@@ -59,46 +58,19 @@ export default function FriendsScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchAllFriends = async () => {
+    const fetchFriends = async () => {
       try {
-        const data = await fetchFriendIds();  
-        const profiles = await fetchFriendsProfiles(data);      
-        setFriends(profiles); 
+        const data = await fetchAllFriends();    
+        setFriends(data); 
       } catch (error) {
         console.error(error);
       }
     };
     
-    fetchAllFriends();
+    fetchFriends();
   }, []);
 
-  useEffect(() => {
-    const fetchActiveFriends = async() => {
-      try {
-        const friendsIds = friends.map(f => f.id);
-        const data = await fetchActiveFriendSessions(friendsIds);
-
-        const activeFriendProfilesAndSessions = friends
-        .filter(friend => data.some(session => session.user_id === friend.id))
-        .map(friend => {
-          const session = data.find(s => s.user_id === friend.id);
-          
-          return {
-            ...friend,
-            ...session
-          };
-        });
-
-        console.log(activeFriendProfilesAndSessions);
-
-        setActiveFriends(activeFriendProfilesAndSessions);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchActiveFriends();
-  }, [friends]);
+  const activeFriends = friends.filter(friend => friend.is_active === true);
 
   return (
     <View style={styles.container}>
@@ -164,7 +136,7 @@ export default function FriendsScreen() {
             {activeTab === 'active' ? (
               <FlatList
                 data={activeFriends}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
                 renderItem={({ item }) => (
                   <FriendCard
@@ -179,15 +151,13 @@ export default function FriendsScreen() {
             ) : ( activeTab === 'all' ? (
                 <FlatList
                   data={friends}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
                   renderItem={({ item }) => (
-                    <View style={styles.resultItem}>
-                      <View style={styles.userInfo}>
-                        <Text style={styles.fullNameText}>{item.full_name}</Text>
-                        <Text style={styles.usernameText}>@{item.username}</Text>
-                      </View>
-                    </View>
+                    <FriendCard
+                      full_name = {item.full_name}
+                      location = {item.location_name}
+                  />
                   )}
                   ListEmptyComponent={
                     <Text style={styles.emptyText}>No friends added yet </Text>

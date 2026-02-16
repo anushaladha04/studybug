@@ -31,7 +31,7 @@ export default function FriendCard(friend: Friend) {
             <View style={styles.info}>
                 <Text style={styles.label}>{friend.full_name}</Text>
                 {friend.time_studied && <Text style={styles.label}>Time studied: {friend.time_studied} hours</Text>}
-                {friend.last_seen && <Text style={styles.label}>Last seen: {friend.last_seen} hours</Text>}
+                {friend.last_seen && <Text style={styles.label}>Last active: {friend.last_seen} hours</Text>}
                 <Text style={styles.label}>Location: {location}</Text>
                 <Text style={styles.label}>Note: {friend.note}</Text>
             </View>
