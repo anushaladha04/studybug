@@ -22,7 +22,16 @@ export default function FriendsScreen() {
     }
   };
 
-  const acceptRequest = async (from: string) => {
+  const fetchFriends = async () => {
+      try {
+        const data = await fetchAllFriends();    
+        setFriends(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+  const handleAcceptRequest = async (from: string) => {
     try {
       await acceptFriendRequest(from);
     } catch (error) {
@@ -30,6 +39,7 @@ export default function FriendsScreen() {
     }
 
     setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
+    await fetchFriends();
   };
 
   useEffect(() => {
@@ -59,15 +69,6 @@ export default function FriendsScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        const data = await fetchAllFriends();    
-        setFriends(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
     fetchFriends();
   }, []);
 
@@ -177,7 +178,7 @@ export default function FriendsScreen() {
                     </View>
                     <Pressable 
                       style={styles.addButton}
-                      onPress={() => acceptRequest(item.friend_id)}
+                      onPress={() => handleAcceptRequest(item.friend_id)}
                     >
                       <Text style={styles.addButtonText}>Accept</Text>
                     </Pressable>
