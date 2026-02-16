@@ -122,7 +122,7 @@ export async function fetchFriendsProfiles(ids: string[]) {
     return data;
 }
 
-export async function fetchActiveFriendIds(ids: string[]) {
+export async function fetchActiveFriendSessions(ids: string[]) {
     const { data, error } = await supabase
         .from('study_sessions')
         .select('*')
@@ -134,5 +134,5 @@ export async function fetchActiveFriendIds(ids: string[]) {
         return [];
     }
 
-    return data.map(session => session.user_id);
+    return data;
 }

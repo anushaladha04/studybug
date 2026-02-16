@@ -1,4 +1,4 @@
-import { acceptFriendRequest, fetchActiveFriendIds, fetchByUsername, fetchFriendIds, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchActiveFriendSessions, fetchByUsername, fetchFriendIds, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -88,12 +88,26 @@ export default function FriendsScreen() {
   useEffect(() => {
     const fetchActiveFriends = async() => {
       try {
-        const ids = friends.map(f => f.id);
-        const data = await fetchActiveFriendIds(ids);
+        const friendsIds = friends.map(f => f.id);
+        const data = await fetchActiveFriendSessions(friendsIds);
 
-        const active = friends.filter((friend) => data.includes(friend.id));
+        const activeFriendIds = data.map(session => session.user_id);
+        const activeFriendProfiles = friends.filter((friend) => activeFriendIds.includes(friend.id));
 
-        setActiveFriends(active);
+        const activeFriendProfilesAndSessions = friends
+        .filter(friend => data.some(session => session.user_id === friend.id))
+        .map(friend => {
+          const session = data.find(s => s.user_id === friend.id);
+          
+          return {
+            ...friend,
+            ...session
+          };
+        });
+
+        console.log(activeFriendProfilesAndSessions);
+
+        setActiveFriends(activeFriendProfilesAndSessions);
       } catch (error) {
         console.error(error);
       }
@@ -173,6 +187,7 @@ export default function FriendsScreen() {
                       <View style={styles.userInfo}>
                         <Text style={styles.fullNameText}>{item.full_name}</Text>
                         <Text style={styles.usernameText}>@{item.username}</Text>
+                        <Text style={styles.usernameText}>{item.location_name}</Text>
                       </View>
                     </View>
                   )}
