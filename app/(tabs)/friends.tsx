@@ -1,3 +1,4 @@
+import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchActiveFriendSessions, fetchByUsername, fetchFriendIds, fetchFriendRequests, fetchFriendsProfiles, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -35,6 +36,14 @@ export default function FriendsScreen() {
     }
   };
 
+  const acceptRequest = async (from: string) => {
+    try {
+      await acceptFriendRequest(from);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -47,15 +56,7 @@ export default function FriendsScreen() {
     };
     
     fetchRequests();
-  }, [friendRequests]);
-
-  const acceptRequest = async (from: string) => {
-    try {
-      await acceptFriendRequest(from);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  }, []);
 
   useEffect(() => {
     const fetchAllFriends = async () => {
@@ -69,30 +70,13 @@ export default function FriendsScreen() {
     };
     
     fetchAllFriends();
-  }, [friends]);
-
-  useEffect(() => {
-    const fetchAllFriends = async () => {
-      try {
-        const data = await fetchFriendIds();  
-        const profiles = await fetchFriendsProfiles(data);      
-        setFriends(profiles); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    fetchAllFriends();
-  }, [friends]);
+  }, []);
 
   useEffect(() => {
     const fetchActiveFriends = async() => {
       try {
         const friendsIds = friends.map(f => f.id);
         const data = await fetchActiveFriendSessions(friendsIds);
-
-        const activeFriendIds = data.map(session => session.user_id);
-        const activeFriendProfiles = friends.filter((friend) => activeFriendIds.includes(friend.id));
 
         const activeFriendProfilesAndSessions = friends
         .filter(friend => data.some(session => session.user_id === friend.id))
@@ -179,22 +163,19 @@ export default function FriendsScreen() {
           <View style={styles.content}>
             {activeTab === 'active' ? (
               <FlatList
-                  data={activeFriends}
-                  keyExtractor={(item) => item.id}
-                  style={{ width: '100%' }}
-                  renderItem={({ item }) => (
-                    <View style={styles.resultItem}>
-                      <View style={styles.userInfo}>
-                        <Text style={styles.fullNameText}>{item.full_name}</Text>
-                        <Text style={styles.usernameText}>@{item.username}</Text>
-                        <Text style={styles.usernameText}>{item.location_name}</Text>
-                      </View>
-                    </View>
-                  )}
-                  ListEmptyComponent={
-                    <Text style={styles.emptyText}>No friends added yet </Text>
-                  }
-                />
+                data={activeFriends}
+                keyExtractor={(item) => item.id}
+                style={{ width: '100%' }}
+                renderItem={({ item }) => (
+                  <FriendCard
+                      full_name = {item.full_name}
+                      location = {item.location_name}
+                  />
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No active friends yet</Text>
+                }
+              />
             ) : ( activeTab === 'all' ? (
                 <FlatList
                   data={friends}
