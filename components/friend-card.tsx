@@ -12,7 +12,6 @@ interface Friend {
 
 export default function FriendCard(friend: Friend) {
     const [ now, setNow ] = useState(new Date());
-    console.log(now);
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
         return () => clearInterval(timer);
