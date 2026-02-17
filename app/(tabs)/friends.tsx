@@ -1,5 +1,5 @@
 import FriendCard from '@/components/friend-card';
-import { fetchByUsername, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -8,6 +8,39 @@ export default function FriendsScreen() {
 
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
+  const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
+  const [ friends, setFriends ] = useState<any[]>([]);
+
+  const isSearching = searchQuery.length > 0;
+
+  const handleRequest = async (to: string, username: string) => {
+    try {
+      await requestFriend(to);
+      Alert.alert(`Alert sent to ${username}`)
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchFriends = async () => {
+      try {
+        const data = await fetchAllFriends();    
+        setFriends(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+  const handleAcceptRequest = async (from: string) => {
+    try {
+      await acceptFriendRequest(from);
+    } catch (error) {
+      console.error(error);
+    }
+
+    setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
+    await fetchFriends();
+  };
 
   useEffect(() => {
     const searchUsers = async (query: string) => {
@@ -22,16 +55,24 @@ export default function FriendsScreen() {
     searchUsers(searchQuery);
   }, [searchQuery]);
 
-  const isSearching = searchQuery.length > 0;
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const data = await fetchFriendRequests();       
+        setFriendRequests(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    fetchRequests();
+  }, []);
 
-  const handleRequest = async (to: string, username: string) => {
-    try {
-      await requestFriend(to);
-      Alert.alert(`Alert sent to ${username}`)
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  useEffect(() => {
+    fetchFriends();
+  }, []);
+
+  const activeFriends = friends.filter(friend => friend.is_active === true);
 
   return (
     <View style={styles.container}>
@@ -95,16 +136,62 @@ export default function FriendsScreen() {
           ) : (
           <View style={styles.content}>
             {activeTab === 'active' ? (
-              <>
-                <FriendCard location='The Study' />
-                <FriendCard location='Understory' />
-                <FriendCard location='YRL' />
-                <FriendCard location='Canopy' />
-              </>
+              <FlatList
+                data={activeFriends}
+                keyExtractor={(item) => item.friend_id}
+                style={{ width: '100%' }}
+                renderItem={({ item }) => (
+                  <FriendCard
+                      full_name = {item.full_name}
+                      location = {item.location_name}
+                      start_time = {item.start_time}
+                      is_active = {item.is_active}
+                  />
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No active friends yet</Text>
+                }
+              />
             ) : ( activeTab === 'all' ? (
-                <Text style={styles.emptyText}>No friends added yet</Text>
+                <FlatList
+                  data={friends}
+                  keyExtractor={(item) => item.friend_id}
+                  style={{ width: '100%' }}
+                  renderItem={({ item }) => (
+                    <FriendCard
+                      full_name = {item.full_name}
+                      location = {item.location_name}
+                      start_time = {item.start_time}
+                      is_active = {item.is_active}
+                  />
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyText}>No friends added yet </Text>
+                  }
+                />
               ) : (
-                <Text style={styles.emptyText}>No requests yet</Text>
+              <FlatList
+                data={friendRequests}
+                keyExtractor={(item) => item.friend_id}
+                style={{ width: '100%' }}
+                renderItem={({ item }) => (
+                  <View style={styles.resultItem}>
+                    <View style={styles.userInfo}>
+                      <Text style={styles.fullNameText}>{item.full_name}</Text>
+                      <Text style={styles.usernameText}>@{item.username}</Text>
+                    </View>
+                    <Pressable 
+                      style={styles.addButton}
+                      onPress={() => handleAcceptRequest(item.friend_id)}
+                    >
+                      <Text style={styles.addButtonText}>Accept</Text>
+                    </Pressable>
+                  </View>
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No friend requests </Text>
+                }
+              />
               )
             )}
           </View>

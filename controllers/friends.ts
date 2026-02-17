@@ -51,21 +51,25 @@ export async function fetchFriendRequests() {
     }
 
     const { data, error } = await supabase
-        .from('friends')
-        .select('from_ids')
-        .eq('user_id', user.id)
-        .single();
+        .from('friend_request_profiles_view')
+        .select('*')
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error fetching friend requests:', error.message);
         return [];
     }
 
-    return data?.from_ids || [];
+    return data;
 }
 
 export async function acceptFriendRequest(fromId: string) {
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+       console.error('Not authenticated');
+       return [];
+    }
     
     const { data, error } = await supabase
         .rpc('accept_friend_request', { 
@@ -74,14 +78,14 @@ export async function acceptFriendRequest(fromId: string) {
         });
             
     if (error) {
-        console.error('Error requesting friend: ', error.message);
+        console.error('Error accepting friend: ', error.message);
         return [];
     }
 
     return data;
 }
 
-export async function fetchFriends() {
+export async function fetchAllFriends() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -90,15 +94,14 @@ export async function fetchFriends() {
     }
 
     const { data, error } = await supabase
-        .from('friends')
-        .select('friends_ids')
+        .from('friend_profiles_view')
+        .select('*')
         .eq('user_id', user.id)
-        .single();
 
     if (error) {
         console.error('Error fetching friends:', error.message);
         return [];
     }
 
-    return data?.friends_ids || [];
+    return data;
 }

@@ -10,7 +10,7 @@ export default function HomeScreen() {
       <Text style={styles.subtitle}>Logged in as: {session?.user?.email}</Text>
     </View>
   );
-}
+} 
 
 const styles = StyleSheet.create({
   container: {
