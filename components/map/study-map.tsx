@@ -34,10 +34,10 @@ interface StudyMapProps {
   userLocation?: { latitude: number; longitude: number } | null;
 }
 
-// Default location (San Francisco) - works well for testing
+// Default location (Los Angeles) - works well for testing
 const DEFAULT_LOCATION = {
-  latitude: 37.7749,
-  longitude: -122.4194,
+  latitude: 34.0522,
+  longitude: -118.2437,
 };
 
 export function StudyMap({
@@ -51,9 +51,23 @@ export function StudyMap({
   const mapboxEnabled = isMapboxEnabled() && MapboxGL !== null;
   const cameraRef = React.useRef<any>(null);
   const [zoomLevel, setZoomLevel] = React.useState(14);
+  const hasCenteredOnUserRef = React.useRef(false);
 
   // Use user location if available, otherwise fall back to default
   const centerLocation = userLocation || DEFAULT_LOCATION;
+
+  React.useEffect(() => {
+    if (!userLocation || !cameraRef.current || hasCenteredOnUserRef.current) {
+      return;
+    }
+
+    hasCenteredOnUserRef.current = true;
+    cameraRef.current.setCamera({
+      centerCoordinate: [userLocation.longitude, userLocation.latitude],
+      zoomLevel: 14,
+      animationDuration: 0,
+    });
+  }, [userLocation]);
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoomLevel + 1, 20);
@@ -288,3 +302,4 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
+

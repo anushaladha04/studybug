@@ -40,6 +40,21 @@ export default function MapScreen() {
   // Get user's location
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+    let isMounted = true;
+
+    const applyLocation = (location: Location.LocationObject | Location.LocationObjectCoords, source: string) => {
+      const coords = 'coords' in location ? location.coords : location;
+      if (!isMounted) {
+        return;
+      }
+
+      setUserLocation({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+      setLocationError(null);
+      console.log(`Location set from ${source}:`, coords.latitude, coords.longitude);
+    };
     
     (async () => {
       try {
@@ -60,77 +75,64 @@ export default function MapScreen() {
           return;
         }
 
-        // Get current location with timeout - try multiple accuracy levels
+        // Fast path: use a recent cached position first so map centers immediately.
         try {
-          let location: Location.LocationObject | null = null;
-          
-          // Try with different accuracy levels, starting with less accurate (faster)
-          const accuracyLevels = [
-            Location.Accuracy.Low,
-            Location.Accuracy.Balanced,
-            Location.Accuracy.High,
-          ];
-          
-          for (const accuracy of accuracyLevels) {
-            try {
-              location = await Promise.race([
-                Location.getCurrentPositionAsync({
-                  accuracy: accuracy,
-                }),
-                new Promise<never>((_, reject) => 
-                  setTimeout(() => reject(new Error('Location timeout')), 8000)
-                ),
-              ]);
-              break; // Success, exit loop
-            } catch (err) {
-              // Try next accuracy level
-              console.log(`Location request failed with accuracy ${accuracy}, trying next...`);
-              continue;
-            }
-          }
-          
-          if (!location) {
-            throw new Error('All location accuracy attempts failed');
-          }
-          
-          setUserLocation({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
+          const lastKnown = await Location.getLastKnownPositionAsync({
+            maxAge: 120000,
+            requiredAccuracy: 1000,
           });
-          setLocationError(null);
-          console.log('Location obtained:', location.coords.latitude, location.coords.longitude);
-
-          // Watch location updates (only if we got initial location)
-          try {
-            subscription = await Location.watchPositionAsync(
-              {
-                accuracy: Location.Accuracy.Low, // Use lower accuracy for watching to save battery
-                timeInterval: 5000, // Update every 5 seconds
-                distanceInterval: 10, // Update every 10 meters
-              },
-              (location) => {
-                setUserLocation({
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                });
-                setLocationError(null);
-                console.log('Location updated:', location.coords.latitude, location.coords.longitude);
-              }
-            );
-          } catch (watchError) {
-            // If watching fails, that's okay - we still have the initial location
-            console.log('Location watching not available:', watchError);
+          if (lastKnown) {
+            applyLocation(lastKnown, 'lastKnown');
           }
-        } catch (locationError: any) {
-          // Handle specific location errors
-          if (locationError.message?.includes('timeout') || 
+        } catch (lastKnownError) {
+          console.log('No last known location available:', lastKnownError);
+        }
+
+        // Start watching regardless; this can update quickly even if current lookup stalls.
+        try {
+          subscription = await Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.Balanced,
+              timeInterval: 3000,
+              distanceInterval: 5,
+            },
+            (location) => {
+              applyLocation(location, 'watch');
+            }
+          );
+        } catch (watchError) {
+          console.log('Location watching not available:', watchError);
+        }
+
+        // Active lookup with short timeout to avoid long blocking delays.
+        const getCurrentWithTimeout = (accuracy: Location.Accuracy, timeoutMs: number) =>
+          Promise.race<Location.LocationObject>([
+            Location.getCurrentPositionAsync({ accuracy }),
+            new Promise<Location.LocationObject>((_, reject) =>
+              setTimeout(() => reject(new Error('Location timeout')), timeoutMs)
+            ),
+          ]);
+
+        try {
+          const currentLocation = await getCurrentWithTimeout(Location.Accuracy.Balanced, 5000);
+          applyLocation(currentLocation, 'current-balanced');
+        } catch (balancedError) {
+          console.log('Balanced location timed out, trying low accuracy...', balancedError);
+          try {
+            const fallbackLocation = await getCurrentWithTimeout(Location.Accuracy.Low, 3000);
+            applyLocation(fallbackLocation, 'current-low');
+          } catch (locationError: any) {
+            if (
+              locationError.message?.includes('timeout') ||
               locationError.message?.includes('unavailable') ||
-              locationError.code === 'E_LOCATION_UNAVAILABLE') {
-            setLocationError('Location services unavailable. Using default location.');
-            // This is common on emulators - just use default location
-          } else {
-            setLocationError('Failed to get location');
-            console.error('Error getting location:', locationError);
+              locationError.code === 'E_LOCATION_UNAVAILABLE'
+            ) {
+              setLocationError('Location services unavailable. Using default location.');
+              // This is common on emulators - just use default location
+            } else {
+              setLocationError('Failed to get location');
+              console.error('Error getting location:', locationError);
+            }
           }
         }
       } catch (error: any) {
@@ -142,6 +144,7 @@ export default function MapScreen() {
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (subscription) {
         subscription.remove();
       }
