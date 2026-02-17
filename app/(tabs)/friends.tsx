@@ -144,6 +144,8 @@ export default function FriendsScreen() {
                   <FriendCard
                       full_name = {item.full_name}
                       location = {item.location_name}
+                      start_time = {item.start_time}
+                      is_active = {item.is_active}
                   />
                 )}
                 ListEmptyComponent={
@@ -159,6 +161,8 @@ export default function FriendsScreen() {
                     <FriendCard
                       full_name = {item.full_name}
                       location = {item.location_name}
+                      start_time = {item.start_time}
+                      is_active = {item.is_active}
                   />
                   )}
                   ListEmptyComponent={
