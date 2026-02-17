@@ -119,39 +119,46 @@ export default function RecordScreen() {
         </Text>
       </Pressable>
 
+      {/* Timer: rectangle inside a circle */}
+      <View style={styles.timerCircle}>
+        <View style={styles.timerRect}>
+          <Text style={styles.timerText}>{formatTime(seconds)}</Text>
+        </View>
+      </View>
+
       {!isSessionActive ? (
         <Pressable
           style={styles.button}
           onPress={startSessionTrigger}
         >
-          <Text style={styles.buttonText}>Start</Text>
+          <Text style={styles.buttonText}>▶  Start</Text>
         </Pressable>
       ) : (
         <>
-          {/* Big Button */}
-          <Pressable
-            style={styles.button}
-            onPress={() => setTimerIsActive(!timerIsActive)}
-          >
-            <Text style={styles.buttonText}>
-              {timerIsActive ? 'Pause' : 'Resume'}
-            </Text>
-          </Pressable>
+          {timerIsActive ? (
+            <Pressable
+              style={[styles.button, styles.buttonFilled]}
+              onPress={() => setTimerIsActive(false)}
+            >
+              <Text style={[styles.buttonText, styles.buttonFilledText]}>❚❚  Pause</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[styles.button, styles.buttonFilled]}
+                onPress={() => setTimerIsActive(true)}
+              >
+                <Text style={[styles.buttonText, styles.buttonFilledText]}>▶  Resume</Text>
+              </Pressable>
 
-          {/* Timer */}
-          <View style={styles.timer}>
-            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-          </View>
-
-          {/* End Session button */}
-          <Pressable
-            style={styles.button}
-            onPress={() => endSessionTrigger()}
-          >
-            <Text style={styles.buttonText}>
-              End Session
-            </Text>
-          </Pressable>
+              <Pressable
+                style={styles.button}
+                onPress={() => endSessionTrigger()}
+              >
+                <Text style={styles.buttonText}>■  Finish</Text>
+              </Pressable>
+            </View>
+          )}
         </>
       )}
     </View>
@@ -164,43 +171,66 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 40,
+    gap: 28,
   },
   toggle: {
-    borderWidth: 2,
-    borderColor: '#000',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#999',
+    borderRadius: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
   },
   toggleText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'monospace',
+    color: '#555',
   },
-  button: {
-    width: 150,
-    height: 150,
-    borderWidth: 3,
-    borderColor: '#000',
-    borderRadius: 75,
+  timerCircle: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  timer: {
-    borderWidth: 2,
-    borderColor: '#000',
-    borderStyle: 'dashed',
-    width: 250,
-    alignItems: 'center',
-    paddingVertical: 20,
+  timerRect: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 8,
   },
   timerText: {
-    fontSize: 40,
+    fontSize: 36,
     fontFamily: 'monospace',
     fontVariant: ['tabular-nums'],
+    color: '#222',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: '#bbb',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    minWidth: 130,
+  },
+  buttonFilled: {
+    backgroundColor: '#a0a0a0',
+    borderColor: '#a0a0a0',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: 'monospace',
+    color: '#333',
+  },
+  buttonFilledText: {
+    color: '#fff',
   },
 });
