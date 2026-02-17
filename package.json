@@ -19,6 +19,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@rnmapbox/maps": "^10.2.10",
     "@supabase/supabase-js": "^2.48.0",
     "date-fns": "^4.1.0",
     "expo": "~54.0.33",
@@ -27,7 +28,8 @@
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
     "expo-linking": "~8.0.11",
-    "expo-router": "~6.0.23",
+    "expo-location": "^19.0.8",
+    "expo-router": "~6.0.21",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
@@ -57,4 +59,5 @@
   },
   "private": true
 }
+
 
