@@ -1,6 +1,6 @@
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -35,7 +35,7 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
-      <Slot />
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="dark" />
     </ThemeProvider>
   );

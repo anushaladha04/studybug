@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <View style={{ width: 24 }} />
         <Text style={styles.title}>Profile</Text>
-        <Pressable onPress={() => { /*todo- Settings page */ }}>
+        <Pressable onPress={() => router.push('/settings')}>
           <Ionicons name="settings-outline" size={24} color="#333" />
         </Pressable>
       </View>
@@ -50,12 +51,6 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <Pressable
-        style={({ pressed }) => [styles.signOutButton, pressed && { opacity: 0.8 }]}
-        onPress={() => supabase.auth.signOut()}
-      >
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </Pressable>
     </View>
   );
 }
@@ -146,18 +141,5 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: '#999',
-  },
-  signOutButton: {
-    width: '90%',
-    backgroundColor: '#FF3B30',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  signOutText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
   },
 });
