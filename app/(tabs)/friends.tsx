@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => { /*TODO: Add friend flow */ }}>
-          <Ionicons name="person-add-outline" size={24} color="#333" />
-        </Pressable>
+        <View style={{ width: 24 }} />
         <Text style={styles.title}>Friends</Text>
-        <Pressable onPress={() => { /* TODO: Notifications flow */ }}>
-          <Ionicons name="notifications-outline" size={24} color="#333" />
+        <Pressable onPress={() => router.push('/add-friends')}>
+          <Ionicons name="person-add-outline" size={24} color="#333" />
         </Pressable>
       </View>
 
