@@ -47,11 +47,11 @@ export default function RecordScreen() {
       setSessionInfo(`Session: ${name}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
       router.setParams({ refresh: 'false' });
     }
-  })
+  }, [refresh])
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
-    const sessionId = await startStudySession("Session Name", startTime, isPublic, "General", "High", "Note");
+    const sessionId = await startStudySession(name, startTime, isPublic, area, focusLevel, note);
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
