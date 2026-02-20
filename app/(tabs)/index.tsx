@@ -1,5 +1,5 @@
 import SessionPost from '@/components/session-component';
-import { fetchPosts } from '@/controllers/feed';
+import { fetchPostsRandomOrder } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
 
 import { useEffect, useState } from 'react';
@@ -9,11 +9,12 @@ export default function HomeScreen() {
   const { session } = useAuthContext();
 
   const [ posts, setPosts ] = useState<any>([]);
+  const [ seed, setSeed ] = useState(Math.random());
 
   useEffect(() => {
     const fetchFeed = async () => {
       try {
-        const data = await fetchPosts();        
+        const data = await fetchPostsRandomOrder(seed);        
         setPosts(data); 
       } catch (error) {
         console.error(error);
@@ -21,7 +22,7 @@ export default function HomeScreen() {
     };
 
     fetchFeed();
-  }, []);
+  }, [seed]);
 
   return (
     <View style={styles.container}>
@@ -33,7 +34,7 @@ export default function HomeScreen() {
             <SessionPost
                 name = {item.full_name}
                 time = {item.end_time}
-                title = {'Title'}
+                title = {item.name}
                 location = {item.location_name}
                 totalTime = {item.duration}
             />
