@@ -1,11 +1,14 @@
 import { endStudySession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
+  const router = useRouter();
+  const { name, location, focusLevel, note, area, refresh } = useLocalSearchParams();
 
   const [seconds, setSeconds] = useState(0);
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -37,6 +40,14 @@ export default function RecordScreen() {
     };
     checkIncompleteSession();
   }, []);
+
+  useEffect(() => {
+    if (refresh === 'true') {
+      startSessionTrigger();
+      setSessionInfo(`Session: ${name}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
+      router.setParams({ refresh: 'false' });
+    }
+  })
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
@@ -108,13 +119,12 @@ export default function RecordScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Toggle */}
       <Pressable
-        style={styles.toggle}
+        style={styles.button}
         onPress={() => setIsPublic(!isPublic)}
       >
         <Text style={styles.toggleText}>
-          [ {isPublic ? 'PUBLIC' : 'PRIVATE'} ]
+          [ {isPublic ?  'PUBLIC'  : 'PRIVATE'} ]
         </Text>
       </Pressable>
 
@@ -128,9 +138,9 @@ export default function RecordScreen() {
       {!isSessionActive ? (
         <Pressable
           style={styles.button}
-          onPress={startSessionTrigger}
+          onPress={() => router.push('/session-details')}
         >
-          <Text style={styles.buttonText}>▶  Start</Text>
+          <Text style={styles.buttonText}>New Session</Text>
         </Pressable>
       ) : (
         <>
@@ -171,13 +181,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 28,
-  },
-  toggle: {
-    borderWidth: 1.5,
-    borderColor: '#999',
-    borderRadius: 6,
-    paddingHorizontal: 24,
-    paddingVertical: 8,
   },
   toggleText: {
     fontSize: 14,
