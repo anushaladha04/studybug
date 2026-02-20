@@ -5,7 +5,7 @@ interface SessionPostProps {
     time: string;
     title: string;
     location: string;
-    totalTime: string;
+    totalTime: number;
 }
 
 export default function SessionPost({
@@ -16,13 +16,28 @@ export default function SessionPost({
     totalTime,
 }: SessionPostProps) {
 
+    const postedTime = new Date(time);
+
+    const formattedDuration = () => {
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime - hours * 3600) / 60);
+
+        if (hours == 0)
+            return `${minutes} min`
+
+        if (minutes == 0)
+            return `${hours} hr`
+
+        return `${hours} hr ${minutes} min`;
+    }
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
                 <View style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.time}>{time} </Text>
+                    <Text style={styles.time}>{postedTime.toLocaleDateString()} </Text>
                 </View>
             </View>
 
@@ -33,7 +48,7 @@ export default function SessionPost({
                 </View>
                 <View style={styles.totalTimeBlock}>
                     <Text style={styles.totalTimeLabel}>Total Time</Text>
-                    <Text style={styles.totalTimeValue}>{totalTime}</Text>
+                    <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
                 </View>
             </View>
 
