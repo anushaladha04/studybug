@@ -1,13 +1,47 @@
+import SessionPost from '@/components/session-component';
+import { fetchPosts } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
-import { StyleSheet, Text, View } from 'react-native';
+
+import { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const { session } = useAuthContext();
 
+  const [ posts, setPosts ] = useState<any>([]);
+
+  useEffect(() => {
+    const fetchFeed = async () => {
+      try {
+        const data = await fetchPosts();        
+        setPosts(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchFeed();
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to StudyBug!</Text>
-      <Text style={styles.subtitle}>Logged in as: {session?.user?.email}</Text>
+      <FlatList
+          data={posts}
+          keyExtractor={(item) => item.session_id}
+          style={{ width: '100%' }}
+          renderItem={({ item }) => (
+            <SessionPost
+                name = {item.full_name}
+                time = {item.end_time}
+                title = {'Title'}
+                location = {item.location_name}
+                totalTime = {item.duration}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={styles.subtitle}>No posts yet</Text>
+          }
+        />
     </View>
   );
 } 
