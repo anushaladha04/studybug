@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, AppState } from 'react-native';
 import { endStudySession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
-import {  useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
@@ -41,7 +40,7 @@ export default function RecordScreen() {
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
-    const sessionId = await startStudySession(startTime, isPublic, "General");
+    const sessionId = await startStudySession("Session Name", startTime, isPublic, "General", "High", "Note");
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
