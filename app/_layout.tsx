@@ -20,10 +20,9 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
 
-      <Stack.Screen
-        name="modal"
-        options={{ presentation: "modal", title: "Modal" }}
-      />
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen name="session-details" options={{ presentation: 'modal', title: "New Session" }} />
+      </Stack.Protected>
     </Stack>
   );
 }
