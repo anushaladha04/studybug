@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ProfileField = 'name' | 'username' | 'pronouns' | 'email' | 'phone' | 'password';
 
