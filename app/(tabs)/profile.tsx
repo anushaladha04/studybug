@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuthContext } from '@/hooks/use-auth-context';
+
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
+  const { session, profile } = useAuthContext();
   const router = useRouter();
 
   return (
@@ -22,9 +25,8 @@ export default function ProfileScreen() {
           <Ionicons name="person-outline" size={40} color="#999" />
         </View>
         <View style={styles.profileText}>
-          <Text style={styles.nameText}>Jane Doe</Text>
-          <Text style={styles.usernameText}>@janedoe</Text>
-          <Text style={styles.bioText}>Hi! I'm Jane Doe.</Text>
+          <Text style={styles.nameText}>{profile?.full_name ?? 'a'}</Text>
+          <Text style={styles.usernameText}>@{profile?.username ?? 'b'}</Text>
         </View>
       </View>
 
