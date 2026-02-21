@@ -146,6 +146,7 @@ export default function FriendsScreen() {
                       location = {item.location_name}
                       start_time = {item.start_time}
                       is_active = {item.is_active}
+                      note = {item.note}
                   />
                 )}
                 ListEmptyComponent={
@@ -163,6 +164,7 @@ export default function FriendsScreen() {
                       location = {item.location_name}
                       start_time = {item.start_time}
                       is_active = {item.is_active}
+                      note = {item.note}
                   />
                   )}
                   ListEmptyComponent={

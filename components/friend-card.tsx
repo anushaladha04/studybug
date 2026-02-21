@@ -7,7 +7,7 @@ interface Friend {
     location: string,
     start_time: string,
     is_active: boolean;
-    note?: string,
+    note: string,
 }
 
 export default function FriendCard(friend: Friend) {
