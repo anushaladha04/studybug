@@ -25,8 +25,8 @@ export default function ProfileScreen() {
           <Ionicons name="person-outline" size={40} color="#999" />
         </View>
         <View style={styles.profileText}>
-          <Text style={styles.nameText}>{profile?.full_name ?? 'a'}</Text>
-          <Text style={styles.usernameText}>@{profile?.username ?? 'b'}</Text>
+          <Text style={styles.nameText}>{profile?.full_name ?? '-'}</Text>
+          <Text style={styles.usernameText}>@{profile?.username ?? '-'}</Text>
         </View>
       </View>
 
