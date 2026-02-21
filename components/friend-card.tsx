@@ -42,18 +42,8 @@ export default function FriendCard(friend: Friend) {
     // last session of each user on friend's profile
     const location = friend.location;
 
-    const colorStyles = {
-        backgroundColor: location === 'The Study' ? '#c07cc0'
-                        : location === 'Powell Library' ? '#de8787' 
-                        : location === 'Canopy' ? '#65c8f2'
-                        : location === 'Understory' ? '#757ee2'
-                        : location === 'YRL' ? '#f2b065'
-                        : '#52bb97',
-       
-    };
-
     return (
-        <View style={[styles.card, colorStyles]}>
+        <View style={[styles.card]}>
             <View style={styles.avatar} />
 
             <View style={styles.info}>
@@ -72,15 +62,19 @@ export default function FriendCard(friend: Friend) {
 
 const styles = StyleSheet.create({
     card: {
-        marginLeft: 25,
-        marginRight: 25,
-        marginBottom: 10,
-        marginTop: 10,
-        padding: 15,
-        backgroundColor: '#52bb97',
-        height: 120,
-        width: 350,
-        borderRadius: 10,
+        marginVertical: 8,
+        gap: 10,
+        paddingVertical: 9,
+        paddingHorizontal: 14,
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2},
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 5,
+        height: 97,
+        width: 378,
+        borderRadius: 8,
         flexDirection: 'row',
         alignItems: 'center',
     },

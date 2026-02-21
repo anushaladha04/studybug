@@ -115,6 +115,7 @@ export default function FriendsScreen() {
               data={searchResults}
               keyExtractor={(item) => item.id}
               style={{ width: '100%' }}
+              contentContainerStyle={{ alignItems: 'center' }}
               renderItem={({ item }) => (
                 <View style={styles.resultItem}>
                   <View style={styles.userInfo}>
@@ -140,6 +141,7 @@ export default function FriendsScreen() {
                 data={activeFriends}
                 keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
+                contentContainerStyle={{ alignItems: 'center' }}
                 renderItem={({ item }) => (
                   <FriendCard
                       full_name = {item.full_name}
@@ -158,6 +160,7 @@ export default function FriendsScreen() {
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
+                  contentContainerStyle={{ alignItems: 'center' }}
                   renderItem={({ item }) => (
                     <FriendCard
                       full_name = {item.full_name}
@@ -176,6 +179,7 @@ export default function FriendsScreen() {
                 data={friendRequests}
                 keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
+                contentContainerStyle={{ alignItems: 'center' }}
                 renderItem={({ item }) => (
                   <View style={styles.resultItem}>
                     <View style={styles.userInfo}>
@@ -219,8 +223,9 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 42,
     backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderRadius: 18,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
     fontSize: 15,
     marginTop: 16,
     color: '#333',
@@ -229,31 +234,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '90%',
     marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomWidth: 5,
+    borderBottomColor: '#E2E2E2',
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#0a7ea4',
+    borderBottomWidth: 5,
+    borderBottomColor: '#1EA1FF',
+    marginBottom: -5
   },
   tabText: {
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
     fontWeight: '500',
-    color: '#999',
+    color: '#000000',
   },
   activeTabText: {
-    color: '#0a7ea4',
-    fontWeight: '600',
+    color: '#000000',
+    fontWeight: '700',
   },
   content: {
     flex: 1,
     width: '100%',
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
