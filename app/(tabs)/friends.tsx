@@ -1,17 +1,12 @@
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-export default function FriendsScreen() {
-  const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
-  const router = useRouter();
 import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function FriendsScreen() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
 
   const [ searchQuery, setSearchQuery ] = useState('');
