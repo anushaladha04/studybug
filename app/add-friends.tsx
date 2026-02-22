@@ -113,7 +113,7 @@ export default function AddFriendsScreen() {
             onPress={() => router.push('/friend-requests')}
           >
             <View style={styles.avatarStack}>
-              <View style={[styles.avatar, styles.backAvatar]} />
+              <View style={[styles.backAvatar]} />
               <AvatarIcon width={38} height={38} top={12} left={18} zIndex={2}/>
             </View>
 
@@ -180,9 +180,7 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute'
-  },
-  backAvatar: {
+    position: 'absolute',
     backgroundColor: '#9A9A9A',
     top: 0,
     left: 0,

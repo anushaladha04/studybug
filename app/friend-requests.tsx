@@ -110,14 +110,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     backgroundColor: '#F7F7F7'
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 35,
-    backgroundColor: '#2a2f30',
-    marginLeft: 5,
-    marginRight: 20,
-  },
   userInfo: {
     flexDirection: 'column',
     flex: 1,
