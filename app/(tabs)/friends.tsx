@@ -1,11 +1,3 @@
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-export default function FriendsScreen() {
-  const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
-  const router = useRouter();
 import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
@@ -84,13 +76,7 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <View style={{ width: 24 }} />
-        <Text style={styles.title}>Friends</Text>
-        <Pressable onPress={() => router.push('/add-friends')}>
-          <Ionicons name="person-add-outline" size={24} color="#333" />
-        </Pressable>
-      </View>
+      <Text style={styles.title}>Friends</Text>
 
       <TextInput
         style={styles.searchBar}
@@ -221,12 +207,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingTop: 60,
     alignItems: 'center',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '90%',
   },
   title: {
     fontSize: 20,
