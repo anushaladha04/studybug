@@ -1,3 +1,4 @@
+import AddFriend from '@/assets/icons/add-friend.svg';
 import Cancel from '@/assets/icons/cancel.svg';
 import SearchIcon from '@/assets/icons/search.svg';
 import FriendCard from '@/components/friend-card';
@@ -92,8 +93,15 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Friends</Text>
-
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Friends</Text>
+        <Pressable 
+          style={styles.addFriendContainer} 
+          onPress={() => console.log('Navigate to Add Friends')}
+        >
+          <AddFriend />
+        </Pressable>
+      </View>
       <View style={styles.searchBar}>
         <SearchIcon width={16} height={16} fill='transparent' styles={styles.searchIcon}/>
         <TextInput
@@ -260,14 +268,28 @@ const styles = StyleSheet.create({
     paddingTop: 13,
     alignItems: 'center',
   },
-  title: {
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 60,
+    paddingHorizontal: 16,
+    marginTop: 40,
+  },
+  headerTitle: {
     fontSize: 18,
     fontFamily: 'Rethink Sans',
     fontWeight: 500,
     textAlign: 'center',
-    marginTop: 50,
+    color: '#000',
     paddingTop: 13,
     marginBottom: 13
+  },
+  addFriendContainer: {
+    position: 'absolute',
+    right: 20,
+    padding: 5,
   },
   searchBar: {
     flexDirection: 'row',
@@ -297,7 +319,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   clearButton: {
-    padding: 6, // Makes the 14px icon a 26px tap target
+    padding: 6,
     marginLeft: 4,
     justifyContent: 'center',
     alignItems: 'center',
