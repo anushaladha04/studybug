@@ -38,23 +38,32 @@ export default function FriendCard(friend: Friend) {
         return parts.join(' ');
     };
 
-    //dynamic coloring based on location, needs to fetch data from 
-    // last session of each user on friend's profile
     const location = friend.location;
 
     return (
         <View style={[styles.card]}>
             <View style={styles.avatar} />
 
-            <View style={styles.info}>
-                <Text style={styles.label}>{friend.full_name}</Text>
-                <Text style={styles.label}>Location: {location}</Text>
-                {friend.is_active ? (
-                    <Text style={styles.label}>Time studied: {formatTime()}</Text>
-                ) : (
-                    <Text style={styles.label}>Last active: {formatTime()} ago</Text>
-                )}
-                <Text style={styles.label}>Note: {friend.note}</Text>
+            <View style={styles.contentContainer}>
+                <Text style={styles.nameText}>{friend.full_name}</Text>
+                <Text style={styles.detailText}>Location: {location}</Text>
+                <Text style={styles.detailText}>Note: {friend.note}</Text>                
+            </View>
+
+            <View style={[styles.statusBadge, 
+                    !friend.is_active && styles.inactiveBadge]}>
+                    <Text style={styles.statusText}>
+                        {friend.is_active ? 'Active' : 'Inactive'}
+                    </Text>
+                </View>
+
+                <View style={styles.metricsContainer}>
+                    <Text style={styles.metricText}>0.5 mi</Text>
+                    {friend.is_active ? (
+                        <Text style={styles.metricText}>Time studied: {formatTime()}</Text>
+                    ) : (
+                        <Text style={styles.metricText}>Last active: {formatTime()} ago</Text>
+                    )}
             </View>
         </View>
     );
@@ -77,6 +86,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         flexDirection: 'row',
         alignItems: 'center',
+        position: 'relative'
     },
     avatar: {
         width: 70,
@@ -86,11 +96,48 @@ const styles = StyleSheet.create({
         marginLeft: 5,
         marginRight: 20,
     },
-    info: {
+    contentContainer: {
         flex: 1,
-        gap: 6,
+        justifyContent: 'center',
+        gap: 5
     },
-    label: {
+    nameText: {
         fontSize: 14,
-    }
+        fontWeight: 500,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    detailText: {
+        fontSize: 12,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    statusBadge: {
+        position: 'absolute',
+        top: 9,
+        right: 14,
+        backgroundColor: '#1C9635',
+        paddingHorizontal: 15,
+        paddingVertical: 3,
+        borderRadius: 12,
+    },
+    inactiveBadge: {
+        backgroundColor: '#F33D40'
+    },
+    statusText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    metricsContainer: {
+        position: 'absolute',
+        bottom: 9,
+        right: 14,
+        alignItems: 'flex-end',
+    },
+    metricText: {
+        fontSize: 12,
+        color: '#555',
+    },
 });
