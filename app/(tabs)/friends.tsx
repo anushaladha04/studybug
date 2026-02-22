@@ -1,6 +1,7 @@
 import AddFriend from '@/assets/icons/add-friend.svg';
 import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
+import SearchResultItem from '@/components/search-result-item';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -129,7 +130,7 @@ export default function FriendsScreen() {
             style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
             onPress={() => setActiveTab('requests')}
           >
-            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Requests</Text>
+            <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>Requests</Text>
           </Pressable>
         </View>
       )}
@@ -148,33 +149,11 @@ export default function FriendsScreen() {
               style={{ width: '100%' }}
               contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
-                <View style={styles.resultItem}>
-                  <View style={styles.avatar}/>
-                  <View style={styles.userInfo}>
-                    <Text style={styles.fullNameText}>{item.full_name}</Text>
-                    <Text style={styles.usernameText}>@{item.username}</Text>
-                  </View>
-                  <Pressable 
-                    style={[
-                      styles.addButton,
-                      (item.friendship_status === 'friends' || item.friendship_status === 'requested') && styles.followingButton
-                    ]}
-                    onPress={() => {
-                      if (item.friendship_status === 'none') {
-                        handleRequest(item.id);
-                      } else if (item.friendship_status === 'pending_approval') {
-                        handleAcceptRequest(item.id);
-                      }
-                    }}
-                  >
-                    <Text style={styles.addButtonText}>
-                      {item.friendship_status === 'none' && 'Follow'}
-                      {item.friendship_status === 'requested' && 'Requested'}
-                      {item.friendship_status === 'pending_approval' && 'Accept'}
-                      {item.friendship_status === 'friends' && 'Following'}
-                    </Text>
-                </Pressable>
-                </View>
+                <SearchResultItem 
+                  item={item}
+                  onFollow={handleRequest}
+                  onAccept={handleAcceptRequest}
+                />
               )}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>No users found</Text>
@@ -379,13 +358,5 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 14,
     fontFamily: 'Rethink Sans'
-  },
-  followingButton: {
-    paddingVertical: 7,
-    paddingHorizontal: 5,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(28, 150, 53, 0.36)'
   }
 });
