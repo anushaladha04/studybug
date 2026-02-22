@@ -14,14 +14,18 @@ function RootNavigator() {
     <Stack>
       <Stack.Protected guard={isLoggedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="add-friends" 
+          options={{ 
+            presentation: 'card',
+            headerShown: false
+        }} 
+      />
+      <Stack.Screen name="session-details" options={{ presentation: 'modal', title: "New Session" }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack.Protected>
-
-      <Stack.Protected guard={isLoggedIn}>
-        <Stack.Screen name="session-details" options={{ presentation: 'modal', title: "New Session" }} />
       </Stack.Protected>
     </Stack>
   );

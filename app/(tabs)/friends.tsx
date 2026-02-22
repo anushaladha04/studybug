@@ -3,6 +3,7 @@ import Cancel from '@/assets/icons/cancel.svg';
 import SearchIcon from '@/assets/icons/search.svg';
 import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -13,6 +14,8 @@ export default function FriendsScreen() {
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
   const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
   const [ friends, setFriends ] = useState<any[]>([]);
+  
+  const router = useRouter();
 
   const isSearching = searchQuery.length > 0;
 
@@ -21,7 +24,7 @@ export default function FriendsScreen() {
     setSearchResults([]);
   };
 
-  const handleRequest = async (to: string, username: string) => {
+  const handleRequest = async (to: string) => {
     try {
       await requestFriend(to);
       setSearchResults(prev => 
@@ -97,7 +100,7 @@ export default function FriendsScreen() {
         <Text style={styles.headerTitle}>Friends</Text>
         <Pressable 
           style={styles.addFriendContainer} 
-          onPress={() => console.log('Navigate to Add Friends')}
+          onPress={() => router.push('/add-friends')}
         >
           <AddFriend />
         </Pressable>
@@ -168,7 +171,7 @@ export default function FriendsScreen() {
                     ]}
                     onPress={() => {
                       if (item.friendship_status === 'none') {
-                        handleRequest(item.id, item.username);
+                        handleRequest(item.id);
                       } else if (item.friendship_status === 'pending_approval') {
                         handleAcceptRequest(item.id);
                       }
