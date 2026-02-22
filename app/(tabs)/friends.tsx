@@ -1,4 +1,5 @@
-import SearchIcon from '@/assets/images/search.svg';
+import Cancel from '@/assets/icons/cancel.svg';
+import SearchIcon from '@/assets/icons/search.svg';
 import FriendCard from '@/components/friend-card';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
@@ -13,6 +14,11 @@ export default function FriendsScreen() {
   const [ friends, setFriends ] = useState<any[]>([]);
 
   const isSearching = searchQuery.length > 0;
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   const handleRequest = async (to: string, username: string) => {
     try {
@@ -97,7 +103,11 @@ export default function FriendsScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-
+        {searchQuery.length > 0 && (
+        <Pressable onPress={clearSearch} style={styles.clearButton}>
+          <Cancel width={15} height={15} fill="#737373"/>
+        </Pressable>
+      )}
       </View>
 
       { !isSearching && (
@@ -285,6 +295,12 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#717171',
     fontSize: 14,
+  },
+  clearButton: {
+    padding: 6, // Makes the 14px icon a 26px tap target
+    marginLeft: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabBar: {
     flexDirection: 'row',
