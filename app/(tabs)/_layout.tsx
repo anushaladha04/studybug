@@ -118,6 +118,9 @@ export default function TabLayout() {
               resizeMode="contain"
             />
           ),
+          title: 'Map',
+          lazy: false,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
         }}
       />
       <Tabs.Screen

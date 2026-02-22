@@ -1,12 +1,16 @@
+import { useAuthContext } from '@/hooks/use-auth-context';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
+  const { session } = useAuthContext();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>[ HOME ]</Text>
+      <Text style={styles.title}>Welcome to StudyBug!</Text>
+      <Text style={styles.subtitle}>Logged in as: {session?.user?.email}</Text>
     </View>
   );
-}
+} 
 
 const styles = StyleSheet.create({
   container: {
@@ -15,8 +19,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: {
+  title: {
     fontSize: 24,
-    fontFamily: 'monospace',
+  },
+  subtitle: {
+    marginBottom: 16,
   },
 });
+
+

@@ -1,11 +1,27 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuthContext } from '@/hooks/use-auth-context';
+import { supabase } from '@/lib/supabase';
+
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
+  const { session, profile, refreshProfile } = useAuthContext();
   const router = useRouter();
+  const [bioModalVisible, setBioModalVisible] = useState(false);
+  const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+
+  async function handleSaveBio() {
+    if (!session?.user?.id) return;
+    await supabase
+      .from('profiles')
+      .update({ bio: bioInput })
+      .eq('id', session.user.id);
+    await refreshProfile();
+    setBioModalVisible(false);
+  }
 
   return (
     <View style={styles.container}>
@@ -22,9 +38,14 @@ export default function ProfileScreen() {
           <Ionicons name="person-outline" size={40} color="#999" />
         </View>
         <View style={styles.profileText}>
-          <Text style={styles.nameText}>Jane Doe</Text>
-          <Text style={styles.usernameText}>@janedoe</Text>
-          <Text style={styles.bioText}>Hi! I'm Jane Doe.</Text>
+          <Text style={styles.nameText}>{profile?.full_name ?? '-'}</Text>
+          <Text style={styles.usernameText}>@{profile?.username ?? '-'}</Text>
+          <Pressable style={styles.bioRow} onPress={() => { setBioInput(profile?.bio ?? ''); setBioModalVisible(true); }}>
+            <Text style={styles.bioText}>{profile?.bio ?? 'No bio yet'}</Text>
+            <View style={styles.editIconCircle}>
+              <Ionicons name="pencil" size={13} color="#666" />
+            </View>
+          </Pressable>
         </View>
       </View>
 
@@ -51,6 +72,34 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {/* Edit Bio Modal */}
+      <Modal
+        visible={bioModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBioModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setBioModalVisible(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <Pressable style={styles.modalCard} onPress={() => {}}>
+              <Text style={styles.modalTitle}>Edit Bio</Text>
+              <TextInput
+                style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
+                value={bioInput}
+                onChangeText={setBioInput}
+                placeholder="Write something about yourself"
+                autoCorrect
+                autoCapitalize="sentences"
+                multiline
+                autoFocus
+              />
+              <Pressable style={styles.modalDone} onPress={handleSaveBio}>
+                <Text style={styles.modalDoneText}>Done</Text>
+              </Pressable>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -101,10 +150,81 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
+  bioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 6,
+  },
   bioText: {
     fontSize: 13,
     color: '#999',
     marginTop: 4,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    width: '90%',
+    marginTop: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    flex: 1,
+  },
+  editIconCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#e8e8e8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 24,
+    width: 300,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: '#333',
+    backgroundColor: '#fafafa',
+  },
+  modalDone: {
+    marginTop: 16,
+    backgroundColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: '#0a7ea4',
+  },
+  modalDoneText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   tabBar: {
     flexDirection: 'row',

@@ -1,4 +1,5 @@
-import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import AuthProvider from '@/providers/auth-provider';
+import { useAuthContext } from '@/hooks/use-auth-context';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,7 +8,7 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 function RootLayoutNav() {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
 
