@@ -1,11 +1,10 @@
 import AddFriend from '@/assets/icons/add-friend.svg';
-import Cancel from '@/assets/icons/cancel.svg';
-import SearchIcon from '@/assets/icons/search.svg';
 import FriendCard from '@/components/friend-card';
+import SearchBar from '@/components/search-bar';
 import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
@@ -105,21 +104,12 @@ export default function FriendsScreen() {
           <AddFriend />
         </Pressable>
       </View>
-      <View style={styles.searchBar}>
-        <SearchIcon width={16} height={16} fill='transparent' styles={styles.searchIcon}/>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search friends..."
-          placeholderTextColor="#717171"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-        <Pressable onPress={clearSearch} style={styles.clearButton}>
-          <Cancel width={15} height={15} fill="#737373"/>
-        </Pressable>
-      )}
-      </View>
+      <SearchBar 
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onClear={clearSearch}
+        placeholder={'Search friends...'}
+      />
 
       { !isSearching && (
         <View style={styles.tabBar}>
@@ -293,39 +283,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     padding: 5,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
-    height: 32,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 18,
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    gap: 10,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4, 
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#717171',
-    fontSize: 14,
-  },
-  clearButton: {
-    padding: 6,
-    marginLeft: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tabBar: {
     flexDirection: 'row',
