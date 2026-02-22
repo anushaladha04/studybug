@@ -1,8 +1,8 @@
 import SearchIcon from '@/assets/images/search.svg';
 import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
@@ -17,9 +17,14 @@ export default function FriendsScreen() {
   const handleRequest = async (to: string, username: string) => {
     try {
       await requestFriend(to);
-      Alert.alert(`Alert sent to ${username}`)
+      setSearchResults(prev => 
+        prev.map(u => u.id === to ? { ...u, friendship_status: 'requested' } : u)
+      );
     } catch (error) {
       console.error(error);
+      setSearchResults(prev => 
+        prev.map(u => u.id === to ? { ...u, friendship_status: 'none' } : u)
+      );
     }
   };
 
@@ -35,18 +40,22 @@ export default function FriendsScreen() {
   const handleAcceptRequest = async (from: string) => {
     try {
       await acceptFriendRequest(from);
+      setSearchResults(prev => 
+        prev.map(user => 
+          user.id === from ? { ...user, friendship_status: 'friends' } : user
+        )
+      );
+      setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
+      await fetchFriends();
     } catch (error) {
       console.error(error);
     }
-
-    setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
-    await fetchFriends();
   };
 
   useEffect(() => {
     const searchUsers = async (query: string) => {
       try {
-        const data = await fetchByUsername(query);        
+        const data = await fetchByUsernameWithFriendshipStatus(query);        
         setSearchResults(data); 
       } catch (error) {
         console.error(error);
@@ -116,37 +125,59 @@ export default function FriendsScreen() {
 
       <View style={styles.content}>
         {isSearching ? (
+          <>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultText}>
+              Showing results for "{searchQuery}"
+              </Text>
+            </View>
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
               style={{ width: '100%' }}
-              contentContainerStyle={{ alignItems: 'center' }}
+              contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
                 <View style={styles.resultItem}>
+                  <View style={styles.avatar}/>
                   <View style={styles.userInfo}>
                     <Text style={styles.fullNameText}>{item.full_name}</Text>
                     <Text style={styles.usernameText}>@{item.username}</Text>
                   </View>
                   <Pressable 
-                    style={styles.addButton}
-                    onPress={() => handleRequest(item.id, item.username)}
+                    style={[
+                      styles.addButton,
+                      (item.friendship_status === 'friends' || item.friendship_status === 'requested') && styles.followingButton
+                    ]}
+                    onPress={() => {
+                      if (item.friendship_status === 'none') {
+                        handleRequest(item.id, item.username);
+                      } else if (item.friendship_status === 'pending_approval') {
+                        handleAcceptRequest(item.id);
+                      }
+                    }}
                   >
-                    <Text style={styles.addButtonText}>Add</Text>
-                  </Pressable>
+                    <Text style={styles.addButtonText}>
+                      {item.friendship_status === 'none' && 'Follow'}
+                      {item.friendship_status === 'requested' && 'Requested'}
+                      {item.friendship_status === 'pending_approval' && 'Accept'}
+                      {item.friendship_status === 'friends' && 'Following'}
+                    </Text>
+                </Pressable>
                 </View>
               )}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>No users found</Text>
               }
             />
+          </>
           ) : (
-          <View style={styles.content}>
+          <>
             {activeTab === 'active' ? (
               <FlatList
                 data={activeFriends}
                 keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
-                contentContainerStyle={{ alignItems: 'center' }}
+                contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                 renderItem={({ item }) => (
                   <FriendCard
                       full_name = {item.full_name}
@@ -165,7 +196,7 @@ export default function FriendsScreen() {
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
-                  contentContainerStyle={{ alignItems: 'center' }}
+                  contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                   renderItem={({ item }) => (
                     <FriendCard
                       full_name = {item.full_name}
@@ -184,7 +215,7 @@ export default function FriendsScreen() {
                 data={friendRequests}
                 keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
-                contentContainerStyle={{ alignItems: 'center' }}
+                contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                 renderItem={({ item }) => (
                   <View style={styles.resultItem}>
                     <View style={styles.userInfo}>
@@ -205,7 +236,7 @@ export default function FriendsScreen() {
               />
               )
             )}
-          </View>
+          </>
         )}
       </View>
     </View>
@@ -216,13 +247,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
+    paddingTop: 13,
     alignItems: 'center',
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
+    fontSize: 18,
+    fontFamily: 'Rethink Sans',
+    fontWeight: 500,
+    textAlign: 'center',
+    marginTop: 50,
+    paddingTop: 13,
+    marginBottom: 13
   },
   searchBar: {
     flexDirection: 'row',
@@ -255,6 +290,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '90%',
     marginTop: 20,
+    marginBottom: 14,
     borderBottomWidth: 5,
     borderBottomColor: '#E2E2E2',
   },
@@ -282,45 +318,76 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
   },
   emptyText: {
     fontSize: 15,
     color: '#999',
   },
+  resultsHeader: {
+    marginTop: 21,
+    marginBottom: 16,
+    paddingLeft: 16
+  },
+  resultText: {
+    fontSize: 16,
+    fontFamily: 'Rethink Sans',
+    fontWeight: '400',
+    color: '#000',
+  },
   resultItem: {
     flexDirection: 'row',
+    width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    width: '100%',
+    marginBottom: 6,
+    backgroundColor: '#F7F7F7'
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 35,
+    backgroundColor: '#2a2f30',
+    marginLeft: 5,
+    marginRight: 20,
   },
   userInfo: {
     flexDirection: 'column',
     flex: 1,
   },
   fullNameText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'Inter',
+    color: '#000',
   },
   usernameText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: '#787878',
     marginTop: 2,
   },
   addButton: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 5,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#1C9635',
+    backgroundColor: 'rgba(174, 232, 71, 0.36)'
   },
   addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#000',
+    fontWeight: '400',
     fontSize: 14,
+    fontFamily: 'Rethink Sans'
   },
+  followingButton: {
+    paddingVertical: 7,
+    paddingHorizontal: 5,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#1C9635',
+    backgroundColor: 'rgba(28, 150, 53, 0.36)'
+  }
 });

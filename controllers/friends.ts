@@ -15,6 +15,24 @@ export async function fetchByUsername(searchPattern: string) {
     return data;
 }
 
+export async function fetchByUsernameWithFriendshipStatus(searchPattern: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !searchPattern) 
+        return [];
+
+    const { data, error } = await supabase.rpc('search_users_with_relations', {
+        search_pattern: searchPattern,
+        curr_user_id: user.id
+    });
+
+    if (error) {
+        console.error('Search error:', error);
+        return [];
+    }
+
+    return data;
+}
+
 export async function requestFriend(friendId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     
