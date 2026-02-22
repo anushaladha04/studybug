@@ -24,6 +24,7 @@ export interface LocationUser {
   studying: string;
   latitude: number;
   longitude: number;
+  locationName?: string;
   imageUrl?: string;
 }
 
@@ -100,6 +101,22 @@ export function StudyMap({
     }
   };
 
+  const getPinLabel = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return 'Friend';
+    const firstName = trimmed.split(/\s+/)[0];
+
+    if (zoomLevel < 12) {
+      return firstName.slice(0, 1).toUpperCase();
+    }
+    if (zoomLevel < 14) {
+      return firstName;
+    }
+    return trimmed;
+  };
+
+  const compactLabel = zoomLevel < 12;
+
   // Fallback UI when Mapbox is disabled (e.g., in Expo Go)
   if (!mapboxEnabled) {
     return (
@@ -121,6 +138,12 @@ export function StudyMap({
     <View style={styles.container}>
       <MapboxGL.MapView
         style={styles.map}
+        onCameraChanged={(event: any) => {
+          const nextZoom = event?.properties?.zoom;
+          if (typeof nextZoom === 'number' && Number.isFinite(nextZoom)) {
+            setZoomLevel(nextZoom);
+          }
+        }}
         styleURL={
           theme === 'dark'
             ? MapboxGL.StyleURL.Dark
@@ -157,7 +180,7 @@ export function StudyMap({
           <MapboxGL.PointAnnotation
             id="user-location"
             coordinate={[centerLocation.longitude, centerLocation.latitude]}>
-            <View style={styles.userMarker} />
+            <View collapsable={false} style={styles.userMarker} />
           </MapboxGL.PointAnnotation>
         )}
 
@@ -168,8 +191,17 @@ export function StudyMap({
             id={user.id}
             coordinate={[user.longitude, user.latitude]}
             onSelected={() => onUserPress?.(user)}>
-            <View style={styles.userPin}>
-              <View style={styles.pinDot} />
+            <View collapsable={false} style={styles.pinMarkerWrap}>
+              <View
+                collapsable={false}
+                style={[styles.pinLabel, compactLabel && styles.pinLabelCompact]}>
+                <Text numberOfLines={1} style={styles.pinLabelText}>
+                  {getPinLabel(user.name)}
+                </Text>
+              </View>
+              <View collapsable={false} style={styles.userPin}>
+                <View collapsable={false} style={styles.pinDot} />
+              </View>
             </View>
           </MapboxGL.PointAnnotation>
         ))}
@@ -220,19 +252,49 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   userPin: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#FF3B30',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  pinMarkerWrap: {
+    alignItems: 'center',
+    minWidth: 36,
+  },
+  pinLabel: {
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    maxWidth: 96,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  pinLabelCompact: {
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    maxWidth: 28,
+  },
+  pinLabelText: {
+    color: '#111',
+    fontSize: 10,
+    fontWeight: '600',
+  },
   pinDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#fff',
   },
   // Fallback styles

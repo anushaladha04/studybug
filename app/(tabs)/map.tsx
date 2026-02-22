@@ -1,37 +1,28 @@
 import { LocationUser, StudyMap } from '@/components/map';
+import { fetchAllFriends } from '@/controllers/friends';
 import { Colors } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
-// Mock data - in a real app, this would come from Supabase
-const MOCK_USERS: LocationUser[] = [
-  {
-    id: '1',
-    name: 'Alex',
-    studying: 'React Native',
-    latitude: 37.7749,
-    longitude: -122.4194,
-  },
-  {
-    id: '2',
-    name: 'Jordan',
-    studying: 'TypeScript',
-    latitude: 37.7849,
-    longitude: -122.4094,
-  },
-  {
-    id: '3',
-    name: 'Casey',
-    studying: 'Mapbox',
-    latitude: 37.7649,
-    longitude: -122.4294,
-  },
-];
+type FriendRow = {
+  friend_id: string;
+  full_name?: string | null;
+};
+
+type ActiveStudySessionRow = {
+  session_id: string;
+  user_id: string;
+  subject?: string | null;
+  location_name?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+};
 
 export default function MapScreen() {
   const [selectedUser, setSelectedUser] = useState<LocationUser | null>(null);
-  const [users, setUsers] = useState<LocationUser[]>(MOCK_USERS);
+  const [users, setUsers] = useState<LocationUser[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const colorScheme = useColorScheme();
@@ -41,6 +32,8 @@ export default function MapScreen() {
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
     let isMounted = true;
+    let retryInterval: ReturnType<typeof setInterval> | null = null;
+    let isLocationLookupInFlight = false;
 
     const applyLocation = (location: Location.LocationObject | Location.LocationObjectCoords, source: string) => {
       const coords = 'coords' in location ? location.coords : location;
@@ -53,7 +46,48 @@ export default function MapScreen() {
         longitude: coords.longitude,
       });
       setLocationError(null);
-      console.log(`Location set from ${source}:`, coords.latitude, coords.longitude);
+    };
+
+    const getCurrentWithTimeout = (accuracy: Location.Accuracy, timeoutMs: number) =>
+      Promise.race<Location.LocationObject>([
+        Location.getCurrentPositionAsync({ accuracy }),
+        new Promise<Location.LocationObject>((_, reject) =>
+          setTimeout(() => reject(new Error('Location timeout')), timeoutMs)
+        ),
+      ]);
+
+    const attemptActiveLocationLookup = async () => {
+      if (!isMounted || isLocationLookupInFlight) {
+        return;
+      }
+
+      isLocationLookupInFlight = true;
+      try {
+        const currentLocation = await getCurrentWithTimeout(Location.Accuracy.Balanced, 15000);
+        applyLocation(currentLocation, 'current-balanced');
+      } catch (balancedError) {
+        try {
+          const fallbackLocation = await getCurrentWithTimeout(Location.Accuracy.Low, 8000);
+          applyLocation(fallbackLocation, 'current-low');
+        } catch (locationError: any) {
+          if (
+            locationError.message?.includes('timeout') ||
+            locationError.message?.includes('unavailable') ||
+            locationError.code === 'E_LOCATION_UNAVAILABLE'
+          ) {
+            if (isMounted) {
+              setLocationError('Still trying to get your location...');
+            }
+          } else {
+            if (isMounted) {
+              setLocationError('Failed to get location');
+            }
+            console.error('Error getting location:', locationError);
+          }
+        }
+      } finally {
+        isLocationLookupInFlight = false;
+      }
     };
     
     (async () => {
@@ -84,57 +118,28 @@ export default function MapScreen() {
           if (lastKnown) {
             applyLocation(lastKnown, 'lastKnown');
           }
-        } catch (lastKnownError) {
-          console.log('No last known location available:', lastKnownError);
-        }
+        } catch (_lastKnownError) {}
 
         // Start watching regardless; this can update quickly even if current lookup stalls.
         try {
           subscription = await Location.watchPositionAsync(
             {
               accuracy: Location.Accuracy.Balanced,
-              timeInterval: 3000,
-              distanceInterval: 5,
+              timeInterval: 30000,
+              distanceInterval: 25,
             },
             (location) => {
               applyLocation(location, 'watch');
             }
           );
-        } catch (watchError) {
-          console.log('Location watching not available:', watchError);
-        }
+        } catch (_watchError) {}
 
-        // Active lookup with short timeout to avoid long blocking delays.
-        const getCurrentWithTimeout = (accuracy: Location.Accuracy, timeoutMs: number) =>
-          Promise.race<Location.LocationObject>([
-            Location.getCurrentPositionAsync({ accuracy }),
-            new Promise<Location.LocationObject>((_, reject) =>
-              setTimeout(() => reject(new Error('Location timeout')), timeoutMs)
-            ),
-          ]);
+        await attemptActiveLocationLookup();
 
-        try {
-          const currentLocation = await getCurrentWithTimeout(Location.Accuracy.Balanced, 5000);
-          applyLocation(currentLocation, 'current-balanced');
-        } catch (balancedError) {
-          console.log('Balanced location timed out, trying low accuracy...', balancedError);
-          try {
-            const fallbackLocation = await getCurrentWithTimeout(Location.Accuracy.Low, 3000);
-            applyLocation(fallbackLocation, 'current-low');
-          } catch (locationError: any) {
-            if (
-              locationError.message?.includes('timeout') ||
-              locationError.message?.includes('unavailable') ||
-              locationError.code === 'E_LOCATION_UNAVAILABLE'
-            ) {
-              setLocationError('Location services unavailable. Using default location.');
-              // This is common on emulators - just use default location
-            } else {
-              setLocationError('Failed to get location');
-              console.error('Error getting location:', locationError);
-            }
-          }
-        }
+        // Keep retrying in case the emulator/provider is slow to produce an initial fix.
+        retryInterval = setInterval(() => {
+          void attemptActiveLocationLookup();
+        }, 30000);
       } catch (error: any) {
         console.error('Error in location setup:', error);
         setLocationError('Location unavailable');
@@ -145,18 +150,97 @@ export default function MapScreen() {
     // Cleanup
     return () => {
       isMounted = false;
+      if (retryInterval) {
+        clearInterval(retryInterval);
+      }
       if (subscription) {
         subscription.remove();
       }
     };
   }, []);
 
-  // In a real app, you would fetch users from Supabase periodically
   useEffect(() => {
-    // const interval = setInterval(() => {
-    //   fetchUsersFromSupabase();
-    // }, 5000); // Update every 5 seconds
-    // return () => clearInterval(interval);
+    let isMounted = true;
+
+    const fetchMapUsers = async () => {
+      try {
+        const friends = (await fetchAllFriends()) as FriendRow[];
+
+        if (!isMounted) return;
+
+        const friendIds = [...new Set(
+          friends
+            .map((friend) => friend.friend_id)
+            .filter((id): id is string => Boolean(id))
+        )];
+
+        if (friendIds.length === 0) {
+          setUsers([]);
+          return;
+        }
+
+        const friendNameById = new Map(
+          friends.map((friend) => [friend.friend_id, friend.full_name?.trim() || 'Friend'])
+        );
+
+        const { data, error } = await supabase
+          .from('study_sessions')
+          .select('session_id, user_id, subject, location_name, latitude, longitude')
+          .in('user_id', friendIds)
+          .eq('is_active', true)
+          .eq('is_public', true)
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null);
+
+        if (error) {
+          console.error('Error fetching active friend study sessions:', error.message);
+          if (isMounted) setUsers([]);
+          return;
+        }
+
+        const mappedUsers = ((data ?? []) as ActiveStudySessionRow[])
+          .map((session): LocationUser | null => {
+            const latitude = Number(session.latitude);
+            const longitude = Number(session.longitude);
+
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+              return null;
+            }
+
+            const locationName = session.location_name?.trim();
+
+            return {
+              id: session.session_id,
+              name: friendNameById.get(session.user_id) || 'Friend',
+              studying: session.subject?.trim() || 'Studying',
+              ...(locationName ? { locationName } : {}),
+              latitude,
+              longitude,
+            } satisfies LocationUser;
+          })
+          .filter((value): value is LocationUser => value !== null);
+
+        if (isMounted) {
+          setUsers(mappedUsers);
+          setSelectedUser((prev) =>
+            prev ? mappedUsers.find((user) => user.id === prev.id) ?? null : null
+          );
+        }
+      } catch (error) {
+        console.error('Error loading map users:', error);
+        if (isMounted) setUsers([]);
+      }
+    };
+
+    void fetchMapUsers();
+    const interval = setInterval(() => {
+      void fetchMapUsers();
+    }, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -199,8 +283,13 @@ export default function MapScreen() {
               📚 Studying: {selectedUser.studying}
             </Text>
             <Text style={styles.modalLocation}>
+              Location: {selectedUser.locationName ?? 'Unknown location'}
+            </Text>
+            {!selectedUser.locationName && (
+            <Text style={styles.modalLocation}>
               📍 {selectedUser.latitude.toFixed(4)}, {selectedUser.longitude.toFixed(4)}
             </Text>
+            )}
 
             <TouchableOpacity
               style={[
