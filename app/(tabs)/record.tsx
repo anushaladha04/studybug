@@ -50,7 +50,7 @@ export default function RecordScreen() {
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
-    const sessionId = await startStudySession(startTime, isPublic, name, location, focusLevel, note, area);
+    const sessionId = await startStudySession("Session Name", startTime, isPublic, "General", "High", "Note");
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);

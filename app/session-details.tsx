@@ -12,7 +12,7 @@ export default function TimerConfig() {
     const [ area, setArea ] = useState<'Academic' | 'Career'>('Academic');
 
     const handleStartSession = () => {
-        if (!name || !location || !note) {
+        if (!name || !location) {
             alert('Please fill in all fields.');
             return;
         }
