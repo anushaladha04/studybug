@@ -24,7 +24,7 @@ export default function FriendsScreen() {
 
   const fetchFriends = async () => {
       try {
-        const data = await fetchAllFriends();    
+        const data = await fetchAllFriends();
         setFriends(data); 
       } catch (error) {
         console.error(error);
@@ -104,6 +104,7 @@ export default function FriendsScreen() {
                   full_name = {item.full_name}
                   location = {item.location_name}
                   start_time = {item.start_time}
+                  end_time = {item.end_time}
                   is_active = {item.is_active}
                   note = {item.note}
                 />
@@ -126,6 +127,7 @@ export default function FriendsScreen() {
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
+                      end_time = {item.end_time}
                       is_active = {item.is_active}
                       note = {item.note}
                   />
@@ -145,6 +147,7 @@ export default function FriendsScreen() {
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
+                      end_time = {item.end_time}
                       is_active = {item.is_active}
                       note = {item.note}
                   />

@@ -8,6 +8,7 @@ interface Friend {
     full_name: string,
     location: string,
     start_time: string,
+    end_time: string,
     is_active: boolean;
     note: string,
 }
@@ -19,10 +20,10 @@ export default function FriendCard(friend: Friend) {
         return () => clearInterval(timer);
     }, []);
 
-    const startTime = new Date(friend.start_time);
+    const referenceTime = friend.is_active ? new Date(friend.start_time) : new Date(friend.end_time);
 
     const formatTime = () => {
-        const duration = intervalToDuration({start: startTime, end: now});
+        const duration = intervalToDuration({start: referenceTime, end: now});
         const { months, days, hours, minutes } = duration;
 
         if (months && months > 0) {
