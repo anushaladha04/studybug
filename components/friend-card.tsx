@@ -1,5 +1,5 @@
+import AvatarIcon from '@/assets/icons/avatar';
 import ClockIcon from '@/assets/icons/clock';
-
 import { intervalToDuration } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -46,7 +46,7 @@ export default function FriendCard(friend: Friend) {
 
     return (
         <View style={[styles.card]}>
-            <View style={styles.avatar} />
+            <AvatarIcon />
 
             <View style={styles.contentContainer}>
                 <Text style={styles.nameText}>{friend.full_name}</Text>
@@ -75,7 +75,7 @@ export default function FriendCard(friend: Friend) {
 const styles = StyleSheet.create({
     card: {
         marginVertical: 8,
-        gap: 10,
+        gap: 21,
         paddingVertical: 9,
         paddingHorizontal: 14,
         backgroundColor: '#FFFFFF',
@@ -90,14 +90,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         position: 'relative'
-    },
-    avatar: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: '#2a2f30',
-        marginLeft: 5,
-        marginRight: 20,
     },
     contentContainer: {
         flex: 1,

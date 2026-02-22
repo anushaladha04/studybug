@@ -1,3 +1,4 @@
+import AvatarIcon from '@/assets/icons/avatar';
 import BackArrow from '@/assets/icons/back-arrow.svg';
 import RightArrow from '@/assets/icons/right-arrow';
 
@@ -113,7 +114,7 @@ export default function AddFriendsScreen() {
           >
             <View style={styles.avatarStack}>
               <View style={[styles.avatar, styles.backAvatar]} />
-              <View style={[styles.avatar, styles.frontAvatar]} />
+              <AvatarIcon width={38} height={38} top={12} left={18} zIndex={2}/>
             </View>
 
             <Text style={styles.requestText}>Friend Requests</Text>
@@ -182,16 +183,10 @@ const styles = StyleSheet.create({
     position: 'absolute'
   },
   backAvatar: {
-    backgroundColor: '#9E9E9E',
+    backgroundColor: '#9A9A9A',
     top: 0,
     left: 0,
     zIndex: 1,
-  },
-  frontAvatar: {
-    backgroundColor: '#D1E3FF',
-    top: 12,
-    left: 18,
-    zIndex: 2,
   },
   requestText: {
     flex: 1,

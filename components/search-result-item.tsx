@@ -1,3 +1,4 @@
+import AvatarIcon from '@/assets/icons/avatar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface SearchResultItemProps {
@@ -14,7 +15,7 @@ interface SearchResultItemProps {
 export default function SearchResultItem({ item, onFollow, onAccept }: SearchResultItemProps) {
   return (
     <View style={styles.resultItem}>
-        <View style={styles.avatar}/>
+        <AvatarIcon />
         <View style={styles.userInfo}>
         <Text style={styles.fullNameText}>{item.full_name}</Text>
         <Text style={styles.usernameText}>@{item.username}</Text>
@@ -51,6 +52,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     marginBottom: 6,
+    gap: 19,
     backgroundColor: '#F7F7F7'
   },
   avatar: {
