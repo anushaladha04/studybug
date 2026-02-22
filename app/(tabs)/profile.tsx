@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
+import { getWeeklyDurations } from "@/controllers/study-session";
 
 
 export default function ProfileScreen() {
@@ -12,6 +13,22 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+
+  const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const id = session.user.id;
+    Promise.all([
+      getWeeklyDurations(id, 0),
+      getWeeklyDurations(id, 1),
+    ]).then(([thisWeek, lastWeek]) => {
+      console.log('weekly durations:', thisWeek);
+      setWeeklyDurations(thisWeek);
+      setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
+    });
+  }, [session?.user?.id]);
 
   async function handleSaveBio() {
     if (!session?.user?.id) return;
@@ -66,7 +83,7 @@ export default function ProfileScreen() {
 
       <View style={styles.content}>
         {activeTab === 'insights' ? (
-          <Text style={styles.emptyText}>No insights yet</Text>
+          <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
         ) : (
           <Text style={styles.emptyText}>No archived sessions</Text>
         )}
@@ -103,6 +120,109 @@ export default function ProfileScreen() {
     </View>
   );
 }
+
+const CARD_WIDTH = Dimensions.get('window').width * 0.9;
+const BAR_MAX_HEIGHT = 120;
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; lastWeekTotal: number | null }) {
+  const max = Math.max(...durations, 1);
+  const todayIndex = new Date().getDay();
+
+  const thisWeekTotal = durations.reduce((sum, v) => sum + v, 0);
+  let subtitleText: string | null = null;
+  if (lastWeekTotal !== null && lastWeekTotal > 0) {
+    const pct = Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100);
+    const dir = pct >= 0 ? 'Up' : 'Down';
+    subtitleText = `${dir} ${Math.abs(pct)}% from last week`;
+  }
+
+  return (
+    <View style={chartStyles.card}>
+      <Text style={chartStyles.cardTitle}>Your Week in Study Sessions</Text>
+      <Text style={chartStyles.cardSubtitle}>{subtitleText ?? ''}</Text>
+      <View style={chartStyles.barsRow}>
+        {durations.map((val, i) => {
+          const barHeight = Math.max(4, (val / max) * BAR_MAX_HEIGHT);
+          const isToday = i === todayIndex;
+          return (
+            <View key={i} style={chartStyles.barColumn}>
+              <View
+                style={[
+                  chartStyles.bar,
+                  { height: barHeight },
+                  isToday ? chartStyles.barToday : chartStyles.barDefault,
+                ]}
+              />
+              <Text style={[chartStyles.dayLabel, isToday && chartStyles.dayLabelToday]}>
+                {DAY_LABELS[i]}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const chartStyles = StyleSheet.create({
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#222',
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    marginBottom: 20,
+  },
+  barsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: BAR_MAX_HEIGHT + 24,
+  },
+  barColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginHorizontal: 4,
+  },
+  bar: {
+    width: '100%',
+    borderRadius: 5,
+  },
+  barDefault: {
+    backgroundColor: '#bbb',
+  },
+  barToday: {
+    backgroundColor: '#555',
+  },
+  dayLabel: {
+    fontSize: 11,
+    color: '#bbb',
+    marginTop: 5,
+  },
+  dayLabelToday: {
+    color: '#555',
+    fontWeight: '600',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -239,7 +359,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   emptyText: {
     fontSize: 15,
