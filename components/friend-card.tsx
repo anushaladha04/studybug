@@ -1,3 +1,5 @@
+import ClockIcon from '@/assets/icons/clock';
+
 import { intervalToDuration } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -32,8 +34,10 @@ export default function FriendCard(friend: Friend) {
         }
 
         const parts = [];
-        if (hours && hours > 0) parts.push(`${hours} hr`);
-        if (minutes !== undefined && (minutes > 0 || ! hours)) parts.push(`${minutes} min`);
+        if (hours && hours > 0) 
+            parts.push(`${hours} hr`);
+        if (minutes !== undefined && (minutes > 0 || ! hours)) 
+            parts.push(`${minutes} min`);
         
         return parts.join(' ');
     };
@@ -59,11 +63,10 @@ export default function FriendCard(friend: Friend) {
 
                 <View style={styles.metricsContainer}>
                     <Text style={styles.metricText}>0.5 mi</Text>
-                    {friend.is_active ? (
-                        <Text style={styles.metricText}>Time studied: {formatTime()}</Text>
-                    ) : (
-                        <Text style={styles.metricText}>Last active: {formatTime()} ago</Text>
-                    )}
+                    <View style={styles.timeContainer}>
+                        <ClockIcon />
+                        <Text style={styles.metricText}>{formatTime()}{! friend.is_active && ' ago'}</Text>
+                    </View>
             </View>
         </View>
     );
@@ -140,4 +143,10 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#555',
     },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 2
+    }
 });
