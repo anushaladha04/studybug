@@ -1,18 +1,16 @@
 import AddFriend from '@/assets/icons/add-friend.svg';
 import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
-import SearchResultItem from '@/components/search-result-item';
-import { acceptFriendRequest, fetchAllFriends, fetchByUsernameWithFriendshipStatus, fetchFriendRequests, requestFriend } from '@/controllers/friends';
+import { fetchAllFriends } from '@/controllers/friends';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function FriendsScreen() {
-  const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
 
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
-  const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
   const [ friends, setFriends ] = useState<any[]>([]);
   
   const router = useRouter();
@@ -24,20 +22,6 @@ export default function FriendsScreen() {
     setSearchResults([]);
   };
 
-  const handleRequest = async (to: string) => {
-    try {
-      await requestFriend(to);
-      setSearchResults(prev => 
-        prev.map(u => u.id === to ? { ...u, friendship_status: 'requested' } : u)
-      );
-    } catch (error) {
-      console.error(error);
-      setSearchResults(prev => 
-        prev.map(u => u.id === to ? { ...u, friendship_status: 'none' } : u)
-      );
-    }
-  };
-
   const fetchFriends = async () => {
       try {
         const data = await fetchAllFriends();    
@@ -47,46 +31,18 @@ export default function FriendsScreen() {
       }
     };
 
-  const handleAcceptRequest = async (from: string) => {
-    try {
-      await acceptFriendRequest(from);
-      setSearchResults(prev => 
-        prev.map(user => 
-          user.id === from ? { ...user, friendship_status: 'friends' } : user
-        )
-      );
-      setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
-      await fetchFriends();
-    } catch (error) {
-      console.error(error);
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(friends);
+      return;
     }
-  };
 
-  useEffect(() => {
-    const searchUsers = async (query: string) => {
-      try {
-        const data = await fetchByUsernameWithFriendshipStatus(query);        
-        setSearchResults(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    searchUsers(searchQuery);
-  }, [searchQuery]);
+    const results = friends.filter(friend =>
+      friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const data = await fetchFriendRequests();       
-        setFriendRequests(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    fetchRequests();
-  }, []);
+    setSearchResults(results);
+}, [searchQuery, friends]);
 
   useEffect(() => {
     fetchFriends();
@@ -109,9 +65,8 @@ export default function FriendsScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         onClear={clearSearch}
-        placeholder={'Search friends...'}
+        placeholder={'Search friends'}
       />
-
       { !isSearching && (
         <View style={styles.tabBar}>
           <Pressable
@@ -126,12 +81,6 @@ export default function FriendsScreen() {
           >
             <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Friends</Text>
           </Pressable>
-          <Pressable
-            style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
-            onPress={() => setActiveTab('requests')}
-          >
-            <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>Requests</Text>
-          </Pressable>
         </View>
       )}
 
@@ -145,14 +94,16 @@ export default function FriendsScreen() {
             </View>
             <FlatList
               data={searchResults}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.friend_id}
               style={{ width: '100%' }}
               contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
-                <SearchResultItem 
-                  item={item}
-                  onFollow={handleRequest}
-                  onAccept={handleAcceptRequest}
+                <FriendCard
+                  full_name = {item.full_name}
+                  location = {item.location_name}
+                  start_time = {item.start_time}
+                  is_active = {item.is_active}
+                  note = {item.note}
                 />
               )}
               ListEmptyComponent={
@@ -181,7 +132,7 @@ export default function FriendsScreen() {
                   <Text style={styles.emptyText}>No active friends yet</Text>
                 }
               />
-            ) : ( activeTab === 'all' ? (
+            ) : (
                 <FlatList
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
@@ -200,32 +151,8 @@ export default function FriendsScreen() {
                     <Text style={styles.emptyText}>No friends added yet </Text>
                   }
                 />
-              ) : (
-              <FlatList
-                data={friendRequests}
-                keyExtractor={(item) => item.friend_id}
-                style={{ width: '100%' }}
-                contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
-                renderItem={({ item }) => (
-                  <View style={styles.resultItem}>
-                    <View style={styles.userInfo}>
-                      <Text style={styles.fullNameText}>{item.full_name}</Text>
-                      <Text style={styles.usernameText}>@{item.username}</Text>
-                    </View>
-                    <Pressable 
-                      style={styles.addButton}
-                      onPress={() => handleAcceptRequest(item.friend_id)}
-                    >
-                      <Text style={styles.addButtonText}>Accept</Text>
-                    </Pressable>
-                  </View>
-                )}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No friend requests </Text>
-                }
-              />
               )
-            )}
+            }
           </>
         )}
       </View>
@@ -313,50 +240,4 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#000',
   },
-  resultItem: {
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 6,
-    backgroundColor: '#F7F7F7'
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 35,
-    backgroundColor: '#2a2f30',
-    marginLeft: 5,
-    marginRight: 20,
-  },
-  userInfo: {
-    flexDirection: 'column',
-    flex: 1,
-  },
-  fullNameText: {
-    fontSize: 12,
-    fontWeight: '400',
-    fontFamily: 'Inter',
-    color: '#000',
-  },
-  usernameText: {
-    fontSize: 12,
-    color: '#787878',
-    marginTop: 2,
-  },
-  addButton: {
-    paddingVertical: 7,
-    paddingHorizontal: 5,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(174, 232, 71, 0.36)'
-  },
-  addButtonText: {
-    color: '#000',
-    fontWeight: '400',
-    fontSize: 14,
-    fontFamily: 'Rethink Sans'
-  }
 });

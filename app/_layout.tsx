@@ -19,8 +19,15 @@ function RootNavigator() {
           options={{ 
             presentation: 'card',
             headerShown: false
-        }} 
-      />
+          }} 
+        />
+        <Stack.Screen 
+          name="friend-requests" 
+          options={{ 
+            presentation: 'card',
+            headerShown: false
+          }} 
+        />
       <Stack.Screen name="session-details" options={{ presentation: 'modal', title: "New Session" }} />
       </Stack.Protected>
 
