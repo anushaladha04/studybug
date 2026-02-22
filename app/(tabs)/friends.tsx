@@ -2,8 +2,8 @@ import AddFriend from '@/assets/icons/add-friend.svg';
 import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
 import { fetchAllFriends } from '@/controllers/friends';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function FriendsScreen() {
@@ -42,11 +42,13 @@ export default function FriendsScreen() {
     );
 
     setSearchResults(results);
-}, [searchQuery, friends]);
+  }, [searchQuery, friends]);
 
-  useEffect(() => {
-    fetchFriends();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchFriends();
+    }, [])
+  );
 
   const activeFriends = friends.filter(friend => friend.is_active === true);
 
