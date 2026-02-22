@@ -43,26 +43,21 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
   // Fetch the profile when the session changes
   useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true);
-
-      if (session) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
-
-      setIsLoading(false)
-    }
-
     fetchProfile();
   }, [session])
+
+  async function fetchProfile() {
+    if (session) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      setProfile(data);
+    } else {
+      setProfile(null);
+    }
+  }
 
   return (
     <AuthContext.Provider
@@ -71,6 +66,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         isLoading,
         profile,
         isLoggedIn: session != undefined,
+        refreshProfile: fetchProfile,
       }}
     >
       {children}
