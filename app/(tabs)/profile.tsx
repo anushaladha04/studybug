@@ -159,18 +159,6 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 13,
     color: '#999',
-    marginTop: 4,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    width: '90%',
-    marginTop: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
     flex: 1,
   },
   editIconCircle: {
@@ -215,11 +203,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: '#0a7ea4',
   },
   modalDoneText: {
     color: '#fff',

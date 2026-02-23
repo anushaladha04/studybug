@@ -54,8 +54,11 @@ const styles = StyleSheet.create({
         marginTop: 2,
         marginBottom: 4,
         width: 380,
-        borderBottomWidth: 1,
-        borderColor: '#dedede',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 2,
     },
     header: {
         flexDirection: 'row',

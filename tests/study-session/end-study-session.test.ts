@@ -18,6 +18,7 @@ describe('endStudySession', () => {
                 session_id: 'test-session-id',
                 end_time: '2025-01-01T01:00:00Z',
                 is_active: false,
+                duration: 0
             },
         ];
 
@@ -34,7 +35,7 @@ describe('endStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await endStudySession('test-session-id', new Date('2025-01-01T01:00:00Z'));
+        const result = await endStudySession('test-session-id', new Date('2025-01-01T01:00:00Z'), 0);
 
         expect(supabase.from).toHaveBeenCalledWith('study_sessions');
         expect(result).toEqual(mockUpdatedRow);
@@ -54,7 +55,7 @@ describe('endStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await endStudySession('test-session-id', new Date('2025-01-01T00:00:00Z'));
+        const result = await endStudySession('test-session-id', new Date('2025-01-01T00:00:00Z'), 0);
 
         expect(result).toBeNull();
     });
@@ -75,9 +76,9 @@ describe('endStudySession', () => {
 
         const endTime = new Date('2025-01-01T02:00:00Z');
 
-        await endStudySession('test-session-id', endTime);
+        await endStudySession('test-session-id', endTime, 0);
 
-        expect(mockUpdate).toHaveBeenCalledWith({end_time: endTime.toISOString(), is_active: false,});
+        expect(mockUpdate).toHaveBeenCalledWith({end_time: endTime.toISOString(), is_active: false, duration: 0});
     });
 
     it('should filter by correct session_id', async () => {
@@ -94,7 +95,7 @@ describe('endStudySession', () => {
             select: mockSelect,
         });
 
-        await endStudySession('test-session-id', new Date('2025-01-01T00:00:00Z'));
+        await endStudySession('test-session-id', new Date('2025-01-01T00:00:00Z'), 0);
 
         expect(mockEq).toHaveBeenCalledWith('session_id', 'test-session-id');
     });

@@ -1,42 +1,126 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AvatarIcon from '@/assets/icons/avatar';
+import BackArrow from '@/assets/icons/back-arrow.svg';
+import RightArrow from '@/assets/icons/right-arrow';
+
+import SearchBar from '@/components/search-bar';
+import SearchResultItem from '@/components/search-result-item';
+import { acceptFriendRequest, fetchByUsernameWithFriendshipStatus, requestFriend } from '@/controllers/friends';
+
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function AddFriendsScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [ searchResults, setSearchResults ] = useState<any[]>([]);
+
   const router = useRouter();
-  const [search, setSearch] = useState('');
+
+  const isSearching = searchQuery.length > 0;
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleRequest = async (to: string) => {
+    try {
+      await requestFriend(to);
+      setSearchResults(prev => 
+        prev.map(u => u.id === to ? { ...u, friendship_status: 'requested' } : u)
+      );
+    } catch (error) {
+      console.error(error);
+      setSearchResults(prev => 
+        prev.map(u => u.id === to ? { ...u, friendship_status: 'none' } : u)
+      );
+    }
+  };
+
+  const handleAcceptRequest = async (from: string) => {
+    try {
+      await acceptFriendRequest(from);
+      setSearchResults(prev => 
+        prev.map(user => 
+          user.id === from ? { ...user, friendship_status: 'friends' } : user
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const searchUsers = async (query: string) => {
+      try {
+        const data = await fetchByUsernameWithFriendshipStatus(query);        
+        setSearchResults(data); 
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    
+    searchUsers(searchQuery);
+  }, [searchQuery]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+      <View style={styles.headerContainer}>
+        <Pressable
+            style={styles.backButtonContainer}
+            onPress={() => router.back()} 
+            hitSlop={20}
+        >
+            <BackArrow />
         </Pressable>
-        <Text style={styles.title}>Add Friends</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Add Friends</Text>
       </View>
 
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Find new friends..."
-        placeholderTextColor="#999"
-        value={search}
-        onChangeText={setSearch}
+      <SearchBar 
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onClear={clearSearch}
+        placeholder={'Find friends'}
       />
+      <View style={styles.content}>
+        {isSearching ? (
+          <>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultText}>
+              Showing results for "{searchQuery}"
+              </Text>
+            </View>
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item) => item.id}
+              style={{ width: '100%' }}
+              contentContainerStyle={{ alignItems: 'center'}}
+              renderItem={({ item }) => (
+                <SearchResultItem 
+                  item={item}
+                  onFollow={handleRequest}
+                  onAccept={handleAcceptRequest}
+                />
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No users found</Text>
+              }
+            />
+          </>
+        ) : (
+          <Pressable style={
+            styles.requestContainer} 
+            onPress={() => router.push('/friend-requests')}
+          >
+            <View style={styles.avatarStack}>
+              <View style={[styles.avatar, styles.backAvatar]} />
+              <AvatarIcon width={38} height={38} top={12} left={18} zIndex={2}/>
+            </View>
 
-      <Pressable style={styles.requestsButton}>
-        <Ionicons name="mail-outline" size={20} color="#0a7ea4" />
-        <Text style={styles.requestsButtonText}>Friend Requests</Text>
-        <Ionicons name="chevron-forward" size={20} color="#999" />
-      </Pressable>
-
-      <View style={styles.contactsSection}>
-        <Text style={styles.sectionHeader}>All Contacts</Text>
-        <View style={styles.contactsPlaceholder}>
-          <Ionicons name="people-outline" size={40} color="#ccc" />
-          <Text style={styles.placeholderText}>No contacts found yet</Text>
-        </View>
+            <Text style={styles.requestText}>Friend Requests</Text>
+            <RightArrow />
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -46,65 +130,91 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
+    paddingTop: 13,
     alignItems: 'center',
   },
-  headerRow: {
+  headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '90%',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  searchBar: {
-    width: '90%',
-    height: 42,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    marginTop: 16,
-    color: '#333',
-  },
-  requestsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
-    paddingVertical: 14,
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  requestsButtonText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginLeft: 10,
-  },
-  contactsSection: {
-    width: '90%',
-    marginTop: 24,
-    flex: 1,
-  },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 16,
-  },
-  contactsPlaceholder: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    height: 60,
+    paddingHorizontal: 16,
+    marginTop: 40,
   },
-  placeholderText: {
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'Rethink Sans',
+    fontWeight: 500,
+    textAlign: 'center',
+    color: '#000',
+    paddingTop: 13,
+    marginBottom: 13
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    left: 20,
+    padding: 5,
+  },
+  requestContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 23,
+    marginTop: 30,
+    backgroundColor: '#fff',
+  },
+  avatarStack: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginRight: 15,
+    width: 60,
+    height: 50,
+    position: 'relative'
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute'
+  },
+  backAvatar: {
+    backgroundColor: '#9A9A9A',
+    top: 0,
+    left: 0,
+    zIndex: 1,
+  },
+  requestText: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Rethink Sans',
+    fontWeight: '400',
+    color: '#000',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 10,
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+  },
+  emptyText: {
     fontSize: 15,
     color: '#999',
-    marginTop: 8,
+  },
+  resultsHeader: {
+    marginTop: 21,
+    marginBottom: 16,
+    paddingLeft: 16
+  },
+  resultText: {
+    fontSize: 16,
+    fontFamily: 'Rethink Sans',
+    fontWeight: '400',
+    color: '#000',
   },
 });

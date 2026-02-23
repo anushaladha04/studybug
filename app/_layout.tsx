@@ -36,7 +36,27 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen 
+          name="add-friends" 
+          options={{ 
+            presentation: 'card',
+            headerShown: false
+          }} 
+        />
+        <Stack.Screen 
+          name="friend-requests" 
+          options={{ 
+            presentation: 'card',
+            headerShown: false
+          }} 
+        />
+        <Stack.Screen 
+          name="session-details" 
+          options={{ 
+            presentation: 'modal', 
+            title: "New Session" }} />
+        </Stack>
       <StatusBar style="dark" />
     </ThemeProvider>
   );
