@@ -16,7 +16,18 @@ export default function SessionPost({
     totalTime,
 }: SessionPostProps) {
 
-    const postedTime = new Date(time);
+    const formatPostedTime = () => {
+        const postedTime = new Date(time);
+        const now = new Date();
+
+        if (postedTime.toLocaleDateString() === now.toLocaleDateString())
+            return postedTime.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        else
+            return postedTime.toLocaleDateString();
+    };
 
     const formattedDuration = () => {
         const hours = Math.floor(totalTime / 3600);
@@ -37,7 +48,7 @@ export default function SessionPost({
                 <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.time}>{postedTime.toLocaleDateString()} </Text>
+                    <Text style={styles.time}>{formatPostedTime()} </Text>
                 </View>
             </View>
 

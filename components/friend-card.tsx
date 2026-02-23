@@ -35,6 +35,8 @@ export default function FriendCard(friend: Friend) {
         }
 
         const parts = [];
+        if (! hours && ! minutes) 
+            return 'Just now';
         if (hours && hours > 0) 
             parts.push(`${hours} hr`);
         if (minutes !== undefined && (minutes > 0 || ! hours)) 
@@ -63,7 +65,7 @@ export default function FriendCard(friend: Friend) {
                 </View>
 
                 <View style={styles.metricsContainer}>
-                    <Text style={styles.metricText}>0.5 mi</Text>
+                    <Text style={styles.metricText}>0.5 mi {/*Need to add actual data*/}</Text>
                     <View style={styles.timeContainer}>
                         <ClockIcon />
                         <Text style={styles.metricText}>{formatTime()}{! friend.is_active && ' ago'}</Text>

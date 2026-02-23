@@ -10,6 +10,12 @@ export default function HomeScreen() {
 
   const [ posts, setPosts ] = useState<any>([]);
   const [ seed, setSeed ] = useState(Math.random());
+  const [ refreshing, setRefreshing ] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setSeed(Math.random());
+  };
 
   useEffect(() => {
     const fetchFeed = async () => {
@@ -18,6 +24,8 @@ export default function HomeScreen() {
         setPosts(data); 
       } catch (error) {
         console.error(error);
+      } finally {
+        setRefreshing(false);
       }
     };
 
@@ -34,11 +42,13 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.session_id}
           style={{ width: '100%' }}
           contentContainerStyle={styles.listContent}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
           renderItem={({ item }) => (
             <SessionPost
                 name = {item.full_name}
                 time = {item.end_time}
-                title = {item.name}
+                title = {item.session_name}
                 location = {item.location_name}
                 totalTime = {item.duration}
             />
