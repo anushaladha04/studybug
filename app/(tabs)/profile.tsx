@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
-
+import { getWeeklyDurations, fetchSessionsByUser } from "@/controllers/study-session";
+import SessionPost from '@/components/session-component';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
@@ -12,6 +13,28 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+
+  const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
+  const [sessions, setSessions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const id = session.user.id;
+    Promise.all([
+      getWeeklyDurations(id, 0),
+      getWeeklyDurations(id, 1),
+      fetchSessionsByUser(id),
+    ]).then(([thisWeek, lastWeek, userSessions]) => {
+      console.log('weekly durations:', thisWeek);
+      setWeeklyDurations(thisWeek);
+      setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
+      const completed = (userSessions ?? [])
+        .filter((s: any) => s.end_time !== null)
+        .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+      setSessions(completed);
+    });
+  }, [session?.user?.id]);
 
   async function handleSaveBio() {
     if (!session?.user?.id) return;
@@ -66,9 +89,24 @@ export default function ProfileScreen() {
 
       <View style={styles.content}>
         {activeTab === 'insights' ? (
-          <Text style={styles.emptyText}>No insights yet</Text>
+          <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
         ) : (
-          <Text style={styles.emptyText}>No archived sessions</Text>
+          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 12 }}>
+            {sessions.length === 0 ? (
+              <Text style={styles.emptyText}>No past sessions yet</Text>
+            ) : (
+              sessions.map((s) => (
+                <SessionPost
+                  key={s.session_id}
+                  name={profile?.full_name ?? '-'}
+                  time={relativeTime(s.start_time)}
+                  title={sessionTitle(s.start_time)}
+                  location={s.subject ?? ''}
+                  totalTime={formatDuration(s.duration)}
+                />
+              ))
+            )}
+          </ScrollView>
         )}
       </View>
 
@@ -103,6 +141,141 @@ export default function ProfileScreen() {
     </View>
   );
 }
+
+function sessionTitle(isoString: string): string {
+  const hour = new Date(isoString).getHours();
+  if (hour >= 5 && hour < 9) return 'Early Morning Study Session';
+  if (hour >= 9 && hour < 12) return 'Morning Study Session';
+  if (hour >= 12 && hour < 14) return 'Midday Study Session';
+  if (hour >= 14 && hour < 17) return 'Afternoon Study Session';
+  if (hour >= 17 && hour < 20) return 'Evening Study Session';
+  if (hour >= 20 && hour < 23) return 'Night Study Session';
+  return 'Late Night Study Session';
+}
+
+function relativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds < 0) return '0 min';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
+}
+
+const CARD_WIDTH = Dimensions.get('window').width * 0.9;
+const BAR_MAX_HEIGHT = 120;
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; lastWeekTotal: number | null }) {
+  const max = Math.max(...durations, 1);
+  const todayIndex = new Date().getDay();
+
+  const thisWeekTotal = durations.reduce((sum, v) => sum + v, 0);
+  let subtitleText: string | null = null;
+  if (lastWeekTotal !== null && lastWeekTotal > 0) {
+    const pct = Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100);
+    const dir = pct >= 0 ? 'Up' : 'Down';
+    subtitleText = `${dir} ${Math.abs(pct)}% from last week`;
+  }
+
+  return (
+    <View style={chartStyles.card}>
+      <Text style={chartStyles.cardTitle}>Your Week in Study Sessions</Text>
+      <Text style={chartStyles.cardSubtitle}>{subtitleText ?? ''}</Text>
+      <View style={chartStyles.barsRow}>
+        {durations.map((val, i) => {
+          const barHeight = Math.max(4, (val / max) * BAR_MAX_HEIGHT);
+          const isToday = i === todayIndex;
+          return (
+            <View key={i} style={chartStyles.barColumn}>
+              <View
+                style={[
+                  chartStyles.bar,
+                  { height: barHeight },
+                  isToday ? chartStyles.barToday : chartStyles.barDefault,
+                ]}
+              />
+              <Text style={[chartStyles.dayLabel, isToday && chartStyles.dayLabelToday]}>
+                {DAY_LABELS[i]}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const chartStyles = StyleSheet.create({
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#222',
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    marginBottom: 20,
+  },
+  barsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: BAR_MAX_HEIGHT + 24,
+  },
+  barColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginHorizontal: 4,
+  },
+  bar: {
+    width: '100%',
+    borderRadius: 5,
+  },
+  barDefault: {
+    backgroundColor: '#bbb',
+  },
+  barToday: {
+    backgroundColor: '#555',
+  },
+  dayLabel: {
+    fontSize: 11,
+    color: '#bbb',
+    marginTop: 5,
+  },
+  dayLabelToday: {
+    color: '#555',
+    fontWeight: '600',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -239,7 +412,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   emptyText: {
     fontSize: 15,
