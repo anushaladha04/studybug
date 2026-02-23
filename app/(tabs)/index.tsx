@@ -20,10 +20,11 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchFeed = async () => {
       try {
-        const data = await fetchPostsRandomOrder(seed);        
-        setPosts(data); 
+        const data = await fetchPostsRandomOrder(seed);
+
+        setPosts(data);
       } catch (error) {
-        console.error(error);
+        console.error("Fetch error:", error);
       } finally {
         setRefreshing(false);
       }
@@ -32,6 +33,8 @@ export default function HomeScreen() {
     fetchFeed();
   }, [seed]);
 
+  console.log('Current Post IDs:', posts.map(p => p.session_id));
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -39,12 +42,12 @@ export default function HomeScreen() {
       </View>
       <FlatList
           data={posts}
-          keyExtractor={(item) => item.session_id}
+          keyExtractor={(item) => String(item.session_id)}
           style={{ width: '100%' }}
           contentContainerStyle={styles.listContent}
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          renderItem={({ item }) => (
+          renderItem={({ item }) =>  (
             <SessionPost
                 name = {item.full_name}
                 time = {item.end_time}

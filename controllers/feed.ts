@@ -30,8 +30,11 @@ export async function fetchPostsRandomOrder(seed: Float) {
         return [];
     }
 
-    const { data, error } = await supabase
-        .rpc('randomize_feed', { user_seed: seed });
+    const { data, error } = await supabase.rpc(
+        'get_weighted_feed', {
+            user_seed: seed.toString()
+        }
+    );
     
     if (error) {
         console.error('Error fetching posts:', error.message);
