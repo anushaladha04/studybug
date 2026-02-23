@@ -64,11 +64,10 @@ export default function SessionPost({
 const styles = StyleSheet.create({
       card: {
         backgroundColor: '#fff',
-        paddingHorizontal: 26,
-        paddingVertical: 12,
+        paddingHorizontal: 29,
+        paddingVertical: 19,
         marginTop: 2,
         marginBottom: 4,
-        width: 380,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -84,11 +83,13 @@ const styles = StyleSheet.create({
         width: 46,
         height: 46,
         borderRadius: 23,
-        marginRight: 12,
+        marginRight: 15,
     },
     name: {
-        fontSize: 17,
-        color: '#1a1a1a',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     time: {
         fontSize: 15,
@@ -102,27 +103,31 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '500',
-        color: '#1a1a1a',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     location: {
-        fontSize: 15,
-        color: '#666',
-        marginTop: 3,
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeBlock: {
         alignItems: 'flex-end',
     },
     totalTimeLabel: {
-        fontSize: 15,
-        color: '#888',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeValue: {
-        fontSize: 17,
-        color: '#1a1a1a',
-        marginTop: 2,
+        fontSize: 16,
         fontWeight: '500',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     chartPlaceholder: {
         height: 150,
