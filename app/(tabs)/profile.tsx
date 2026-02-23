@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
-import { getWeeklyDurations } from "@/controllers/study-session";
-
+import { getWeeklyDurations, fetchSessionsByUser } from "@/controllers/study-session";
+import SessionPost from '@/components/session-component';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
@@ -16,6 +16,7 @@ export default function ProfileScreen() {
 
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
+  const [sessions, setSessions] = useState<any[]>([]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -23,10 +24,15 @@ export default function ProfileScreen() {
     Promise.all([
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
-    ]).then(([thisWeek, lastWeek]) => {
+      fetchSessionsByUser(id),
+    ]).then(([thisWeek, lastWeek, userSessions]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
+      const completed = (userSessions ?? [])
+        .filter((s: any) => s.end_time !== null)
+        .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+      setSessions(completed);
     });
   }, [session?.user?.id]);
 
@@ -85,7 +91,22 @@ export default function ProfileScreen() {
         {activeTab === 'insights' ? (
           <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
         ) : (
-          <Text style={styles.emptyText}>No archived sessions</Text>
+          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 12 }}>
+            {sessions.length === 0 ? (
+              <Text style={styles.emptyText}>No past sessions yet</Text>
+            ) : (
+              sessions.map((s) => (
+                <SessionPost
+                  key={s.session_id}
+                  name={profile?.full_name ?? '-'}
+                  time={relativeTime(s.start_time)}
+                  title={sessionTitle(s.start_time)}
+                  location={s.subject ?? ''}
+                  totalTime={formatDuration(s.duration)}
+                />
+              ))
+            )}
+          </ScrollView>
         )}
       </View>
 
@@ -119,6 +140,38 @@ export default function ProfileScreen() {
       </Modal>
     </View>
   );
+}
+
+function sessionTitle(isoString: string): string {
+  const hour = new Date(isoString).getHours();
+  if (hour >= 5 && hour < 9) return 'Early Morning Study Session';
+  if (hour >= 9 && hour < 12) return 'Morning Study Session';
+  if (hour >= 12 && hour < 14) return 'Midday Study Session';
+  if (hour >= 14 && hour < 17) return 'Afternoon Study Session';
+  if (hour >= 17 && hour < 20) return 'Evening Study Session';
+  if (hour >= 20 && hour < 23) return 'Night Study Session';
+  return 'Late Night Study Session';
+}
+
+function relativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds < 0) return '0 min';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
 }
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.9;
