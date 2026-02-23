@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(startTime: Date, isPublic: boolean, subject: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, subject: string, focusLevel: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -13,11 +13,14 @@ export async function startStudySession(startTime: Date, isPublic: boolean, subj
         .insert([
             { 
                 user_id: user?.id, 
+                session_name: sessionName,
                 start_time: startTime.toISOString(),
                 end_time: null,
                 is_active: true,
                 is_public: isPublic, 
-                subject: subject 
+                subject: subject,
+                focus_level: focusLevel,
+                note: note
             },
         ])
         .select();
@@ -31,11 +34,12 @@ export async function startStudySession(startTime: Date, isPublic: boolean, subj
     }
 }
 
-export async function endStudySession(sessionId: string, endTime: Date) {    
+export async function endStudySession(sessionId: string, endTime: Date, duration: number) {    
     const { data, error } = await supabase
         .from('study_sessions')
         .update({
             end_time: endTime.toISOString(),
+            duration: duration,
             is_active: false
         })
         .eq('session_id', sessionId)

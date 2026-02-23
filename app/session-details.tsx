@@ -5,28 +5,32 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 export default function TimerConfig() {
     const router = useRouter();
 
-    const [ subject, setSubject ] = useState('');
+    const [ name, setName ] = useState('');
     const [ location, setLocation ] = useState('');
     const [ focusLevel, setFocusLevel ] = useState<'Low' | 'High'>('Low');
-    const [ feeling, setFeeling ] = useState('');
-    const [ visibility, setVisibility ] = useState<'Private' | 'Public'>('Private');
+    const [ note, setNote ] = useState('');
+    const [ area, setArea ] = useState<'Academic' | 'Career'>('Academic');
 
     const handleStartSession = () => {
-        if (!subject || !location || !feeling) {
+        if (!name || !location) {
             alert('Please fill in all fields.');
             return;
         }
-
+        
+        router.replace({
+            params: { name, location, focusLevel, note, area, refresh: 'true' },
+            pathname: '/(tabs)/record',
+        });
         // backend logic
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>What are you studying?</Text>
+            <Text style={styles.title}>Session Name</Text>
             <TextInput 
                 style={styles.input}
-                value={subject}
-                onChangeText={setSubject}
+                value={name}
+                onChangeText={setName}
                 placeholder='' />
 
             <Text style={styles.title}>Location</Text>
@@ -69,45 +73,49 @@ export default function TimerConfig() {
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.title}>How are you feeling?</Text>
-            <TextInput 
-                style={styles.input}
-                value={feeling}
-                onChangeText={setFeeling}
-                placeholder='' />
-
-            <Text style={styles.title}>Private/Public</Text>
+            <Text style={styles.title}>Area of Work</Text>
             <View style={styles.toggleRow}>
                 <TouchableOpacity
                     style={[
                         styles.toggleButton,
-                        visibility === 'Private' && styles.toggleButtonActive
+                        area === 'Academic' && styles.toggleButtonActive
                     ]}
-                    onPress={() => setVisibility('Private')}
+                    onPress={() => setArea('Academic')}
                 >
                     <Text style={[
                         styles.toggleText,
-                        visibility === 'Private' && styles.toggleTextActive
+                        area === 'Academic' && styles.toggleTextActive
                     ]}>
-                        Private
+                        Academic
                     </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
                     style={[
                         styles.toggleButton,
-                        visibility === 'Public' && styles.toggleButtonActive
+                        area === 'Career' && styles.toggleButtonActive
                     ]}
-                    onPress={() => setVisibility('Public')}
+                    onPress={() => setArea('Career')}
                 >
                     <Text style={[
                         styles.toggleText,
-                        visibility === 'Public' && styles.toggleTextActive
+                        area === 'Career' && styles.toggleTextActive
                     ]}>
-                        Public
+                        Career
                     </Text>
                 </TouchableOpacity>
             </View>
+
+            <Text style={styles.title}>Add a Note</Text>
+            <TextInput 
+                style={styles.input}
+                value={note}
+                onChangeText={setNote}
+                placeholder='' />
+
+            <TouchableOpacity style={styles.button} onPress={handleStartSession}>
+                <Text style={styles.buttonText}>▶  Start</Text>
+            </TouchableOpacity>
         </View>
 
     );
@@ -116,24 +124,23 @@ export default function TimerConfig() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
+        padding: 10,
         backgroundColor: "white",
-        justifyContent: "center",
     },
     title: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "bold",
-        textAlign: "center",
-        marginBottom: 20,
+        marginBottom: 10,
         marginTop: 10,
+        marginLeft: 20,
         color: "#000",
     },
     input: {
-        height: 50,
+        height: 45,
         backgroundColor: "#52bb97",
         borderRadius: 15,
         paddingHorizontal: 15,
-        marginBottom: 15,
+        marginBottom: 30,
         marginHorizontal: 20,
         fontSize: 16,
     },
@@ -144,7 +151,6 @@ const styles = StyleSheet.create({
     toggleRow: {
         flexDirection: 'row',
         gap: 15,
-        marginBottom: 15,
         marginHorizontal: 20,
     },
     toggleButton: {
@@ -152,17 +158,37 @@ const styles = StyleSheet.create({
         backgroundColor: '#a4deca',
         borderRadius: 25,
         padding: 15,
+        marginBottom: 30,
         alignItems: 'center',
     },
     toggleButtonActive: {
         backgroundColor: '#52bb97',
     },
     toggleText: {
-        fontSize: 16,
+        fontSize: 15,
         color: '#1d2422',
     },
     toggleTextActive: {
         color: '#000',
         fontWeight: '600',
     },
-})
+    button: {
+        paddingHorizontal: 28,
+        paddingVertical: 15,
+        borderWidth: 1.5,
+        marginTop: 35,
+        marginHorizontal: 30,
+        borderColor: '#bbb',
+        borderRadius: 25,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        minWidth: 130,
+    },
+        buttonText: {
+        fontSize: 15,
+        fontWeight: '600',
+        fontFamily: 'monospace',
+        color: '#333',
+    },
+});
