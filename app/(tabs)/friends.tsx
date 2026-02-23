@@ -1,6 +1,6 @@
-import AddFriend from '@/assets/icons/add-friend.svg';
-import FriendCard from '@/components/friend-card';
+ import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
+import AddFriend from '@/assets/icons/add-friend.svg';
 import { fetchAllFriends } from '@/controllers/friends';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
