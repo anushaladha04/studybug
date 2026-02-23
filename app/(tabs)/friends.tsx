@@ -1,91 +1,74 @@
+import AddFriend from '@/assets/icons/add-friend.svg';
 import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
-import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import SearchBar from '@/components/search-bar';
+import { fetchAllFriends } from '@/controllers/friends';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function FriendsScreen() {
-  const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
 
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
-  const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
   const [ friends, setFriends ] = useState<any[]>([]);
+  
+  const router = useRouter();
 
   const isSearching = searchQuery.length > 0;
 
-  const handleRequest = async (to: string, username: string) => {
-    try {
-      await requestFriend(to);
-      Alert.alert(`Alert sent to ${username}`)
-    } catch (error) {
-      console.error(error);
-    }
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const fetchFriends = async () => {
       try {
-        const data = await fetchAllFriends();    
+        const data = await fetchAllFriends();
         setFriends(data); 
       } catch (error) {
         console.error(error);
       }
     };
 
-  const handleAcceptRequest = async (from: string) => {
-    try {
-      await acceptFriendRequest(from);
-    } catch (error) {
-      console.error(error);
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(friends);
+      return;
     }
 
-    setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
-    await fetchFriends();
-  };
+    const results = friends.filter(friend =>
+      friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  useEffect(() => {
-    const searchUsers = async (query: string) => {
-      try {
-        const data = await fetchByUsername(query);        
-        setSearchResults(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    searchUsers(searchQuery);
-  }, [searchQuery]);
+    setSearchResults(results);
+  }, [searchQuery, friends]);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const data = await fetchFriendRequests();       
-        setFriendRequests(data); 
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    
-    fetchRequests();
-  }, []);
-
-  useEffect(() => {
-    fetchFriends();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchFriends();
+    }, [])
+  );
 
   const activeFriends = friends.filter(friend => friend.is_active === true);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Friends</Text>
-
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search friends..."
-        placeholderTextColor="#999"
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>Friends</Text>
+        <Pressable 
+          style={styles.addFriendContainer} 
+          onPress={() => router.push('/add-friends')}
+        >
+          <AddFriend />
+        </Pressable>
+      </View>
+      <SearchBar 
         value={searchQuery}
         onChangeText={setSearchQuery}
+        onClear={clearSearch}
+        placeholder={'Search friends'}
       />
-
       { !isSearching && (
         <View style={styles.tabBar}>
           <Pressable
@@ -100,101 +83,82 @@ export default function FriendsScreen() {
           >
             <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Friends</Text>
           </Pressable>
-          <Pressable
-            style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
-            onPress={() => setActiveTab('requests')}
-          >
-            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Requests</Text>
-          </Pressable>
         </View>
       )}
 
       <View style={styles.content}>
         {isSearching ? (
+          <>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultText}>
+              Showing results for "{searchQuery}"
+              </Text>
+            </View>
             <FlatList
               data={searchResults}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.friend_id}
               style={{ width: '100%' }}
+              contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
-                <View style={styles.resultItem}>
-                  <View style={styles.userInfo}>
-                    <Text style={styles.fullNameText}>{item.full_name}</Text>
-                    <Text style={styles.usernameText}>@{item.username}</Text>
-                  </View>
-                  <Pressable 
-                    style={styles.addButton}
-                    onPress={() => handleRequest(item.id, item.username)}
-                  >
-                    <Text style={styles.addButtonText}>Add</Text>
-                  </Pressable>
-                </View>
+                <FriendCard
+                  full_name = {item.full_name}
+                  location = {item.location_name}
+                  start_time = {item.start_time}
+                  end_time = {item.end_time}
+                  is_active = {item.is_active}
+                  note = {item.note}
+                />
               )}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>No users found</Text>
               }
             />
+          </>
           ) : (
-          <View style={styles.content}>
+          <>
             {activeTab === 'active' ? (
               <FlatList
                 data={activeFriends}
                 keyExtractor={(item) => item.friend_id}
                 style={{ width: '100%' }}
+                contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                 renderItem={({ item }) => (
                   <FriendCard
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
+                      end_time = {item.end_time}
                       is_active = {item.is_active}
+                      note = {item.note}
                   />
                 )}
                 ListEmptyComponent={
                   <Text style={styles.emptyText}>No active friends yet</Text>
                 }
               />
-            ) : ( activeTab === 'all' ? (
+            ) : (
                 <FlatList
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
+                  contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                   renderItem={({ item }) => (
                     <FriendCard
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
+                      end_time = {item.end_time}
                       is_active = {item.is_active}
+                      note = {item.note}
                   />
                   )}
                   ListEmptyComponent={
                     <Text style={styles.emptyText}>No friends added yet </Text>
                   }
                 />
-              ) : (
-              <FlatList
-                data={friendRequests}
-                keyExtractor={(item) => item.friend_id}
-                style={{ width: '100%' }}
-                renderItem={({ item }) => (
-                  <View style={styles.resultItem}>
-                    <View style={styles.userInfo}>
-                      <Text style={styles.fullNameText}>{item.full_name}</Text>
-                      <Text style={styles.usernameText}>@{item.username}</Text>
-                    </View>
-                    <Pressable 
-                      style={styles.addButton}
-                      onPress={() => handleAcceptRequest(item.friend_id)}
-                    >
-                      <Text style={styles.addButtonText}>Accept</Text>
-                    </Pressable>
-                  </View>
-                )}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No friend requests </Text>
-                }
-              />
               )
-            )}
-          </View>
+            }
+          </>
         )}
       </View>
     </View>
@@ -205,92 +169,80 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
+    paddingTop: 13,
     alignItems: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  searchBar: {
-    width: '90%',
-    height: 42,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 60,
     paddingHorizontal: 16,
-    fontSize: 15,
-    marginTop: 16,
-    color: '#333',
+    marginTop: 40,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'Rethink Sans',
+    fontWeight: 500,
+    textAlign: 'center',
+    color: '#000',
+    paddingTop: 13,
+    marginBottom: 13
+  },
+  addFriendContainer: {
+    position: 'absolute',
+    right: 20,
+    padding: 5,
   },
   tabBar: {
     flexDirection: 'row',
     width: '90%',
     marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginBottom: 14,
+    borderBottomWidth: 5,
+    borderBottomColor: '#E2E2E2',
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#0a7ea4',
+    borderBottomWidth: 5,
+    borderBottomColor: '#1EA1FF',
+    marginBottom: -5
   },
   tabText: {
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
     fontWeight: '500',
-    color: '#999',
+    color: '#000000',
   },
   activeTabText: {
-    color: '#0a7ea4',
-    fontWeight: '600',
+    color: '#000000',
+    fontWeight: '700',
   },
   content: {
     flex: 1,
     width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 10,
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
   },
   emptyText: {
     fontSize: 15,
     color: '#999',
   },
-  resultItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    width: '100%',
+  resultsHeader: {
+    marginTop: 21,
+    marginBottom: 16,
+    paddingLeft: 16
   },
-  userInfo: {
-    flexDirection: 'column',
-    flex: 1,
-  },
-  fullNameText: {
+  resultText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  usernameText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  addButton: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    fontFamily: 'Rethink Sans',
+    fontWeight: '400',
+    color: '#000',
   },
 });

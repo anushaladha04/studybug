@@ -1,14 +1,17 @@
 import { supabase } from "@/lib/supabase";
 
-export async function fetchByUsername(searchPattern: string) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .ilike('username', `%${searchPattern}%`)
-        .limit(10);
-    
+export async function fetchByUsernameWithFriendshipStatus(searchPattern: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !searchPattern) 
+        return [];
+
+    const { data, error } = await supabase.rpc('search_users_with_relations', {
+        search_pattern: searchPattern,
+        curr_user_id: user.id
+    });
+
     if (error) {
-        console.error('Error fetching users:', error.message);
+        console.error('Search error:', error);
         return [];
     }
 

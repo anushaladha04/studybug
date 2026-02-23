@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 interface SessionPostProps {
     name: string;
@@ -34,7 +34,7 @@ export default function SessionPost({
     return (
         <View style={styles.card}>
             <View style={styles.header}>
-                <View style={styles.avatar} />
+                <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{name}</Text>
                     <Text style={styles.time}>{postedTime.toLocaleDateString()} </Text>
@@ -44,7 +44,7 @@ export default function SessionPost({
             <View style={styles.infoRow}>
                 <View>
                     <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.location}>{location}</Text>
+                    <Text style={styles.location}>{location} </Text>
                 </View>
                 <View style={styles.totalTimeBlock}>
                     <Text style={styles.totalTimeLabel}>Total Time</Text>
@@ -64,43 +64,36 @@ export default function SessionPost({
 const styles = StyleSheet.create({
       card: {
         backgroundColor: '#fff',
-        paddingHorizontal: 18,
-        paddingTop: 20,
-        paddingBottom: 14,
-        marginVertical: 6,
+        paddingHorizontal: 26,
+        paddingVertical: 12,
+        marginTop: 2,
+        marginBottom: 4,
         width: 380,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 2,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 14,
     },
     avatar: {
         width: 46,
         height: 46,
         borderRadius: 23,
         marginRight: 12,
-        backgroundColor: '#2a2f30',
     },
     name: {
         fontSize: 17,
-        fontWeight: '700',
         color: '#1a1a1a',
     },
     time: {
-        fontSize: 13,
+        fontSize: 15,
         color: '#888',
         marginTop: 2,
-    },
-    menuDots: {
-        fontSize: 20,
-        color: '#888',
-        paddingLeft: 10,
     },
     infoRow: {
         flexDirection: 'row',
@@ -110,7 +103,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 17,
-        fontWeight: '700',
+        fontWeight: '500',
         color: '#1a1a1a',
     },
     location: {
@@ -122,19 +115,19 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
     },
     totalTimeLabel: {
-        fontSize: 14,
+        fontSize: 15,
         color: '#888',
     },
     totalTimeValue: {
-        fontSize: 19,
-        fontWeight: '700',
+        fontSize: 17,
         color: '#1a1a1a',
         marginTop: 2,
+        fontWeight: '500',
     },
     chartPlaceholder: {
         height: 150,
         backgroundColor: '#f2f2f2',
-        borderRadius: 14,
+        borderRadius: 7,
         marginTop: 10,
     },
     actions: {
