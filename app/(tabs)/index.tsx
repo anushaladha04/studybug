@@ -33,8 +33,6 @@ export default function HomeScreen() {
     fetchFeed();
   }, [seed]);
 
-  console.log('Current Post IDs:', posts.map(p => p.session_id));
-
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
