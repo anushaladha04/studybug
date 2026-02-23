@@ -1,12 +1,10 @@
-import FriendCard from '@/components/friend-card';
-import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import FriendCard from '@/components/friend-card';
+import { acceptFriendRequest, fetchAllFriends, fetchByUsername, fetchFriendRequests, requestFriend } from '@/controllers/friends';
 
 export default function FriendsScreen() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'active' | 'all' | 'requests'>('active');
 
   const [ searchQuery, setSearchQuery ] = useState('');
@@ -80,10 +78,12 @@ export default function FriendsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <View style={{ width: 24 }} />
-        <Text style={styles.title}>Friends</Text>
-        <Pressable onPress={() => router.push('/add-friends')}>
+        <Pressable onPress={() => { /*TODO: Add friend flow */ }}>
           <Ionicons name="person-add-outline" size={24} color="#333" />
+        </Pressable>
+        <Text style={styles.title}>Friends</Text>
+        <Pressable onPress={() => { /* TODO: Notifications flow */ }}>
+          <Ionicons name="notifications-outline" size={24} color="#333" />
         </Pressable>
       </View>
 
