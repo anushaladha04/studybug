@@ -2,19 +2,16 @@ import { isMapboxEnabled } from '@/lib/mapbox-config';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
-// Try to import Mapbox - will fail gracefully in Expo Go
 let MapboxGL: any = null;
 try {
-  // Only attempt to load if Mapbox should be enabled
   if (isMapboxEnabled()) {
     MapboxGL = require('@rnmapbox/maps').default;
-    // Set Mapbox access token
-    const token = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1Ijoia3Vrc3RlcjkzIiwiYSI6ImNta3VkZjhhdjF5MnAzZHBzd3o5amFkOWQifQ.u0dyXONcMJbWcG5F_e1uvw';
+    const token =
+      process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ||
+      'pk.eyJ1Ijoia3Vrc3RlcjkzIiwiYSI6ImNta3VkZjhhdjF5MnAzZHBzd3o5amFkOWQifQ.u0dyXONcMJbWcG5F_e1uvw';
     MapboxGL.setAccessToken(token);
   }
-} catch (error) {
-  // Mapbox not available (e.g., in Expo Go or not installed)
-  // This is expected when running in Expo Go
+} catch {
   MapboxGL = null;
 }
 
@@ -26,6 +23,7 @@ export interface LocationUser {
   longitude: number;
   locationName?: string;
   imageUrl?: string;
+  pinColor?: string;
 }
 
 interface StudyMapProps {
@@ -33,9 +31,11 @@ interface StudyMapProps {
   onUserPress?: (user: LocationUser) => void;
   showUserLocation?: boolean;
   userLocation?: { latitude: number; longitude: number } | null;
+  showMapboxBadge?: boolean;
+  showZoomControls?: boolean;
+  showMarkerLabels?: boolean;
 }
 
-// Default location (Los Angeles) - works well for testing
 const DEFAULT_LOCATION = {
   latitude: 34.0522,
   longitude: -118.2437,
@@ -46,6 +46,9 @@ export function StudyMap({
   onUserPress,
   showUserLocation = true,
   userLocation,
+  showMapboxBadge = true,
+  showZoomControls = true,
+  showMarkerLabels = true,
 }: StudyMapProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
@@ -54,7 +57,6 @@ export function StudyMap({
   const [zoomLevel, setZoomLevel] = React.useState(14);
   const hasCenteredOnUserRef = React.useRef(false);
 
-  // Use user location if available, otherwise fall back to default
   const centerLocation = userLocation || DEFAULT_LOCATION;
 
   React.useEffect(() => {
@@ -73,67 +75,64 @@ export function StudyMap({
   const handleZoomIn = () => {
     const newZoom = Math.min(zoomLevel + 1, 20);
     setZoomLevel(newZoom);
-    // Get current center from camera and zoom in
-    cameraRef.current?.setCamera({
-      zoomLevel: newZoom,
-      animationDuration: 300,
-    });
+    cameraRef.current?.setCamera({ zoomLevel: newZoom, animationDuration: 300 });
   };
 
   const handleZoomOut = () => {
     const newZoom = Math.max(zoomLevel - 1, 0);
     setZoomLevel(newZoom);
-    // Get current center from camera and zoom out
-    cameraRef.current?.setCamera({
-      zoomLevel: newZoom,
-      animationDuration: 300,
-    });
+    cameraRef.current?.setCamera({ zoomLevel: newZoom, animationDuration: 300 });
   };
 
   const handleCenterOnUser = () => {
-    if (userLocation) {
-      cameraRef.current?.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 14,
-        animationDuration: 1000,
-      });
-      setZoomLevel(14);
-    }
+    if (!userLocation) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: [userLocation.longitude, userLocation.latitude],
+      zoomLevel: 14,
+      animationDuration: 700,
+    });
+    setZoomLevel(14);
   };
 
   const getPinLabel = (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return 'Friend';
     const firstName = trimmed.split(/\s+/)[0];
-
-    if (zoomLevel < 12) {
-      return firstName.slice(0, 1).toUpperCase();
-    }
-    if (zoomLevel < 14) {
-      return firstName;
-    }
+    if (zoomLevel < 12) return firstName.slice(0, 1).toUpperCase();
+    if (zoomLevel < 14) return firstName;
     return trimmed;
   };
 
-  const compactLabel = zoomLevel < 12;
-
-  // Fallback UI when Mapbox is disabled (e.g., in Expo Go)
   if (!mapboxEnabled) {
     return (
       <View style={styles.container}>
-        <View style={styles.fallbackContainer}>
-          <Text style={styles.fallbackTitle}>
-            🗺️ Map View
-          </Text>
-          <Text style={styles.fallbackMessage}>
-            Mapbox doesn't work with Expo Go. Use a development build to see the interactive map.
-          </Text>
+        <View style={styles.fallbackMap}>
+          <View style={styles.roadHorizontal} />
+          <View style={[styles.roadVertical, { left: '22%' }]} />
+          <View style={[styles.roadVertical, { left: '52%', height: '88%', top: '-4%', transform: [{ rotate: '12deg' }] }]} />
+          <View style={[styles.roadDiagonal, { top: '28%' }]} />
+          <View style={[styles.roadDiagonal, { top: '62%' }]} />
+          {users.slice(0, 4).map((user, index) => (
+            <View
+              key={user.id}
+              style={[
+                styles.fallbackPin,
+                {
+                  top: `${22 + index * 14}%`,
+                  left: `${18 + (index % 3) * 26}%`,
+                  borderColor: user.pinColor ?? '#ea9a9a',
+                },
+              ]}>
+              <View style={styles.fallbackPinInner} />
+            </View>
+          ))}
         </View>
       </View>
     );
   }
 
-  // Mapbox-enabled view
+  const compactLabel = zoomLevel < 12;
+
   return (
     <View style={styles.container}>
       <MapboxGL.MapView
@@ -144,17 +143,13 @@ export function StudyMap({
             setZoomLevel(nextZoom);
           }
         }}
-        styleURL={
-          theme === 'dark'
-            ? MapboxGL.StyleURL.Dark
-            : MapboxGL.StyleURL.Street
-        }
-        zoomEnabled={true}
-        scrollEnabled={true}
-        pitchEnabled={true}
-        rotateEnabled={true}
-        logoEnabled={true}
-        attributionEnabled={true}>
+        styleURL={theme === 'dark' ? MapboxGL.StyleURL.Dark : MapboxGL.StyleURL.Street}
+        zoomEnabled
+        scrollEnabled
+        pitchEnabled
+        rotateEnabled
+        logoEnabled={showMapboxBadge}
+        attributionEnabled={showMapboxBadge}>
         <MapboxGL.Camera
           ref={cameraRef}
           defaultSettings={{
@@ -162,29 +157,20 @@ export function StudyMap({
             zoomLevel: 14,
           }}
           animationMode="flyTo"
-          animationDuration={2000}
+          animationDuration={1000}
         />
 
-        {/* User's location - use Mapbox's built-in UserLocation for better accuracy */}
-        {showUserLocation && userLocation && (
-          <MapboxGL.UserLocation
-            visible={true}
-            animated={true}
-            showsUserHeadingIndicator={true}
-            androidRenderMode="gps"
-          />
-        )}
-
-        {/* Fallback user marker if UserLocation not available */}
-        {showUserLocation && !userLocation && (
+        {showUserLocation && (
           <MapboxGL.PointAnnotation
             id="user-location"
-            coordinate={[centerLocation.longitude, centerLocation.latitude]}>
+            coordinate={[
+              (userLocation ?? centerLocation).longitude,
+              (userLocation ?? centerLocation).latitude,
+            ]}>
             <View collapsable={false} style={styles.userMarker} />
           </MapboxGL.PointAnnotation>
         )}
 
-        {/* Other users' markers */}
         {users.map((user) => (
           <MapboxGL.PointAnnotation
             key={user.id}
@@ -192,14 +178,16 @@ export function StudyMap({
             coordinate={[user.longitude, user.latitude]}
             onSelected={() => onUserPress?.(user)}>
             <View collapsable={false} style={styles.pinMarkerWrap}>
+              {showMarkerLabels && (
+                <View collapsable={false} style={[styles.pinLabel, compactLabel && styles.pinLabelCompact]}>
+                  <Text numberOfLines={1} style={styles.pinLabelText}>
+                    {getPinLabel(user.name)}
+                  </Text>
+                </View>
+              )}
               <View
                 collapsable={false}
-                style={[styles.pinLabel, compactLabel && styles.pinLabelCompact]}>
-                <Text numberOfLines={1} style={styles.pinLabelText}>
-                  {getPinLabel(user.name)}
-                </Text>
-              </View>
-              <View collapsable={false} style={styles.userPin}>
+                style={[styles.userPin, user.pinColor ? { backgroundColor: user.pinColor } : null]}>
                 <View collapsable={false} style={styles.pinDot} />
               </View>
             </View>
@@ -207,55 +195,47 @@ export function StudyMap({
         ))}
       </MapboxGL.MapView>
 
-      {/* Mapbox indicator badge */}
-      <View style={styles.mapboxBadge}>
-        <Text style={styles.mapboxBadgeText}>🗺️ Mapbox</Text>
-      </View>
+      {showMapboxBadge && (
+        <View style={styles.mapboxBadge}>
+          <Text style={styles.mapboxBadgeText}>Mapbox</Text>
+        </View>
+      )}
 
-      {/* Zoom controls */}
-      <View style={styles.zoomControls}>
-        <TouchableOpacity
-          style={styles.zoomButton}
-          onPress={handleZoomIn}>
-          <Text style={styles.zoomButtonText}>+</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.zoomButton}
-          onPress={handleZoomOut}>
-          <Text style={styles.zoomButtonText}>−</Text>
-        </TouchableOpacity>
-        {userLocation && (
-          <TouchableOpacity
-            style={[styles.zoomButton, styles.centerButton]}
-            onPress={handleCenterOnUser}>
-            <Text style={styles.zoomButtonText}>📍</Text>
+      {showZoomControls && (
+        <View style={styles.zoomControls}>
+          <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
+            <Text style={styles.zoomButtonText}>+</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
+            <Text style={styles.zoomButtonText}>-</Text>
+          </TouchableOpacity>
+          {userLocation && (
+            <TouchableOpacity style={[styles.zoomButton, styles.centerButton]} onPress={handleCenterOnUser}>
+              <Text style={styles.zoomButtonText}>o</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  map: { flex: 1 },
   userMarker: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#7da6f8',
     borderWidth: 3,
     borderColor: '#fff',
   },
   userPin: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#FF3B30',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ea9a9a',
     borderWidth: 3,
     borderColor: '#fff',
     justifyContent: 'center',
@@ -266,7 +246,7 @@ const styles = StyleSheet.create({
     minWidth: 36,
   },
   pinLabel: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 10,
     paddingHorizontal: 7,
     paddingVertical: 3,
@@ -276,7 +256,7 @@ const styles = StyleSheet.create({
     maxWidth: 96,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 2,
   },
@@ -292,36 +272,62 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pinDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#fff',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#e7e7e7',
   },
-  // Fallback styles
-  fallbackContainer: {
+  fallbackMap: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+    backgroundColor: '#dfdfdf',
+    overflow: 'hidden',
+  },
+  roadHorizontal: {
+    position: 'absolute',
+    top: '44%',
+    left: '-10%',
+    width: '120%',
+    height: 18,
+    backgroundColor: '#d0d0d0',
+    transform: [{ rotate: '8deg' }],
+  },
+  roadVertical: {
+    position: 'absolute',
+    top: '-10%',
+    width: 12,
+    height: '120%',
+    backgroundColor: '#ececec',
+    transform: [{ rotate: '8deg' }],
+  },
+  roadDiagonal: {
+    position: 'absolute',
+    left: '-10%',
+    width: '130%',
+    height: 8,
+    backgroundColor: '#efefef',
+    transform: [{ rotate: '-18deg' }],
+  },
+  fallbackPin: {
+    position: 'absolute',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 4,
+    backgroundColor: '#d9d9d9',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  fallbackTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    color: '#000',
+  fallbackPinInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#ececec',
   },
-  fallbackMessage: {
-    textAlign: 'center',
-    opacity: 0.7,
-    color: '#000',
-  },
-  // Mapbox indicator badge
   mapboxBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -333,19 +339,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Zoom controls
   zoomControls: {
     position: 'absolute',
     right: 10,
     bottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 8,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 4,
   },
   zoomButton: {
     width: 44,
@@ -353,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#e6e6e6',
   },
   centerButton: {
     borderBottomWidth: 0,
@@ -364,4 +369,3 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
