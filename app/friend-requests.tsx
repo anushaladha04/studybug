@@ -63,7 +63,9 @@ export default function FriendRequestsScreen() {
             </View>
             )}
             ListEmptyComponent={
-            <Text style={styles.emptyText}>No friend requests </Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No friend requests </Text>
+              </View>
             }
         />
         </View>
@@ -139,8 +141,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Rethink Sans'
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   emptyText: {
-    fontSize: 15,
-    color: '#999',
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
+    fontWeight: '400',
+    color: '#000000',
   },
 });
