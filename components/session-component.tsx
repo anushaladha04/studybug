@@ -5,7 +5,7 @@ interface SessionPostProps {
     time: string;
     title: string;
     location: string;
-    totalTime: string;
+    totalTime: number;
 }
 
 export default function SessionPost({
@@ -16,13 +16,39 @@ export default function SessionPost({
     totalTime,
 }: SessionPostProps) {
 
+    const formatPostedTime = () => {
+        const postedTime = new Date(time);
+        const now = new Date();
+
+        if (postedTime.toLocaleDateString() === now.toLocaleDateString())
+            return postedTime.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        else
+            return postedTime.toLocaleDateString();
+    };
+
+    const formattedDuration = () => {
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime - hours * 3600) / 60);
+
+        if (hours == 0)
+            return `${minutes} min`
+
+        if (minutes == 0)
+            return `${hours} hr`
+
+        return `${hours} hr ${minutes} min`;
+    }
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
                 <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.time}>{time} </Text>
+                    <Text style={styles.time}>{formatPostedTime()} </Text>
                 </View>
             </View>
 
@@ -33,7 +59,7 @@ export default function SessionPost({
                 </View>
                 <View style={styles.totalTimeBlock}>
                     <Text style={styles.totalTimeLabel}>Total Time</Text>
-                    <Text style={styles.totalTimeValue}>{totalTime}</Text>
+                    <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
                 </View>
             </View>
 
@@ -49,11 +75,10 @@ export default function SessionPost({
 const styles = StyleSheet.create({
       card: {
         backgroundColor: '#fff',
-        paddingHorizontal: 26,
-        paddingVertical: 12,
+        paddingHorizontal: 29,
+        paddingVertical: 19,
         marginTop: 2,
         marginBottom: 4,
-        width: 380,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -69,11 +94,13 @@ const styles = StyleSheet.create({
         width: 46,
         height: 46,
         borderRadius: 23,
-        marginRight: 12,
+        marginRight: 15,
     },
     name: {
-        fontSize: 17,
-        color: '#1a1a1a',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     time: {
         fontSize: 15,
@@ -87,27 +114,31 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '500',
-        color: '#1a1a1a',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     location: {
-        fontSize: 15,
-        color: '#666',
-        marginTop: 3,
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeBlock: {
         alignItems: 'flex-end',
     },
     totalTimeLabel: {
-        fontSize: 15,
-        color: '#888',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeValue: {
-        fontSize: 17,
-        color: '#1a1a1a',
-        marginTop: 2,
+        fontSize: 16,
         fontWeight: '500',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     chartPlaceholder: {
         height: 150,

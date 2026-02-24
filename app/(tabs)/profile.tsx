@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import SessionPost from '@/components/session-component';
+import { fetchSessionsByUser, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
-import { getWeeklyDurations, fetchSessionsByUser } from "@/controllers/study-session";
-import SessionPost from '@/components/session-component';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
@@ -99,10 +99,10 @@ export default function ProfileScreen() {
                 <SessionPost
                   key={s.session_id}
                   name={profile?.full_name ?? '-'}
-                  time={relativeTime(s.start_time)}
-                  title={sessionTitle(s.start_time)}
+                  time={s.end_time}
+                  title={s.session_name}
                   location={s.subject ?? ''}
-                  totalTime={formatDuration(s.duration)}
+                  totalTime={s.duration}
                 />
               ))
             )}
