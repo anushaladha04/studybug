@@ -1,3 +1,4 @@
+import EndSessionPopup from "@/components/end-session-popup";
 import { endStudySession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,11 +16,12 @@ export default function RecordScreen() {
   const [timerIsActive, setTimerIsActive] = useState(false);
   const [currentSessionId, setCurrentSessionId ] = useState('');
   const [sessionInfo, setSessionInfo] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
+
+  const [endSessionConfirmation, setEndSessionConfirmation] = useState(false);
 
   const appState = useRef(AppState.currentState);
   const backgroundTime = useRef<number | null>(null);
-
-  const [isPublic, setIsPublic] = useState(false);
 
   // Check for incomplete session on mount
   useEffect(() => {
@@ -162,7 +164,7 @@ export default function RecordScreen() {
 
               <Pressable
                 style={styles.button}
-                onPress={() => endSessionTrigger()}
+                onPress={() => setEndSessionConfirmation(true)}
               >
                 <Text style={styles.buttonText}>■  Finish</Text>
               </Pressable>
@@ -170,6 +172,11 @@ export default function RecordScreen() {
           )}
         </>
       )}
+      <EndSessionPopup 
+        isVisible={endSessionConfirmation}
+        onGoBack={() => setEndSessionConfirmation(false)}
+        onConfirm={endSessionTrigger}
+      />
     </View>
   );
 }

@@ -55,10 +55,10 @@ export default function FriendRequestsScreen() {
                 <Text style={styles.usernameText}>@{item.username}</Text>
                 </View>
                 <Pressable 
-                style={styles.acceptButton}
-                onPress={() => handleAcceptRequest(item.friend_id)}
+                  style={styles.acceptButton}
+                  onPress={() => handleAcceptRequest(item.friend_id)}
                 >
-                <Text style={styles.acceptButtonText}>Accept</Text>
+                  <Text style={styles.acceptButtonText}>Accept</Text>
                 </Pressable>
             </View>
             )}
