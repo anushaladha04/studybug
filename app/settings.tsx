@@ -269,7 +269,59 @@ export default function SettingsScreen() {
                   </View>
                 </View>
               ) : (
-                <Ionicons name="happy-outline" size={64} color="#bbb" />
+                <View style={{ width: '100%', alignItems: 'center' }}>
+                  {/* Currently selected avatar */}
+                  <Image
+                    source={{ uri: supabase.storage.from('profile_pictures').getPublicUrl(
+                      imagePath.startsWith('avatar_') ? imagePath : 'avatar_4.jpg'
+                    ).data.publicUrl }}
+                    style={{ width: 90, height: 90, borderRadius: 45, marginBottom: 24 }}
+                  />
+                  {/* Avatar grid 2x4 */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+                      const avatarFile = `avatar_${i}.jpg`;
+                      const { data: { publicUrl: aUrl } } = supabase.storage
+                        .from('profile_pictures')
+                        .getPublicUrl(avatarFile);
+                      const isSelected = imagePath === avatarFile || (!imagePath.startsWith('avatar_') && avatarFile === 'avatar_4.jpg');
+                      return (
+                        <Pressable
+                          key={i}
+                          onPress={async () => {
+                            const userId = session?.user?.id;
+                            if (!userId) return;
+                            setUploading(true);
+                            try {
+                              await supabase
+                                .from('profiles')
+                                .update({ profile_image_path: avatarFile })
+                                .eq('id', userId);
+                              await refreshProfile();
+                              closePictureModal();
+                            } catch (err: any) {
+                              Alert.alert('Error', err.message ?? 'Something went wrong.');
+                            } finally {
+                              setUploading(false);
+                            }
+                          }}
+                          disabled={uploading}
+                          style={{
+                            borderRadius: 40,
+                            borderWidth: isSelected ? 3 : 0,
+                            borderColor: '#333',
+                            padding: 2,
+                          }}
+                        >
+                          <Image
+                            source={{ uri: aUrl }}
+                            style={{ width: 72, height: 72, borderRadius: 36 }}
+                          />
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
               )}
             </View>
             </Pressable>
