@@ -1,29 +1,45 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import AddToProfilePopup from '@/components/add-to-profile-popup';
 
 export default function SessionSummary() {
     const router = useRouter();
     const { sessionName, location, duration } = useLocalSearchParams();
+    const [ isPopupVisible, setIsPopupVisible ] = useState(false);
 
     return (
         <View style={styles.container}>
-        <Text style={styles.congrats}>Congrats! You finished your study session!</Text>
-        
-        <View style={styles.statsRow}>
-            <View>
-            <Text style={styles.sessionNameText}>{sessionName}</Text>
-            <Text style={styles.locationText}>{location}</Text>
+            <Text style={styles.congrats}>Congrats! You finished your study session!</Text>
+            
+            <View style={styles.statsRow}>
+                <View>
+                <Text style={styles.sessionNameText}>{sessionName}</Text>
+                <Text style={styles.locationText}>{location}</Text>
+                </View>
+                <View>
+                <Text style={styles.timeLabel}>Total Time</Text>
+                <Text style={styles.timeValue}>{duration}</Text>
+                </View>
             </View>
-            <View>
-            <Text style={styles.timeLabel}>Total Time</Text>
-            <Text style={styles.timeValue}>{duration}</Text>
-            </View>
-        </View>
 
-        {/* Add Photo Placeholder and Skip Button */}
-        <Pressable style={styles.skipButton} onPress={() => router.replace('/(tabs)')}>
-            <Text style={styles.skipButtonText}>Skip</Text>
-        </Pressable>
+            {/* Add Photo Placeholder and Skip Button */}
+            <Pressable style={styles.skipButton} onPress={() => setIsPopupVisible(true)}>
+                <Text style={styles.skipButtonText}>Skip</Text>
+            </Pressable>
+
+            <AddToProfilePopup 
+                isVisible={isPopupVisible}
+                onSeeTrends={() => {
+                    setIsPopupVisible(false);
+                    router.push('/(tabs)/profile');
+                }}
+                onDone={() => {
+                    setIsPopupVisible(false);
+                    router.push('/(tabs)');
+                }}
+            />
         </View>
     );
 }

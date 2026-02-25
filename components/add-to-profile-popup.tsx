@@ -1,39 +1,37 @@
+import Caterpillar from '@/assets/images/popup-caterpillar';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-interface EndSessionPopupProps {
+interface AddToProfilePopupProps {
     isVisible: boolean;
-    onGoBack: () => void;
-    onConfirm: () => void;
+    onSeeTrends: () => void;
+    onDone: () => void;
 }
 
-export default function EndSessionPopup({ isVisible, onGoBack, onConfirm}: EndSessionPopupProps) {
+export default function AddToProfilePopup({ isVisible, onSeeTrends, onDone}: AddToProfilePopupProps) {
     return (
         <Modal
             animationType="slide"
             transparent={true}
             visible={isVisible}
-            onRequestClose={onGoBack}
             >
             <View style={styles.container}>
                 <View style={styles.popupCard}>
-                    <Text style={styles.title}>Are you sure you want to end your session?</Text>
-                <View style={styles.buttonContainer}>
-                    <Pressable 
-                        style={styles.confirmButton}
-                        onPress={() => {
-                            onConfirm();
-                            onGoBack();
-                        }}
-                    >
-                        <Text style={styles.confirmButtonText}>Yes</Text>
-                    </Pressable>
-                    <Pressable 
-                        style={styles.goBackButton}
-                        onPress={() => onGoBack}
-                    >
-                        <Text style={styles.goBackButtonText}>Go back</Text>
-                    </Pressable>
-                </View>
+                    <Text style={styles.title}>Your session has been added to your profile!</Text>
+                    <Caterpillar />
+                    <View style={styles.buttonContainer}>
+                        <Pressable 
+                            style={styles.seeTrendsButton}
+                            onPress={onSeeTrends}
+                        >
+                            <Text style={styles.seeTrendsButtonText}>See Trends</Text>
+                        </Pressable>
+                        <Pressable 
+                            style={styles.doneButton}
+                            onPress={onDone}
+                        >
+                            <Text style={styles.doneButtonText}>Done</Text>
+                        </Pressable>
+                    </View>
                 </View>
             </View>
         </Modal>
@@ -54,7 +52,7 @@ const styles = StyleSheet.create({
         gap: 15,
         borderRadius: 15,
         width: 311,
-        height: 267,
+        height: 325,
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 5,
@@ -74,7 +72,7 @@ const styles = StyleSheet.create({
         gap: 15,
         width: '100%',
     },
-    confirmButton: {
+    seeTrendsButton: {
         width: 184,
         height: 43,
         paddingVertical: 11.18,
@@ -82,14 +80,14 @@ const styles = StyleSheet.create({
         borderRadius: 38,
         backgroundColor: '#8DBF58'
     },
-    confirmButtonText: {
+    seeTrendsButtonText: {
         fontSize: 18,
         fontWeight: 500,
         fontFamily: 'Rethink Sans',
         color: '#FFF',
         textAlign: 'center'
     },
-    goBackButton: {
+    doneButton: {
         width: 184,
         height: 43,
         paddingVertical: 11.18,
@@ -99,7 +97,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#8DBF58'
     },
-    goBackButtonText: {
+    doneButtonText: {
         fontSize: 18,
         fontWeight: 500,
         fontFamily: 'Rethink Sans',
