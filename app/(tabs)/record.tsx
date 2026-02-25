@@ -3,7 +3,7 @@ import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
@@ -136,12 +136,22 @@ export default function RecordScreen() {
       </View>
 
       {!isSessionActive ? (
-        <Pressable
-          style={styles.button}
-          onPress={() => router.push('/session-details')}
-        >
-          <Text style={styles.buttonText}>New Session</Text>
-        </Pressable>
+        <View style={{ overflow: 'visible' }}>
+          <Pressable
+            onPress={() => router.push('/session-details')}
+          >
+            <Image
+              source={require('@/assets/images/new-session.png')}
+              resizeMode="contain"
+              style={{ width: 1000, height: 60 }}
+            />
+          </Pressable>
+          <Image
+            source={require('@/assets/images/crosshair.png')}
+            resizeMode="contain"
+            style={{ position: 'absolute', width: 700, height: 35, top: 12, left: 4, tintColor: 'white' }}
+          />
+        </View>
       ) : (
         <>
           {timerIsActive ? (
@@ -203,7 +213,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: 36,
-    fontFamily: 'monospace',
+    fontFamily: 'Rethink Sans',
     fontVariant: ['tabular-nums'],
     color: '#222',
   },
