@@ -5,12 +5,17 @@ import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
   const { session, profile, refreshProfile } = useAuthContext();
   const router = useRouter();
+
+  const imagePath = profile?.profile_image_path ?? 'default_avatar.jpg';
+  const { data: { publicUrl: avatarUrl } } = supabase.storage
+    .from('profile_pictures')
+    .getPublicUrl(imagePath);
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
 
@@ -58,7 +63,10 @@ export default function ProfileScreen() {
 
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <Ionicons name="person-outline" size={40} color="#999" />
+          <Image
+            source={{ uri: avatarUrl }}
+            style={{ width: 80, height: 80, borderRadius: 40 }}
+          />
         </View>
         <View style={styles.profileText}>
           <Text style={styles.nameText}>{profile?.full_name ?? '-'}</Text>
@@ -91,7 +99,7 @@ export default function ProfileScreen() {
         {activeTab === 'insights' ? (
           <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
         ) : (
-          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 12 }}>
+          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'stretch', paddingVertical: 12 }}>
             {sessions.length === 0 ? (
               <Text style={styles.emptyText}>No past sessions yet</Text>
             ) : (
