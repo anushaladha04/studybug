@@ -9,13 +9,14 @@ import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, Sc
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
-  const { session, profile, refreshProfile } = useAuthContext();
+  const { session, profile, refreshProfile, profileImageVersion } = useAuthContext();
   const router = useRouter();
 
-  const imagePath = profile?.profile_image_path ?? 'default_avatar.jpg';
-  const { data: { publicUrl: avatarUrl } } = supabase.storage
+  const imagePath = profile?.profile_image_path ?? 'avatar_4.jpg';
+  const { data: { publicUrl: avatarUrlBase } } = supabase.storage
     .from('profile_pictures')
     .getPublicUrl(imagePath);
+  const avatarUrl = `${avatarUrlBase}?v=${profileImageVersion}`;
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
 
