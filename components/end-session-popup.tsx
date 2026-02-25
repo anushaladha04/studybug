@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 15,              // Spacing between buttons
+        gap: 15,
         width: '100%',
     },
     confirmButton: {

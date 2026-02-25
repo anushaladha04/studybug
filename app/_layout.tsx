@@ -56,7 +56,15 @@ function RootLayoutNav() {
           options={{ 
             presentation: 'modal', 
             title: "New Session" }} />
-        </Stack>
+
+        <Stack.Screen 
+          name="session-summary" 
+          options={{ 
+            presentation: 'card',
+            headerShown: false
+          }} 
+        />
+      </Stack>
       <StatusBar style="dark" />
     </ThemeProvider>
   );

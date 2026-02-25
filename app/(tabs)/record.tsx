@@ -9,7 +9,7 @@ import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 export default function RecordScreen() {
   const { session } = useAuthContext();
   const router = useRouter();
-  const { name, location, focusLevel, note, area, refresh } = useLocalSearchParams();
+  const { sessionName, location, focusLevel, note, area, refresh } = useLocalSearchParams();
 
   const [seconds, setSeconds] = useState(0);
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -46,14 +46,14 @@ export default function RecordScreen() {
   useEffect(() => {
     if (refresh === 'true') {
       startSessionTrigger();
-      setSessionInfo(`Session: ${name}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
+      setSessionInfo(`Session: ${sessionName}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
       router.setParams({ refresh: 'false' });
     }
   }, [refresh])
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
-    const sessionId = await startStudySession(name, startTime, isPublic, location, area, focusLevel, note);
+    const sessionId = await startStudySession(sessionName, startTime, isPublic, location, area, focusLevel, note);
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
@@ -74,6 +74,15 @@ export default function RecordScreen() {
     const endTime = new Date();
     endStudySession(currentSessionId, endTime, seconds);
     setTimerIsActive(false);
+
+    router.push({
+      pathname: '/session-summary',
+      params: { 
+        sessionName: sessionName,
+        location: location,
+        duration: formatTime(seconds)
+      }
+    });
   }
 
   const formatTime = (totalSeconds: number) => {
