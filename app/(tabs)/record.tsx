@@ -196,7 +196,7 @@ export default function RecordScreen() {
                     style={styles.stopButton}
                     onPress={() => endSessionTrigger()}
                   >
-                    <Text style={styles.stopButtonText}>■  Finish</Text>
+                    <Text style={styles.stopButtonText}>■  Stop</Text>
                 </Pressable>
             </View>
         </View>
