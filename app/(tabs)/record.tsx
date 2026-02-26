@@ -1,11 +1,6 @@
-import MinimizeIcon from '@/assets/icons/minimize.svg';
-import PlusSign from '@/assets/icons/plus.svg';
-import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
-import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
 import { endStudySession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -124,84 +119,57 @@ export default function RecordScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable 
-        style={styles.backButton} 
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.back();
-        }}
+      <Pressable
+        style={styles.button}
+        onPress={() => setIsPublic(!isPublic)}
       >
-        <MinimizeIcon /> 
-      </Pressable>
-      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => { Haptics.selectionAsync(); setIsPublic(!isPublic); }}>
-        <PubPrivBg width={165} height={42} />
-        <PubPrivToggle
-          width={85}
-          height={39}
-          style={{
-            position: 'absolute',
-            top: 4.5,
-            left: isPublic ? 4.5 : 72.5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.15,
-            shadowRadius: 4,
-            elevation: 4,
-          }}
-        />
-        <View style={styles.toggleRow}>
-          <Text style={[styles.toggleText, isPublic && styles.toggleActive]}>public</Text>
-          <Text style={[styles.toggleText, !isPublic && styles.toggleActive]}>private</Text>
-        </View>
+        <Text style={styles.toggleText}>
+          [ {isPublic ?  'PUBLIC'  : 'PRIVATE'} ]
+        </Text>
       </Pressable>
 
       {/* Timer: rectangle inside a circle */}
-      <View style={styles.mainContent}>
-        <View style={styles.timerCircle}>
-          <View style={styles.timerRect}>
-            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-          </View>
+      <View style={styles.timerCircle}>
+        <View style={styles.timerRect}>
+          <Text style={styles.timerText}>{formatTime(seconds)}</Text>
         </View>
-
-        {!isSessionActive ? (
-            <Pressable
-              style={styles.beginSessionButton}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/session-details'); }}
-            >
-              <View style={styles.plusSignContainer}>
-                <PlusSign />
-              </View>
-              <Text style={styles.beginSessionButtonText}>Begin Session</Text>
-            </Pressable>
-        ) : (
-          <View style={styles.controlsContainer}>
-            <View style={styles.buttonRow}>
-              {timerIsActive ? (
-                <Pressable
-                  style={styles.pauseButton}
-                  onPress={() => setTimerIsActive(false)}
-                >
-                  <Text style={styles.pauseButtonText}>❚❚  Pause</Text>
-                </Pressable>
-              ) : (
-                  <Pressable
-                    style={styles.pauseButton}
-                    onPress={() => setTimerIsActive(true)}
-                  >
-                    <Text style={styles.pauseButtonText}>▶  Resume</Text>
-                  </Pressable>
-              )}
-
-                <Pressable
-                    style={styles.stopButton}
-                    onPress={() => endSessionTrigger()}
-                  >
-                    <Text style={styles.stopButtonText}>■  Stop</Text>
-                </Pressable>
-            </View>
-        </View>
-        )}
       </View>
+
+      {!isSessionActive ? (
+        <Pressable
+          style={styles.button}
+          onPress={() => router.push('/session-details')}
+        >
+          <Text style={styles.buttonText}>New Session</Text>
+        </Pressable>
+      ) : (
+        <>
+          {timerIsActive ? (
+            <Pressable
+              style={[styles.button, styles.buttonFilled]}
+              onPress={() => setTimerIsActive(false)}
+            >
+              <Text style={[styles.buttonText, styles.buttonFilledText]}>❚❚  Pause</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[styles.button, styles.buttonFilled]}
+                onPress={() => setTimerIsActive(true)}
+              >
+                <Text style={[styles.buttonText, styles.buttonFilledText]}>▶  Resume</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.button}
+                onPress={() => endSessionTrigger()}
+              >
+                <Text style={styles.buttonText}>■  Finish</Text>
+              </Pressable>
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -209,130 +177,62 @@ export default function RecordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
-  },
-  backButton: {
-    position: 'absolute',
-    top: 60,
-    right: 25,
-    zIndex: 20,
-    padding: 10,
-  },
-  toggleRow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 165,
-    height: 42,
-    flexDirection: 'row',
+    backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'center',
+    gap: 28,
   },
   toggleText: {
     fontSize: 14,
-    fontFamily: 'Rethink Sans',
-    color: '#0c0b0b',
-    opacity: 0.4,
-  },
-  toggleActive: {
-    opacity: 1,
-    fontWeight: '700',
-  },
-  mainContent: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: 210,
-    gap: 70, 
+    fontFamily: 'monospace',
+    color: '#555',
   },
   timerCircle: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   timerRect: {
     backgroundColor: '#fff',
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 8,
   },
   timerText: {
-    fontSize: 40,
-    fontFamily: 'Rethink Sans',
+    fontSize: 36,
+    fontFamily: 'monospace',
     fontVariant: ['tabular-nums'],
-    fontWeight: '500',
     color: '#222',
-  },
-  controlsContainer: {
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  plusSignContainer: {
-    position: 'absolute',
-    left: 15,
-  },
-  beginSessionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 282,
-    height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
-    borderRadius: 38,
-    backgroundColor: '#8DBF58'
-  },
-  beginSessionButtonText: {
-    fontSize: 18,
-    fontWeight: 500,
-    fontFamily: 'Rethink Sans',
-    color: '#FFF',
-    textAlign: 'center'
   },
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
   },
-  pauseButton: {
-    width: 184,
-    height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
-    borderRadius: 38,
-    backgroundColor: '#8DBF58'
+  button: {
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: '#bbb',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    minWidth: 130,
   },
-  pauseButtonText: {
+  buttonFilled: {
+    backgroundColor: '#a0a0a0',
+    borderColor: '#a0a0a0',
+  },
+  buttonText: {
     fontSize: 18,
-    fontWeight: 500,
-    fontFamily: 'Rethink Sans',
-    color: '#FFF',
-    textAlign: 'center'
+    fontWeight: '600',
+    fontFamily: 'monospace',
+    color: '#333',
   },
-  stopButton: {
-    width: 184,
-    height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
-    borderRadius: 38,
-    color: '#FFF',
-    borderWidth: 1,
-    borderColor: '#8DBF58'
+  buttonFilledText: {
+    color: '#fff',
   },
-  stopButtonText: {
-      fontSize: 18,
-      fontWeight: 500,
-      fontFamily: 'Rethink Sans',
-      color: '#8DBF58',
-      textAlign: 'center'
-  }
 });
