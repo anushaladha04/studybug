@@ -1,3 +1,4 @@
+import MinimizeIcon from '@/assets/icons/minimize.svg';
 import PlusSign from '@/assets/icons/plus.svg';
 import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
 import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
@@ -123,6 +124,15 @@ export default function RecordScreen() {
 
   return (
     <View style={styles.container}>
+      <Pressable 
+        style={styles.backButton} 
+        onPress={() => {
+          Haptics.selectionAsync();
+          router.back();
+        }}
+      >
+        <MinimizeIcon /> 
+      </Pressable>
       <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => { Haptics.selectionAsync(); setIsPublic(!isPublic); }}>
         <PubPrivBg width={165} height={42} />
         <PubPrivToggle
@@ -201,6 +211,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff'
   },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    right: 25,
+    zIndex: 20,
+    padding: 10,
+  },
   toggleRow: {
     position: 'absolute',
     top: 0,
@@ -225,8 +242,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 60, 
+    justifyContent: 'flex-start',
+    marginTop: 210,
+    gap: 70, 
   },
   timerCircle: {
     width: 300,

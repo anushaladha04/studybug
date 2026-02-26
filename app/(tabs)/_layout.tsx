@@ -1,19 +1,19 @@
+import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 
+import BlankNavbar from '@/assets/images/blanknavbar.svg';
+import FriendsActive from '@/assets/images/friends-active.svg';
+import FriendsInactive from '@/assets/images/friends-inactive.svg';
 import HomeActive from '@/assets/images/home-active.svg';
 import HomeInactive from '@/assets/images/home-inactive.svg';
 import MapActive from '@/assets/images/map-active.svg';
 import MapInactive from '@/assets/images/map-inactive.svg';
-import TimerActive from '@/assets/images/timer-active.svg';
-import TimerInactive from '@/assets/images/timer-inactive.svg';
-import FriendsActive from '@/assets/images/friends-active.svg';
-import FriendsInactive from '@/assets/images/friends-inactive.svg';
 import ProfileActive from '@/assets/images/profile-active.svg';
 import ProfileInactive from '@/assets/images/profile-inactive.svg';
-import BlankNavbar from '@/assets/images/blanknavbar.svg';
+import TimerActive from '@/assets/images/timer-active.svg';
+import TimerInactive from '@/assets/images/timer-inactive.svg';
 
 import * as Haptics from 'expo-haptics';
 
@@ -99,6 +99,7 @@ export default function TabLayout() {
         name="record"
         options={{
           title: 'Timer',
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }) => (
             focused
               ? <TimerActive width={56} height={80} style={{ transform: [{ translateY: 8 }] }} />
