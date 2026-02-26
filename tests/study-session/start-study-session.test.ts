@@ -24,6 +24,7 @@ describe('startStudySession', () => {
             end_time: null,
             is_active: true,
             is_public: true, 
+            location_name: 'test-location',
             subject: 'test-subject',
             focus_level: 'high',
             note: 'test note'
@@ -44,7 +45,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-subject', 'high', 'test note');
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
 
         expect(supabase.auth.getUser).toHaveBeenCalled();
         expect(supabase.from).toHaveBeenCalledWith('study_sessions');
@@ -67,7 +68,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         })
 
-        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-subject', 'high', 'test note');
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
 
         expect(result).toBeNull();
     });
@@ -88,7 +89,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-subject', 'high', 'test note');
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
         expect(result).toBeNull();
     });
 
@@ -110,7 +111,7 @@ describe('startStudySession', () => {
 
         const startTime = new Date('2025-01-01T00:00:00Z');
 
-        await startStudySession('test session', startTime, true, 'test-subject', 'high', 'test note')
+        await startStudySession('test session', startTime, true, 'test-location', 'test-subject', 'high', 'test note')
 
         expect(mockInsert).toHaveBeenCalledWith(
             expect.objectContaining([{
@@ -120,6 +121,7 @@ describe('startStudySession', () => {
                 end_time: null,
                 is_active: true,
                 is_public: true, 
+                location_name: 'test-location',
                 subject: 'test-subject',
                 focus_level: 'high',
                 note: 'test note'

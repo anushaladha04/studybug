@@ -110,7 +110,9 @@ export default function FriendsScreen() {
                 />
               )}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>No users found</Text>
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No users found </Text>
+                </View>
               }
             />
           </>
@@ -133,7 +135,9 @@ export default function FriendsScreen() {
                   />
                 )}
                 ListEmptyComponent={
-                  <Text style={styles.emptyText}>No active friends yet</Text>
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No active friends </Text>
+                  </View>
                 }
               />
             ) : (
@@ -141,7 +145,7 @@ export default function FriendsScreen() {
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
-                  contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
+                  contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16 }}
                   renderItem={({ item }) => (
                     <FriendCard
                       full_name = {item.full_name}
@@ -153,7 +157,9 @@ export default function FriendsScreen() {
                   />
                   )}
                   ListEmptyComponent={
-                    <Text style={styles.emptyText}>No friends added yet </Text>
+                    <View style={styles.emptyContainer}>
+                      <Text style={styles.emptyText}>No friends added yet </Text>
+                    </View>
                   }
                 />
               )
@@ -230,9 +236,17 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   emptyText: {
-    fontSize: 15,
-    color: '#999',
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
+    fontWeight: '400',
+    color: '#000000',
   },
   resultsHeader: {
     marginTop: 21,

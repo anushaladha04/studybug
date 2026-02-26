@@ -103,6 +103,7 @@ export default function ProfileScreen() {
                   title={s.session_name}
                   location={s.subject ?? ''}
                   totalTime={s.duration}
+                  image={s.image_url}
                 />
               ))
             )}

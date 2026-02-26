@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, subject: string, focusLevel: string, note: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -18,6 +18,7 @@ export async function startStudySession(sessionName: string, startTime: Date, is
                 end_time: null,
                 is_active: true,
                 is_public: isPublic, 
+                location_name: location,
                 subject: subject,
                 focus_level: focusLevel,
                 note: note
@@ -65,6 +66,30 @@ export async function fetchSessionsByUser(userId: string) {
         return null;
     }
 
+    return data;
+}
+
+export async function fetchUserLastSession() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
+    }
+
+    const { data, error } = await supabase
+        .from('study_sessions')
+        .select('start_time, duration, location_name, session_name')
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching user\'s last session:', error.message);
+        return null;
+    }
+    
     return data;
 }
 
@@ -163,3 +188,49 @@ export async function getWeeklyDurations(userId: string, weekOffset: number = 0)
     return durations;
 }
 
+export async function uploadSessionImage(sessionId: string, imageUri: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
+    }
+
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const arrayBuffer = await new Response(blob).arrayBuffer();
+    
+    const filePath = `${user.id}/${sessionId}.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('session_pictures')
+      .upload(filePath, arrayBuffer, { 
+        contentType: 'image/jpeg',
+        upsert: true
+     });
+
+    if (uploadError) {
+        console.error('Error uploading image to database: ', uploadError.message);
+        return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('session_pictures')
+      .getPublicUrl(filePath);
+    
+    const publicUrl = urlData.publicUrl;
+
+    const { error } = await supabase
+        .from('study_sessions')
+        .update({
+            image_url: publicUrl,
+        })
+        .eq('session_id', sessionId);
+
+    if (error) {
+        console.error('Error uploading image: ', error.message);
+        return null;
+    }
+
+    return publicUrl;
+}
