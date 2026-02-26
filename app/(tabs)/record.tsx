@@ -78,9 +78,10 @@ export default function RecordScreen() {
     router.push({
       pathname: '/session-summary',
       params: { 
+        sessionId: currentSessionId,
         sessionName: sessionName,
         location: location,
-        duration: formatTime(seconds)
+        duration: seconds
       }
     });
   }
