@@ -52,6 +52,7 @@ export default function HomeScreen() {
                 title = {item.session_name}
                 location = {item.location_name}
                 totalTime = {item.duration}
+                image = {item.image_url}
             />
           )}
           ListEmptyComponent={

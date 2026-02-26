@@ -6,6 +6,7 @@ interface SessionPostProps {
     title: string;
     location: string;
     totalTime: number;
+    image: string
 }
 
 export default function SessionPost({
@@ -14,6 +15,7 @@ export default function SessionPost({
     title,
     location,
     totalTime,
+    image
 }: SessionPostProps) {
 
     const formatPostedTime = () => {
@@ -62,8 +64,15 @@ export default function SessionPost({
                     <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
                 </View>
             </View>
-
-            <View style={styles.chartPlaceholder} />
+            {image ? (
+                <Image 
+                    source={{ uri: image }} 
+                    style={styles.postImage}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.chartPlaceholder} />
+            )}
 
             <View style={styles.actions}>
                 <Text style={styles.icon}>♡</Text>
@@ -136,6 +145,12 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         fontFamily: 'Rethink Sans',
         color: '#000',
+    },
+    postImage: {
+        width: '100%',
+        paddingVertical: 20,
+        aspectRatio: 3/2,
+        borderRadius: 8,
     },
     chartPlaceholder: {
         height: 150,
