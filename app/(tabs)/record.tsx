@@ -3,9 +3,11 @@ import PlusSign from '@/assets/icons/plus.svg';
 import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
 import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
 import EndSessionPopup from "@/components/end-session-popup";
-import { endStudySession, startStudySession } from "@/controllers/study-session";
+import LastFocusSession, { StudySessionProps } from '@/components/last-focus-session';
+import { endStudySession, fetchUserLastSession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
@@ -24,9 +26,35 @@ export default function RecordScreen() {
   const [isPublic, setIsPublic] = useState(false);
 
   const [endSessionConfirmation, setEndSessionConfirmation] = useState(false);
+  const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
+
+  const [ isPrivacyChosen, setIsPrivacyChosen] = useState(false);
 
   const appState = useRef(AppState.currentState);
   const backgroundTime = useRef<number | null>(null);
+
+  const togglePublic = async () => {
+    const newValue = !isPublic;
+    setIsPublic(newValue);
+    await AsyncStorage.setItem('preferredVisibility', newValue.toString());
+    Haptics.selectionAsync();
+  };
+
+  useEffect(() => {
+  const loadPreference = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('preferredVisibility');
+      if (saved !== null) {
+        setIsPublic(saved === 'true');
+      }
+      setIsPrivacyChosen(true); 
+    } catch (e) {
+      console.error("Failed to load privacy preference", e);
+      setIsPrivacyChosen(true); // Set to true anyway so the app doesn't hang
+    }
+  };
+  loadPreference();
+}, []);
 
   // Check for incomplete session on mount
   useEffect(() => {
@@ -49,16 +77,21 @@ export default function RecordScreen() {
   }, []);
 
   useEffect(() => {
-    if (refresh === 'true') {
+    if (refresh === 'true' && isPrivacyChosen) {
       startSessionTrigger();
       setSessionInfo(`Session: ${sessionName}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
       router.setParams({ refresh: 'false' });
     }
-  }, [refresh])
+  }, [refresh, isPrivacyChosen])
 
   const startSessionTrigger = async () => {
     const startTime = new Date();
-    const sessionId = await startStudySession(sessionName, startTime, isPublic, location, area, focusLevel, note);
+    const savedVisibility = await AsyncStorage.getItem('preferredVisibility');
+    const currentIsPublic = savedVisibility !== null 
+    ? savedVisibility === 'true' 
+    : isPublic; 
+
+    const sessionId = await startStudySession(sessionName, startTime, currentIsPublic, location, area, focusLevel, note);
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
@@ -99,6 +132,31 @@ export default function RecordScreen() {
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  useEffect(() => {
+    const fetchLastFocusSession = async () => {
+      if (!session?.user?.id || isSessionActive) 
+        return;
+
+      try {
+        const data = await fetchUserLastSession();
+        if (data) {
+          const formattedDate = format(new Date(data.start_time), 'dd MMM yyyy');
+
+          setLastStudySession({
+            date: formattedDate,
+            totalTime: formatTime(data.duration),
+            location: data.location_name,
+            topic: data.session_name
+          });
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+
+    fetchLastFocusSession();
+  }, [session, isSessionActive, refresh]);
 
   useEffect(() => {
     let interval: any;
@@ -145,7 +203,7 @@ export default function RecordScreen() {
       >
         <MinimizeIcon /> 
       </Pressable>
-      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => { Haptics.selectionAsync(); setIsPublic(!isPublic); }}>
+      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => togglePublic()}>
         <PubPrivBg width={165} height={42} />
         <PubPrivToggle
           width={85}
@@ -176,15 +234,31 @@ export default function RecordScreen() {
         </View>
 
         {!isSessionActive ? (
+          <>
             <Pressable
-              style={styles.beginSessionButton}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/session-details'); }}
-            >
-              <View style={styles.plusSignContainer}>
-                <PlusSign />
-              </View>
-              <Text style={styles.beginSessionButtonText}>Begin Session</Text>
-            </Pressable>
+                style={styles.beginSessionButton}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/session-details'); }}
+              >
+                <View style={styles.plusSignContainer}>
+                  <PlusSign />
+                </View>
+                <Text style={styles.beginSessionButtonText}>Begin Session</Text>
+              </Pressable>
+
+              {lastStudySession && (
+                <View style={styles.lastFocusSessionContainer}>
+                  <Text style={styles.lastFocusSessionHeader}>
+                    Last Focus Session
+                  </Text>
+                  <LastFocusSession 
+                    date={lastStudySession.date}
+                    totalTime={lastStudySession.totalTime}
+                    location={lastStudySession.location}
+                    topic={lastStudySession.topic}
+                  />
+                </View>
+              )}
+          </>
         ) : (
           <View style={styles.controlsContainer}>
             <View style={styles.buttonRow}>
@@ -259,8 +333,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    marginTop: 210,
-    gap: 70, 
+    marginTop: 200,
+    gap: 60, 
   },
   timerCircle: {
     width: 300,
@@ -350,5 +424,16 @@ const styles = StyleSheet.create({
       fontFamily: 'Rethink Sans',
       color: '#8DBF58',
       textAlign: 'center'
+  },
+  lastFocusSessionContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  lastFocusSessionHeader: {
+    fontSize: 18,
+    fontWeight: 500,
+    fontFamily: 'Rethink Sans',
+    color: '#000',
+    marginBottom: 10
   }
 });

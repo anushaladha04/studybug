@@ -69,6 +69,30 @@ export async function fetchSessionsByUser(userId: string) {
     return data;
 }
 
+export async function fetchUserLastSession() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
+    }
+
+    const { data, error } = await supabase
+        .from('study_sessions')
+        .select('start_time, duration, location_name, session_name')
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching user\'s last session:', error.message);
+        return null;
+    }
+    
+    return data;
+}
+
 // --- Helpers for timezone-aware date handling ---
 
 function toLocalDateString(date: Date, timezone: string): string {
