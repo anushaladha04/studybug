@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
         }
 
         Alert.alert('Success', 'Password reset email sent! Please check your inbox.');
-        router.replace('/login');
+        router.replace('/(auth)/login');
     }
 
     return (
