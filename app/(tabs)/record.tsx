@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import NewSession from '@/assets/images/new-session.svg';
 import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
 import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
@@ -122,7 +123,7 @@ export default function RecordScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => setIsPublic(!isPublic)}>
+      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => { Haptics.selectionAsync(); setIsPublic(!isPublic); }}>
         <PubPrivBg width={165} height={42} />
         <PubPrivToggle
           width={85}
@@ -154,7 +155,7 @@ export default function RecordScreen() {
       {!isSessionActive ? (
         <View style={{ overflow: 'visible', position: 'absolute', bottom: 265, alignSelf: 'center' }}>
           <Pressable
-            onPress={() => router.push('/session-details')}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/session-details'); }}
           >
             <NewSession width={1000} height={60} />
           </Pressable>
