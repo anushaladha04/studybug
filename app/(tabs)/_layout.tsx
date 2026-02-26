@@ -1,19 +1,7 @@
-import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Pressable, View } from 'react-native';
-
-import BlankNavbar from '@/assets/images/blanknavbar.svg';
-import FriendsActive from '@/assets/images/friends-active.svg';
-import FriendsInactive from '@/assets/images/friends-inactive.svg';
-import HomeActive from '@/assets/images/home-active.svg';
-import HomeInactive from '@/assets/images/home-inactive.svg';
-import MapActive from '@/assets/images/map-active.svg';
-import MapInactive from '@/assets/images/map-inactive.svg';
-import ProfileActive from '@/assets/images/profile-active.svg';
-import ProfileInactive from '@/assets/images/profile-inactive.svg';
-import TimerActive from '@/assets/images/timer-active.svg';
-import TimerInactive from '@/assets/images/timer-inactive.svg';
+import { Image, ImageBackground, Pressable } from 'react-native';
+import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 
 import * as Haptics from 'expo-haptics';
 
@@ -44,8 +32,7 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
-          bottom: -12,
-          height: 127,
+          height: 117,
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           borderTopColor: 'transparent',
@@ -57,20 +44,11 @@ export default function TabLayout() {
           overflow: 'visible',
         },
         tabBarBackground: () => (
-          <View style={{
-            position: 'absolute',
-            left: -4,
-            right: -4,
-            top: 0,
-            bottom: 0,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.12,
-            shadowRadius: 8,
-            elevation: 12,
-          }}>
-            <BlankNavbar width="100%" height="100%" preserveAspectRatio="none" />
-          </View>
+          <ImageBackground
+            source={require('@/assets/images/blanknavbar.png')}
+            style={{ flex: 1 }}
+            resizeMode="stretch"
+          />
         ),
       }}>
       <Tabs.Screen
@@ -78,9 +56,15 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <HomeActive width={52.08} height={51} style={{ transform: [{ translateY: 50 }] }} />
-              : <HomeInactive width={52.08} height={51} style={{ transform: [{ translateY: 50 }] }} />
+            <Image
+              source={
+                focused
+                  ? require('@/assets/images/home-active.png')
+                  : require('@/assets/images/home-inactive.png')
+              }
+              style={{ width: 50.08, height: 49, transform: [{ translateY: 50 }] }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -89,9 +73,15 @@ export default function TabLayout() {
         options={{
           title: 'Map',
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <MapActive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
-              : <MapInactive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
+            <Image
+              source={
+                focused
+                  ? require('@/assets/images/map-active.png')
+                  : require('@/assets/images/map-inactive.png')
+              }
+              style={{ width: 50.08, height: 49, transform: [{ translateY: 50 }] }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -99,11 +89,16 @@ export default function TabLayout() {
         name="record"
         options={{
           title: 'Timer',
-          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <TimerActive width={56} height={80} style={{ transform: [{ translateY: 8 }] }} />
-              : <TimerInactive width={56} height={80} style={{ transform: [{ translateY: 8 }] }} />
+            <Image
+              source={
+                focused
+                  ? require('@/assets/images/timer-active.png')
+                  : require('@/assets/images/timer-inactive.png')
+              }
+              style={{ width: 56, height: 80, transform: [{ translateY: 12 }] }}
+              resizeMode="contain"
+            />
           ),
           tabBarButton: (props) => <RecordButton {...props} />,
         }}
@@ -113,9 +108,15 @@ export default function TabLayout() {
         options={{
           title: 'Friends',
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <FriendsActive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
-              : <FriendsInactive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
+            <Image
+              source={
+                focused
+                  ? require('@/assets/images/friends-active.png')
+                  : require('@/assets/images/friends-inactive.png')
+              }
+              style={{ width: 50.08, height: 49.24, transform: [{ translateY: 50 }] }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -124,9 +125,15 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <ProfileActive width={52.08} height={49} style={{ transform: [{ translateY: 51 }] }} />
-              : <ProfileInactive width={52.08} height={49} style={{ transform: [{ translateY: 51 }] }} />
+            <Image
+              source={
+                focused
+                  ? require('@/assets/images/profile-active.png')
+                  : require('@/assets/images/profile-inactive.png')
+              }
+              style={{ width: 50.08, height: 47, transform: [{ translateY: 50 }] }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
