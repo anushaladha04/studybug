@@ -38,7 +38,7 @@ export default function LoginScreen() {
       return;
     }
 
-    router.replace("/(tabs)");
+    setLoading(false);
   }
 
   return (
@@ -55,7 +55,7 @@ export default function LoginScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
-        placeholder="Username"
+        placeholder="Email"
         placeholderTextColor={MEDIUM_GRAY}
         editable={!loading}
       />
