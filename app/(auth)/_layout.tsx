@@ -4,8 +4,17 @@ export default function AuthLayout() {
   return (
     <Stack>
       <Stack.Screen
+        name="splash"
+        options={{ headerShown: false, title: "Splash" }}
+      />
+      <Stack.Screen
         name="onboarding"
-        options={{ headerShown: false, title: "Onboarding" }}
+        options={{
+          headerShown: false,
+          title: "Onboarding",
+          animation: "fade",
+          animationDuration: 400,
+        }}
       />
       <Stack.Screen
         name="login"

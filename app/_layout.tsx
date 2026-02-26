@@ -19,7 +19,7 @@ function RootLayoutNav() {
 
     if (!session && !inAuthGroup) {
       // Not logged in, redirect to login
-      router.replace("/(auth)/onboarding");
+      router.replace("/(auth)/splash");
     } else if (session && inAuthGroup) {
       // Logged in but on auth page, redirect to home
       router.replace("/(tabs)");

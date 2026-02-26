@@ -1,14 +1,45 @@
 import Logo from "@/assets/icons/logo.svg";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+
+const LOGO_SIZE = 280;
+const LOGO_TOP = 170;
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const logoY = useSharedValue(
+    Dimensions.get("window").height / 2 - LOGO_SIZE / 2 - LOGO_TOP,
+  );
+
+  const animatedLogoStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: logoY.value }],
+  }));
+
+  useEffect(() => {
+    logoY.value = withTiming(0, {
+      duration: 600,
+      easing: Easing.bezier(0.33, 0, 0.2, 1),
+    });
+  }, []);
 
   async function signInWithEmail() {
     setLoading(true);
@@ -30,7 +61,9 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Logo width={280} height={280} style={{ alignSelf: "center" }} />
+      <Animated.View style={[styles.logoWrap, animatedLogoStyle]}>
+        <Logo width={LOGO_SIZE} height={LOGO_SIZE} style={{ alignSelf: "center" }} />
+      </Animated.View>
       <Pressable
         style={({ pressed }) => [
           styles.primaryButton,
@@ -63,7 +96,10 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "white",
     justifyContent: "flex-start",
-    paddingTop: 170,
+    paddingTop: LOGO_TOP,
+  },
+  logoWrap: {
+    alignSelf: "center",
   },
   primaryButton: {
     marginTop: -20,
