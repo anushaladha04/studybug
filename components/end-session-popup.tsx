@@ -29,7 +29,7 @@ export default function EndSessionPopup({ isVisible, onGoBack, onConfirm}: EndSe
                     </Pressable>
                     <Pressable 
                         style={styles.goBackButton}
-                        onPress={() => onGoBack}
+                        onPress={() => onGoBack()}
                     >
                         <Text style={styles.goBackButtonText}>Go back</Text>
                     </Pressable>
