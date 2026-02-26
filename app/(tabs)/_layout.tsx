@@ -79,8 +79,8 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ focused }) => (
             focused
-              ? <HomeActive width={50.08} height={49} style={{ transform: [{ translateY: 50 }] }} />
-              : <HomeInactive width={50.08} height={49} style={{ transform: [{ translateY: 50 }] }} />
+              ? <HomeActive width={52.08} height={51} style={{ transform: [{ translateY: 50 }] }} />
+              : <HomeInactive width={52.08} height={51} style={{ transform: [{ translateY: 50 }] }} />
           ),
         }}
       />
@@ -90,8 +90,8 @@ export default function TabLayout() {
           title: 'Map',
           tabBarIcon: ({ focused }) => (
             focused
-              ? <MapActive width={50.08} height={49} style={{ transform: [{ translateY: 50 }] }} />
-              : <MapInactive width={50.08} height={49} style={{ transform: [{ translateY: 50 }] }} />
+              ? <MapActive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
+              : <MapInactive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
           ),
         }}
       />
@@ -101,8 +101,8 @@ export default function TabLayout() {
           title: 'Timer',
           tabBarIcon: ({ focused }) => (
             focused
-              ? <TimerActive width={56} height={80} style={{ transform: [{ translateY: 12 }] }} />
-              : <TimerInactive width={56} height={80} style={{ transform: [{ translateY: 12 }] }} />
+              ? <TimerActive width={56} height={80} style={{ transform: [{ translateY: 8 }] }} />
+              : <TimerInactive width={56} height={80} style={{ transform: [{ translateY: 8 }] }} />
           ),
           tabBarButton: (props) => <RecordButton {...props} />,
         }}
@@ -113,8 +113,8 @@ export default function TabLayout() {
           title: 'Friends',
           tabBarIcon: ({ focused }) => (
             focused
-              ? <FriendsActive width={50.08} height={49.24} style={{ transform: [{ translateY: 50 }] }} />
-              : <FriendsInactive width={50.08} height={49.24} style={{ transform: [{ translateY: 50 }] }} />
+              ? <FriendsActive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
+              : <FriendsInactive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
           ),
         }}
       />
@@ -124,8 +124,8 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
             focused
-              ? <ProfileActive width={50.08} height={47} style={{ transform: [{ translateY: 50 }] }} />
-              : <ProfileInactive width={50.08} height={47} style={{ transform: [{ translateY: 50 }] }} />
+              ? <ProfileActive width={52.08} height={49} style={{ transform: [{ translateY: 51 }] }} />
+              : <ProfileInactive width={52.08} height={49} style={{ transform: [{ translateY: 51 }] }} />
           ),
         }}
       />

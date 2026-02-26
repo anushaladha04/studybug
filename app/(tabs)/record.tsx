@@ -3,7 +3,10 @@ import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import NewSession from '@/assets/images/new-session.svg';
+import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
+import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
@@ -119,38 +122,42 @@ export default function RecordScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable
-        style={styles.button}
-        onPress={() => setIsPublic(!isPublic)}
-      >
-        <Text style={styles.toggleText}>
-          [ {isPublic ?  'PUBLIC'  : 'PRIVATE'} ]
-        </Text>
+      <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => setIsPublic(!isPublic)}>
+        <PubPrivBg width={165} height={42} />
+        <PubPrivToggle
+          width={85}
+          height={39}
+          style={{
+            position: 'absolute',
+            top: 4.5,
+            left: isPublic ? 4.5 : 72.5,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 4,
+          }}
+        />
+        <View style={styles.toggleRow}>
+          <Text style={[styles.toggleText, isPublic && styles.toggleActive]}>public</Text>
+          <Text style={[styles.toggleText, !isPublic && styles.toggleActive]}>private</Text>
+        </View>
       </Pressable>
 
       {/* Timer: rectangle inside a circle */}
-      <View style={styles.timerCircle}>
+      <View style={[styles.timerCircle, { position: 'absolute', top: 190, alignSelf: 'center' }]}>
         <View style={styles.timerRect}>
           <Text style={styles.timerText}>{formatTime(seconds)}</Text>
         </View>
       </View>
 
       {!isSessionActive ? (
-        <View style={{ overflow: 'visible' }}>
+        <View style={{ overflow: 'visible', position: 'absolute', bottom: 265, alignSelf: 'center' }}>
           <Pressable
             onPress={() => router.push('/session-details')}
           >
-            <Image
-              source={require('@/assets/images/new-session.png')}
-              resizeMode="contain"
-              style={{ width: 1000, height: 60 }}
-            />
+            <NewSession width={1000} height={60} />
           </Pressable>
-          <Image
-            source={require('@/assets/images/crosshair.png')}
-            resizeMode="contain"
-            style={{ position: 'absolute', width: 700, height: 35, top: 12, left: 4, tintColor: 'white' }}
-          />
         </View>
       ) : (
         <>
@@ -188,33 +195,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  toggleRow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 165,
+    height: 42,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 28,
+    justifyContent: 'space-evenly',
   },
   toggleText: {
     fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#555',
+    fontFamily: 'Rethink Sans',
+    color: '#0c0b0b',
+    opacity: 0.4,
+  },
+  toggleActive: {
+    opacity: 1,
+    fontWeight: '700',
   },
   timerCircle: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   timerRect: {
     backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   timerText: {
-    fontSize: 36,
+    fontSize: 40,
     fontFamily: 'Rethink Sans',
     fontVariant: ['tabular-nums'],
+    fontWeight: '500',
     color: '#222',
   },
   buttonRow: {
