@@ -7,6 +7,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | undefined | null>()
   const [profile, setProfile] = useState<any>()
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [profileImageVersion, setProfileImageVersion] = useState<number>(0)
 
   // Fetch the session once, and subscribe to auth state changes
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         .eq('id', session.user.id)
         .single();
       setProfile(data);
+      setProfileImageVersion(v => v + 1);
     } else {
       setProfile(null);
     }
@@ -67,6 +69,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         profile,
         isLoggedIn: session != undefined,
         refreshProfile: fetchProfile,
+        profileImageVersion,
       }}
     >
       {children}

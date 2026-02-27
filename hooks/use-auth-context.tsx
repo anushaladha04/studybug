@@ -7,6 +7,7 @@ export type AuthData = {
   isLoading: boolean
   isLoggedIn: boolean
   refreshProfile: () => Promise<void>
+  profileImageVersion: number
 };
 
 export const AuthContext = createContext<AuthData>({
@@ -15,6 +16,7 @@ export const AuthContext = createContext<AuthData>({
   isLoading: true,
   isLoggedIn: false,
   refreshProfile: async () => {},
+  profileImageVersion: 0,
 });
 
 export const useAuthContext = () => useContext(AuthContext);
