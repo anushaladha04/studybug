@@ -173,13 +173,7 @@ export default function SettingsScreen() {
 
         <View style={styles.avatarContainer}>
           <View style={styles.avatarRow}>
-            <View style={styles.avatar}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={{ width: 89, height: 89, borderRadius: 44.5 }}
-              />
-            </View>
-            <View style={[styles.avatar, { marginLeft: 50 }]}>
+            <View style={[styles.avatar]}>
               <Image
                 source={{ uri: avatarUrl }}
                 style={{ width: 89, height: 89, borderRadius: 44.5 }}
