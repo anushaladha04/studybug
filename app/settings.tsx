@@ -176,13 +176,13 @@ export default function SettingsScreen() {
             <View style={styles.avatar}>
               <Image
                 source={{ uri: imageUrl }}
-                style={{ width: 100, height: 100, borderRadius: 50 }}
+                style={{ width: 89, height: 89, borderRadius: 44.5 }}
               />
             </View>
-            <View style={[styles.avatar, { marginLeft: 16 }]}>
+            <View style={[styles.avatar, { marginLeft: 50 }]}>
               <Image
                 source={{ uri: avatarUrl }}
-                style={{ width: 100, height: 100, borderRadius: 50 }}
+                style={{ width: 89, height: 89, borderRadius: 44.5 }}
               />
             </View>
           </View>
@@ -196,15 +196,19 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Name</Text>
             <Text style={styles.rowValue}>{profile?.full_name ?? '-'}</Text>
             <View style={styles.editIconCircle}>
-              <Ionicons name="pencil" size={13} color="#666" />
+              <Ionicons name="pencil" size={10} color="#666" />
             </View>
           </Pressable>
-          <View style={styles.divider} />
+        </View>
+
+        <View style={styles.rowGroup}>
           <Pressable style={styles.row}>
             <Text style={styles.rowLabel}>Username</Text>
             <Text style={styles.rowValue}>{profile?.username ?? '-'}</Text>
           </Pressable>
-          <View style={styles.divider} />
+        </View>
+
+        <View style={styles.rowGroup}>
           <Pressable style={styles.row}>
             <Text style={styles.rowLabel}>Email</Text>
             <Text style={styles.rowValue}>{session?.user?.email ?? '-'}</Text>
@@ -212,7 +216,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Log Out */}
-        <View style={[styles.rowGroup, styles.logoutGroup]}>
+        <View style={styles.rowGroup}>
           <Pressable style={styles.row} onPress={handleLogOut}>
             <Text style={[styles.rowText, styles.logoutText]}>Log Out</Text>
           </Pressable>
@@ -249,22 +253,24 @@ export default function SettingsScreen() {
                 <View style={{ width: '100%' }}>
                   <Image
                     source={{ uri: imageUrl }}
-                    style={{ width: 90, height: 90, borderRadius: 45, marginBottom: 24, alignSelf: 'center' }}
+                    style={{ width: 89, height: 89, borderRadius: 44.5, marginBottom: 25, alignSelf: 'center' }}
                   />
-                  <View style={styles.actionGroup}>
-                    <Pressable style={styles.actionRow} onPress={pickAndUploadPhoto} disabled={uploading}>
+                  <View style={styles.rowGroup}>
+                    <Pressable style={styles.row} onPress={pickAndUploadPhoto} disabled={uploading}>
                       {uploading
                         ? <ActivityIndicator size="small" color="#333" />
                         : <Text style={styles.actionText}>Upload Photo</Text>
                       }
                     </Pressable>
-                    <View style={styles.actionDivider} />
-                    <Pressable style={styles.actionRow} onPress={takeAndUploadPhoto} disabled={uploading}>
+                  </View>
+                  <View style={styles.rowGroup}>
+                    <Pressable style={styles.row} onPress={takeAndUploadPhoto} disabled={uploading}>
                       <Text style={styles.actionText}>Camera</Text>
                     </Pressable>
-                    <View style={styles.actionDivider} />
-                    <Pressable style={styles.actionRow} onPress={clearPicture} disabled={uploading}>
-                      <Text style={[styles.actionText, { color: '#e53935' }]}>Clear Picture</Text>
+                  </View>
+                  <View style={styles.rowGroup}>
+                    <Pressable style={styles.row} onPress={clearPicture} disabled={uploading}>
+                      <Text style={[styles.actionText, { color: '#F6943B' }]}>Clear Picture</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -275,7 +281,7 @@ export default function SettingsScreen() {
                     source={{ uri: supabase.storage.from('profile_pictures').getPublicUrl(
                       imagePath.startsWith('avatar_') ? imagePath : 'avatar_4.jpg'
                     ).data.publicUrl }}
-                    style={{ width: 90, height: 90, borderRadius: 45, marginBottom: 24 }}
+                    style={{ width: 89, height: 89, borderRadius: 44.5, marginBottom: 24 }}
                   />
                   {/* Avatar grid 2x4 */}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
@@ -371,58 +377,59 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 4,
   },
   backButton: {
     width: 24,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
+    color: '#000',
   },
   scrollContent: {
     paddingBottom: 40,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#888',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
+    color: '#000',
     letterSpacing: 0.8,
-    marginTop: 24,
-    marginBottom: 12,
-    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 21,
+    marginLeft: 31,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 18,
   },
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   editPictureText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#0a7ea4',
-    fontWeight: '500',
+    marginTop: 17,
+    fontSize: 12,
+    color: '#1EA1FF',
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 89,
+    height: 89,
+    borderRadius: 44.5,
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowGroup: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#ddd',
-    backgroundColor: '#f9f9f9',
-  },
-  logoutGroup: {
-    marginTop: 32,
+    backgroundColor: '#F7F7F7',
+    marginHorizontal: 13,
+    marginBottom: 3,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -432,30 +439,36 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    height: 46,
+    paddingLeft: 17,
+    paddingRight: 16,
   },
   rowLabel: {
-    fontSize: 16,
-    color: '#333',
-    width: 100,
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
+    width: 80,
   },
   rowValue: {
-    fontSize: 16,
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
     color: '#888',
     flex: 1,
   },
   rowText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
   },
   logoutText: {
-    color: '#e53935',
+    color: '#F6943B',
   },
   editIconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#e8e8e8',
     alignItems: 'center',
     justifyContent: 'center',
@@ -466,13 +479,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: '#EEEEEE',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 40,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    minHeight: 320,
+    paddingTop: 6,
+    width: 378,
+    height: 400,
+    alignSelf: 'center',
   },
   bottomSheetHandle: {
     width: 36,
@@ -480,13 +495,13 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: '#ddd',
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   pictureTabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    marginBottom: 24,
+    marginBottom: 0,
   },
   pictureTab: {
     flex: 1,
@@ -500,17 +515,20 @@ const styles = StyleSheet.create({
     borderBottomColor: '#333',
   },
   pictureTabText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
     color: '#999',
   },
   pictureTabTextActive: {
-    color: '#333',
-    fontWeight: '600',
+    color: '#000',
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
   },
   pictureTabContent: {
     justifyContent: 'flex-start',
-    paddingVertical: 24,
+    paddingTop: 27,
+    paddingBottom: 24,
   },
   actionGroup: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -525,8 +543,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   actionText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
   },
   actionDivider: {
     height: StyleSheet.hairlineWidth,
@@ -546,20 +566,23 @@ const styles = StyleSheet.create({
     width: 300,
   },
   modalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
+    color: '#000',
     marginBottom: 16,
   },
   modalInput: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: '#ddd',
+    borderRadius: 0,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    fontSize: 16,
+    fontSize: 12,
+    fontFamily: 'RethinkSans-Regular',
+    fontWeight: '400',
     color: '#333',
-    backgroundColor: '#fafafa',
+    backgroundColor: '#F7F7F7',
   },
   modalDone: {
     marginTop: 16,
@@ -570,7 +593,8 @@ const styles = StyleSheet.create({
   },
   modalDoneText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: 'RethinkSans-Medium',
+    fontWeight: '500',
   },
 });
