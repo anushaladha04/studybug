@@ -1,4 +1,5 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface SessionPostProps {
     name: string;
@@ -17,6 +18,7 @@ export default function SessionPost({
     totalTime,
     image
 }: SessionPostProps) {
+    const router = useRouter();
 
     const formatPostedTime = () => {
         const postedTime = new Date(time);
@@ -54,16 +56,31 @@ export default function SessionPost({
                 </View>
             </View>
 
-            <View style={styles.infoRow}>
-                <View>
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.location}>{location} </Text>
+            <Pressable 
+                onPress={() => router.push({
+                    pathname: '/session-posting-details',
+                    params: {
+                        name,
+                        title,
+                        location,
+                        postedTime: formatPostedTime(),
+                        duration: formattedDuration(),
+                        image
+                    }
+                })}
+            >
+                <View style={styles.infoRow}>
+                    <View>
+                        <Text style={styles.title}>{title}</Text>
+                        <Text style={styles.location}>{location} </Text>
+                    </View>
+                    <View style={styles.totalTimeBlock}>
+                        <Text style={styles.totalTimeLabel}>Total Time</Text>
+                        <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
+                    </View>
                 </View>
-                <View style={styles.totalTimeBlock}>
-                    <Text style={styles.totalTimeLabel}>Total Time</Text>
-                    <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
-                </View>
-            </View>
+            </Pressable>
+
             {image ? (
                 <Image 
                     source={{ uri: image }} 
