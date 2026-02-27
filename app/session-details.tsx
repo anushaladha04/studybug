@@ -5,20 +5,20 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 export default function TimerConfig() {
     const router = useRouter();
 
-    const [ name, setName ] = useState('');
+    const [ sessionName, setSessionName ] = useState('');
     const [ location, setLocation ] = useState('');
     const [ focusLevel, setFocusLevel ] = useState<'Low' | 'High'>('Low');
     const [ note, setNote ] = useState('');
     const [ area, setArea ] = useState<'Academic' | 'Career'>('Academic');
 
     const handleStartSession = () => {
-        if (!name || !location || !note) {
+        if (!sessionName || !location || !note) {
             alert('Please fill in all fields.');
             return;
         }
         
         router.replace({
-            params: { name, location, focusLevel, note, area, refresh: 'true' },
+            params: { sessionName, location, focusLevel, note, area, refresh: 'true' },
             pathname: '/(tabs)/record',
         });
         // backend logic
@@ -29,8 +29,8 @@ export default function TimerConfig() {
             <Text style={styles.title}>Session Name</Text>
             <TextInput 
                 style={styles.input}
-                value={name}
-                onChangeText={setName}
+                value={sessionName}
+                onChangeText={setSessionName}
                 placeholder='' />
 
             <Text style={styles.title}>Location</Text>

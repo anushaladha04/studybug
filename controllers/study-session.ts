@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, subject: string, focusLevel: string, note: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -18,6 +18,7 @@ export async function startStudySession(sessionName: string, startTime: Date, is
                 end_time: null,
                 is_active: true,
                 is_public: isPublic, 
+                location_name: location,
                 subject: subject,
                 focus_level: focusLevel,
                 note: note
@@ -65,6 +66,30 @@ export async function fetchSessionsByUser(userId: string) {
         return null;
     }
 
+    return data;
+}
+
+export async function fetchUserLastSession() {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
+    }
+
+    const { data, error } = await supabase
+        .from('study_sessions')
+        .select('start_time, duration, location_name, session_name')
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching user\'s last session:', error.message);
+        return null;
+    }
+    
     return data;
 }
 
@@ -163,48 +188,49 @@ export async function getWeeklyDurations(userId: string, weekOffset: number = 0)
     return durations;
 }
 
-// Returns the total lifetime study seconds across all completed sessions.
-export async function getLifetimeSeconds(userId: string): Promise<number> {
-    const sessions = await fetchSessionsByUser(userId);
-    if (!sessions) return 0;
-    return sessions.reduce((sum, s) => {
-        if (s.duration != null && s.duration > 0 && s.end_time != null) {
-            return sum + s.duration;
-        }
-        return sum;
-    }, 0);
-}
+export async function uploadSessionImage(sessionId: string, imageUri: string) {
+    const { data: { user } } = await supabase.auth.getUser();
 
-// Returns the current study streak in days.
-// A day counts if at least one completed session *started* on that local calendar day.
-// Streak counts consecutive days ending at today (if today has a session) or yesterday
-// (if today has no session yet). Going further back stops at the first day with no session.
-export async function getStreakDays(userId: string): Promise<number> {
-    const sessions = await fetchSessionsByUser(userId);
-    if (!sessions) return 0;
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Collect the set of local date strings (YYYY-MM-DD) that have at least one completed session
-    const studiedDates = new Set<string>();
-    for (const s of sessions) {
-        if (!s.start_time || s.duration == null || s.duration === 0 || s.end_time == null) continue;
-        studiedDates.add(toLocalDateString(new Date(s.start_time), timezone));
+    if (! user) {
+        console.log('No authenticated user found.');
+        return null;
     }
 
-    const todayStr = toLocalDateString(new Date(), timezone);
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const arrayBuffer = await new Response(blob).arrayBuffer();
+    
+    const filePath = `${user.id}/${sessionId}.jpg`;
 
-    // If today has no session, start streak check from yesterday
-    let checkStr = studiedDates.has(todayStr)
-        ? todayStr
-        : shiftDateString(todayStr, -1);
+    const { error: uploadError } = await supabase.storage
+      .from('session_pictures')
+      .upload(filePath, arrayBuffer, { 
+        contentType: 'image/jpeg',
+        upsert: true
+     });
 
-    let streak = 0;
-    while (studiedDates.has(checkStr)) {
-        streak++;
-        checkStr = shiftDateString(checkStr, -1);
+    if (uploadError) {
+        console.error('Error uploading image to database: ', uploadError.message);
+        return null;
     }
 
-    return streak;
-}
+    const { data: urlData } = supabase.storage
+      .from('session_pictures')
+      .getPublicUrl(filePath);
+    
+    const publicUrl = urlData.publicUrl;
 
+    const { error } = await supabase
+        .from('study_sessions')
+        .update({
+            image_url: publicUrl,
+        })
+        .eq('session_id', sessionId);
+
+    if (error) {
+        console.error('Error uploading image: ', error.message);
+        return null;
+    }
+
+    return publicUrl;
+}

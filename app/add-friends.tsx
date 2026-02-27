@@ -103,7 +103,9 @@ export default function AddFriendsScreen() {
                 />
               )}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>No users found</Text>
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No users found </Text>
+                </View>
               }
             />
           </>
@@ -202,9 +204,17 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   emptyText: {
-    fontSize: 15,
-    color: '#999',
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
+    fontWeight: '400',
+    color: '#000000',
   },
   resultsHeader: {
     marginTop: 21,

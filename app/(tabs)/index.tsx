@@ -52,10 +52,13 @@ export default function HomeScreen() {
                 title = {item.session_name}
                 location = {item.location_name}
                 totalTime = {item.duration}
+                image = {item.image_url}
             />
           )}
           ListEmptyComponent={
-            <Text style={styles.subtitle}>No posts yet</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No posts yet </Text>
+            </View>
           }
         />
     </View>
@@ -99,6 +102,18 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginBottom: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: "Rethink Sans",
+    fontWeight: '400',
+    color: '#000000',
   },
 });
 
