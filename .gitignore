@@ -46,5 +46,5 @@ app-example
 # generated native folders
 /ios
 /android
-
+.idea
 fix-ngrok-arm64.js
