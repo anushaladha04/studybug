@@ -163,3 +163,48 @@ export async function getWeeklyDurations(userId: string, weekOffset: number = 0)
     return durations;
 }
 
+// Returns the total lifetime study seconds across all completed sessions.
+export async function getLifetimeSeconds(userId: string): Promise<number> {
+    const sessions = await fetchSessionsByUser(userId);
+    if (!sessions) return 0;
+    return sessions.reduce((sum, s) => {
+        if (s.duration != null && s.duration > 0 && s.end_time != null) {
+            return sum + s.duration;
+        }
+        return sum;
+    }, 0);
+}
+
+// Returns the current study streak in days.
+// A day counts if at least one completed session *started* on that local calendar day.
+// Streak counts consecutive days ending at today (if today has a session) or yesterday
+// (if today has no session yet). Going further back stops at the first day with no session.
+export async function getStreakDays(userId: string): Promise<number> {
+    const sessions = await fetchSessionsByUser(userId);
+    if (!sessions) return 0;
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Collect the set of local date strings (YYYY-MM-DD) that have at least one completed session
+    const studiedDates = new Set<string>();
+    for (const s of sessions) {
+        if (!s.start_time || s.duration == null || s.duration === 0 || s.end_time == null) continue;
+        studiedDates.add(toLocalDateString(new Date(s.start_time), timezone));
+    }
+
+    const todayStr = toLocalDateString(new Date(), timezone);
+
+    // If today has no session, start streak check from yesterday
+    let checkStr = studiedDates.has(todayStr)
+        ? todayStr
+        : shiftDateString(todayStr, -1);
+
+    let streak = 0;
+    while (studiedDates.has(checkStr)) {
+        streak++;
+        checkStr = shiftDateString(checkStr, -1);
+    }
+
+    return streak;
+}
+
