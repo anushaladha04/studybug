@@ -321,7 +321,7 @@ export default function SettingsScreen() {
                         >
                           <Image
                             source={{ uri: aUrl }}
-                            style={{ width: 72, height: 72, borderRadius: 36 }}
+                            style={{ width: 68, height: 68, borderRadius: 34 }}
                           />
                         </Pressable>
                       );
@@ -480,14 +480,14 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     backgroundColor: '#EEEEEE',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 16,
+    borderRadius: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 8,
     paddingTop: 6,
     width: 378,
-    height: 400,
+    height: 385,
     alignSelf: 'center',
+    marginBottom: 0,
   },
   bottomSheetHandle: {
     width: 36,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     width: 300,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '500',
     fontFamily: 'RethinkSans-Medium',
     color: '#000',
