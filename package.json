@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "node -e \"const{execSync}=require('child_process'),fs=require('fs'),path=require('path');const dir=path.join('node_modules','@expo','ngrok-bin-win32-x64');if(process.platform==='win32'&&process.arch==='arm64'&&!fs.existsSync(dir)){execSync('npm install @expo/ngrok-bin-win32-x64 --force --no-save --ignore-scripts',{stdio:'inherit'})}\"",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
@@ -13,7 +14,6 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expo/ngrok-bin-win32-x64": "^2.3.42",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
