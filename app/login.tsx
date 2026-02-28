@@ -49,7 +49,8 @@ export default function LoginScreen() {
           value={email}
           placeholder="email@address.com"
           placeholderTextColor="black"
-          autoCapitalize={'none'}
+          autoCapitalize="none"
+          autoCorrect={false}
           style={styles.input}
         />
       </View>
@@ -61,7 +62,8 @@ export default function LoginScreen() {
           secureTextEntry={true}
           placeholder="Password"
           placeholderTextColor="black"
-          autoCapitalize={'none'}
+          autoCapitalize="none"
+          autoCorrect={false}
           style={styles.input}
         />
       </View>

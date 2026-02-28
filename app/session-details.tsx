@@ -27,18 +27,20 @@ export default function TimerConfig() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Session Name</Text>
-            <TextInput 
+            <TextInput
                 style={styles.input}
                 value={sessionName}
                 onChangeText={setSessionName}
-                placeholder='' />
+                placeholder=''
+                autoCapitalize="none" />
 
             <Text style={styles.title}>Location</Text>
-            <TextInput 
+            <TextInput
                 style={styles.input}
                 value={location}
                 onChangeText={setLocation}
-                placeholder='' />
+                placeholder=''
+                autoCapitalize="none" />
                 
             <Text style={styles.title}>Level of Focus</Text>
             <View style={styles.toggleRow}>
@@ -107,11 +109,12 @@ export default function TimerConfig() {
             </View>
 
             <Text style={styles.title}>Add a Note</Text>
-            <TextInput 
+            <TextInput
                 style={styles.input}
                 value={note}
                 onChangeText={setNote}
-                placeholder='' />
+                placeholder=''
+                autoCapitalize="none" />
 
             <TouchableOpacity style={styles.button} onPress={handleStartSession}>
                 <Text style={styles.buttonText}>▶  Start</Text>
