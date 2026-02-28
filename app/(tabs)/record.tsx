@@ -137,7 +137,7 @@ export default function RecordScreen() {
       {!isSessionActive ? (
         <Pressable
           style={styles.button}
-          onPress={() => router.push('/session-details')}
+          onPress={() => router.push({ pathname: '/session-details', params: { startTime: new Date().toISOString() } })}
         >
           <Text style={styles.buttonText}>New Session</Text>
         </Pressable>
