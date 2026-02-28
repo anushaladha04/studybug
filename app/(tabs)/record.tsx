@@ -9,9 +9,15 @@ import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+}
 
 export default function RecordScreen() {
   const { session } = useAuthContext();
@@ -29,6 +35,7 @@ export default function RecordScreen() {
   const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
 
   const [ isPrivacyChosen, setIsPrivacyChosen] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const appState = useRef(AppState.currentState);
   const backgroundTime = useRef<number | null>(null);
@@ -38,6 +45,30 @@ export default function RecordScreen() {
     setIsPublic(newValue);
     await AsyncStorage.setItem('preferredVisibility', newValue.toString());
     Haptics.selectionAsync();
+  };
+
+  const getLocation = async (): Promise<LocationCoords> => {
+    let { status } = await Location.getForegroundPermissionsAsync();
+  
+    if (status !== 'granted') {
+      const response = await Location.requestForegroundPermissionsAsync();
+      status = response.status;
+    }
+
+    if (status !== 'granted') {
+      throw new Error('Permission to access location was denied');
+    }
+
+    let location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Lowest
+    });
+
+    console.log("Coordinates fetched!");
+
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
   };
 
   useEffect(() => {
@@ -77,28 +108,69 @@ export default function RecordScreen() {
   }, []);
 
   useEffect(() => {
-    if (refresh === 'true' && isPrivacyChosen) {
-      startSessionTrigger();
+  const trigger = async () => {
+    if (refresh === 'true' && isPrivacyChosen) {      
+      const success = await startSessionTrigger();
       setSessionInfo(`Session: ${sessionName}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
-      router.setParams({ refresh: 'false' });
+
+      if (success) {
+        router.setParams({ refresh: 'false' });
+      }
     }
-  }, [refresh, isPrivacyChosen])
+  };
+
+  trigger();
+}, [refresh, isPrivacyChosen]);
 
   const startSessionTrigger = async () => {
-    const startTime = new Date();
-    const savedVisibility = await AsyncStorage.getItem('preferredVisibility');
-    const currentIsPublic = savedVisibility !== null 
-    ? savedVisibility === 'true' 
-    : isPublic; 
+    if (isLocating) return;
+    setIsLocating(true);
+    try {
+      const startTime = new Date();
+      const savedVisibility = await AsyncStorage.getItem('preferredVisibility');
+      
+      const currentIsPublic = savedVisibility !== null 
+        ? savedVisibility === 'true' 
+        : isPublic;
+      console.log("Private or public:", currentIsPublic);
 
-    const sessionId = await startStudySession(sessionName, startTime, currentIsPublic, location, area, focusLevel, note);
-    if (sessionId) {
-      setCurrentSessionId(sessionId);
-      setIsSessionActive(true);
-      setTimerIsActive(true);
-      // Save session state to AsyncStorage
-      await AsyncStorage.setItem('activeSessionId', sessionId);
-      await AsyncStorage.setItem('sessionStartTime', startTime.toISOString());
+      let latitude = null;
+      let longitude = null;
+
+      if (currentIsPublic) {
+        console.log("Fetching location...")
+        const coordinates = await getLocation();
+        latitude = coordinates.latitude;
+        longitude = coordinates.longitude;
+        console.log("Fetched location!!!")
+      }
+
+      const sessionId = await startStudySession(
+        sessionName, 
+        startTime, 
+        currentIsPublic, 
+        location, 
+        latitude,
+        longitude,
+        area, 
+        focusLevel, 
+        note
+      );
+
+      if (sessionId) {
+        setCurrentSessionId(sessionId);
+        setIsSessionActive(true);
+        setTimerIsActive(true);
+        await AsyncStorage.setItem('activeSessionId', sessionId);
+        await AsyncStorage.setItem('sessionStartTime', startTime.toISOString());
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Session start failed:", error.message);
+      return false;
+    } finally {
+      setIsLocating(false);
     }
   };
 
