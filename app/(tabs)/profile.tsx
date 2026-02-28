@@ -1,22 +1,30 @@
 import SessionPost from '@/components/session-component';
-import { fetchSessionsByUser, getWeeklyDurations } from "@/controllers/study-session";
+import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'insights' | 'archive'>('insights');
-  const { session, profile, refreshProfile } = useAuthContext();
+  const { session, profile, refreshProfile, profileImageVersion } = useAuthContext();
   const router = useRouter();
+
+  const imagePath = profile?.profile_image_path ?? 'avatar_4.jpg';
+  const { data: { publicUrl: avatarUrlBase } } = supabase.storage
+    .from('profile_pictures')
+    .getPublicUrl(imagePath);
+  const avatarUrl = `${avatarUrlBase}?v=${profileImageVersion}`;
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
 
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
   const [sessions, setSessions] = useState<any[]>([]);
+  const [streak, setStreak] = useState<number>(0);
+  const [lifetimeSeconds, setLifetimeSeconds] = useState<number>(0);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -25,7 +33,9 @@ export default function ProfileScreen() {
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
       fetchSessionsByUser(id),
-    ]).then(([thisWeek, lastWeek, userSessions]) => {
+      getStreakDays(id),
+      getLifetimeSeconds(id),
+    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
@@ -33,6 +43,8 @@ export default function ProfileScreen() {
         .filter((s: any) => s.end_time !== null)
         .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
       setSessions(completed);
+      setStreak(streakDays);
+      setLifetimeSeconds(lifetimeSecs);
     });
   }, [session?.user?.id]);
 
@@ -58,7 +70,10 @@ export default function ProfileScreen() {
 
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <Ionicons name="person-outline" size={40} color="#999" />
+          <Image
+            source={{ uri: avatarUrl }}
+            style={{ width: 89, height: 89, borderRadius: 44.5 }}
+          />
         </View>
         <View style={styles.profileText}>
           <Text style={styles.nameText}>{profile?.full_name ?? '-'}</Text>
@@ -66,7 +81,7 @@ export default function ProfileScreen() {
           <Pressable style={styles.bioRow} onPress={() => { setBioInput(profile?.bio ?? ''); setBioModalVisible(true); }}>
             <Text style={styles.bioText}>{profile?.bio ?? 'No bio yet'}</Text>
             <View style={styles.editIconCircle}>
-              <Ionicons name="pencil" size={13} color="#666" />
+              <Ionicons name="pencil" size={11} color="#666" />
             </View>
           </Pressable>
         </View>
@@ -89,9 +104,21 @@ export default function ProfileScreen() {
 
       <View style={styles.content}>
         {activeTab === 'insights' ? (
-          <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
+          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingTop: 30, paddingBottom: 12 }}>
+            <View style={{ flexDirection: 'row', gap: 14, marginBottom: 4 }}>
+              <View style={styles.statBlock}>
+                <Text style={styles.statLabel}>Streak</Text>
+                <Text style={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</Text>
+              </View>
+              <View style={styles.statBlock}>
+                <Text style={styles.statLabel}>Lifetime</Text>
+                <Text style={styles.statValue}>{Math.round(lifetimeSeconds / 3600)} hours</Text>
+              </View>
+            </View>
+            <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
+          </ScrollView>
         ) : (
-          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 12 }}>
+          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'stretch', paddingVertical: 12 }}>
             {sessions.length === 0 ? (
               <Text style={styles.emptyText}>No past sessions yet</Text>
             ) : (
@@ -175,7 +202,7 @@ function formatDuration(seconds: number): string {
   return `${m} min`;
 }
 
-const CARD_WIDTH = Dimensions.get('window').width * 0.9;
+const CARD_WIDTH = Dimensions.get('window').width - 60;
 const BAR_MAX_HEIGHT = 120;
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -184,17 +211,18 @@ function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; las
   const todayIndex = new Date().getDay();
 
   const thisWeekTotal = durations.reduce((sum, v) => sum + v, 0);
-  let subtitleText: string | null = null;
-  if (lastWeekTotal !== null && lastWeekTotal > 0) {
-    const pct = Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100);
-    const dir = pct >= 0 ? 'Up' : 'Down';
-    subtitleText = `${dir} ${Math.abs(pct)}% from last week`;
-  }
+  const avgSeconds = Math.round(thisWeekTotal / (todayIndex + 1));
+  const avgHours = Math.floor(avgSeconds / 3600);
+  const avgMins = Math.floor((avgSeconds % 3600) / 60);
+  const subtitleText = avgHours > 0 ? `${avgHours}hr ${avgMins}m` : `${avgMins}m`;
+  const totalHours = Math.floor(thisWeekTotal / 3600);
+  const totalMins = Math.floor((thisWeekTotal % 3600) / 60);
+  const totalText = totalHours > 0 ? `${totalHours}hr ${totalMins}m` : `${totalMins}m`;
 
   return (
     <View style={chartStyles.card}>
-      <Text style={chartStyles.cardTitle}>Your Week in Study Sessions</Text>
-      <Text style={chartStyles.cardSubtitle}>{subtitleText ?? ''}</Text>
+      <Text style={chartStyles.cardTitle}>Daily Average</Text>
+      <Text style={chartStyles.cardSubtitle}>{subtitleText}</Text>
       <View style={chartStyles.barsRow}>
         {durations.map((val, i) => {
           const barHeight = Math.max(4, (val / max) * BAR_MAX_HEIGHT);
@@ -215,6 +243,10 @@ function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; las
           );
         })}
       </View>
+      <View style={chartStyles.totalRow}>
+        <Text style={chartStyles.totalLabel}>Total Study Time</Text>
+        <Text style={chartStyles.totalValue}>{totalText}</Text>
+      </View>
     </View>
   );
 }
@@ -224,57 +256,83 @@ const chartStyles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 18,
-    padding: 20,
+    paddingTop: 9,
+    paddingLeft: 15,
+    paddingRight: 20,
+    paddingBottom: 20,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: '#f0f0f0',
   },
   cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#222',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
   },
   cardSubtitle: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-    marginBottom: 20,
+    fontSize: 21,
+    fontWeight: '600',
+    fontFamily: 'RethinkSans-SemiBold',
+    color: '#000',
+    marginTop: 0,
+    marginBottom: 0,
   },
   barsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     height: BAR_MAX_HEIGHT + 24,
+    marginTop: 22,
   },
   barColumn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginHorizontal: 4,
+    marginHorizontal: 2,
   },
   bar: {
     width: '100%',
     borderRadius: 5,
   },
   barDefault: {
-    backgroundColor: '#bbb',
+    backgroundColor: '#A3E2FF',
   },
   barToday: {
-    backgroundColor: '#555',
+    backgroundColor: '#1EA1FF',
   },
   dayLabel: {
-    fontSize: 11,
-    color: '#bbb',
-    marginTop: 5,
+    fontSize: 15.37,
+    fontWeight: '700',
+    fontFamily: 'RethinkSans-Bold',
+    color: '#686868',
+    marginTop: 12,
   },
   dayLabelToday: {
-    color: '#555',
-    fontWeight: '600',
+    color: '#333',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  totalLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
+  },
+  totalValue: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
   },
 });
 
@@ -292,9 +350,10 @@ const styles = StyleSheet.create({
     width: '90%',
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
+    color: '#000',
   },
   profileSection: {
     flexDirection: 'row',
@@ -303,9 +362,9 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 89,
+    height: 89,
+    borderRadius: 44.5,
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -313,32 +372,39 @@ const styles = StyleSheet.create({
   profileText: {
     marginLeft: 16,
     flex: 1,
+    height: 89,
+    overflow: 'hidden',
   },
   nameText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
+    color: '#000',
+    marginTop: 6,
   },
   usernameText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+    fontSize: 16,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#787878',
   },
   bioRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
     gap: 6,
   },
   bioText: {
-    fontSize: 13,
-    color: '#999',
-    flex: 1,
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#333',
+
   },
   editIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#e8e8e8',
     alignItems: 'center',
     justifyContent: 'center',
@@ -386,28 +452,26 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     width: '90%',
-    marginTop: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginTop: 27,
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderBottomColor: '#E2E2E2',
   },
   activeTab: {
-    borderBottomColor: '#0a7ea4',
+    borderBottomColor: '#000',
   },
   tabText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'RethinkSans-Medium',
     color: '#999',
   },
   activeTabText: {
-    color: '#0a7ea4',
-    fontWeight: '600',
+    color: '#000',
   },
   content: {
     flex: 1,
@@ -418,5 +482,26 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: '#999',
+  },
+  statBlock: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    width: 85,
+    height: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statLabel: {
+    fontSize: 9,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
+  },
+  statValue: {
+    fontSize: 9,
+    fontWeight: '500',
+    fontFamily: 'RethinkSans-Regular',
+    color: '#000',
   },
 });
