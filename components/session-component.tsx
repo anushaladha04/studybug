@@ -34,13 +34,27 @@ export default function SessionPost({
         const postedTime = new Date(time);
         const now = new Date();
 
-        if (postedTime.toLocaleDateString() === now.toLocaleDateString())
-            return postedTime.toLocaleTimeString([], { 
+        if (postedTime.toLocaleDateString() === now.toLocaleDateString()) {
+             return postedTime.toLocaleTimeString([], { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
-        else
-            return postedTime.toLocaleDateString();
+        }
+
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfPosted = new Date(postedTime.getFullYear(), postedTime.getMonth(), postedTime.getDate());
+    
+        const diffInMs = startOfToday.getTime() - startOfPosted.getTime();
+        const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24));
+
+        if (diffInDays === 1) {
+            return "Yesterday";
+        }
+        if (diffInDays < 7) {
+            return `${diffInDays} days ago`;
+        }
+            
+        return postedTime.toLocaleDateString();
     };
 
     const formattedDuration = () => {
