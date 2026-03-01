@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string, latitude?: number | null, longitude?: number | null) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -21,7 +21,9 @@ export async function startStudySession(sessionName: string, startTime: Date, is
                 location_name: location,
                 subject: subject,
                 focus_level: focusLevel,
-                note: note
+                note: note,
+                latitude: latitude ?? null,
+                longitude: longitude ?? null
             },
         ])
         .select();

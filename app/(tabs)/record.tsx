@@ -9,6 +9,7 @@ import { useAuthContext } from '@/hooks/use-auth-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -91,7 +92,20 @@ export default function RecordScreen() {
     ? savedVisibility === 'true' 
     : isPublic; 
 
-    const sessionId = await startStudySession(sessionName, startTime, currentIsPublic, location, area, focusLevel, note);
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        latitude = loc.coords.latitude;
+        longitude = loc.coords.longitude;
+      }
+    } catch (e) {
+      console.warn('Could not get location for session:', e);
+    }
+
+    const sessionId = await startStudySession(sessionName, startTime, currentIsPublic, location, area, focusLevel, note, latitude, longitude);
     if (sessionId) {
       setCurrentSessionId(sessionId);
       setIsSessionActive(true);
