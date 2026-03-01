@@ -19,11 +19,15 @@ describe('startStudySession', () => {
         const mockStudySession = [{
             session_id: 'test-study-session-id',
             user_id: 'test-user-id',
+            session_name: 'test session',
             start_time: '2025-01-01T00:00:00Z',
             end_time: null,
             is_active: true,
             is_public: true, 
-            subject: 'test-subject'
+            location_name: 'test-location',
+            subject: 'test-subject',
+            focus_level: 'high',
+            note: 'test note'
         }];
 
         const mockInsert = jest.fn().mockReturnThis();
@@ -41,7 +45,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject');
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
 
         expect(supabase.auth.getUser).toHaveBeenCalled();
         expect(supabase.from).toHaveBeenCalledWith('study_sessions');
@@ -64,7 +68,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         })
 
-        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject')
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
 
         expect(result).toBeNull();
     });
@@ -85,7 +89,7 @@ describe('startStudySession', () => {
             select: mockSelect,
         });
 
-        const result = await startStudySession(new Date('2025-01-01T00:00:00Z'), true, 'test-subject');
+        const result = await startStudySession('test session', new Date('2025-01-01T00:00:00Z'), true, 'test-location', 'test-subject', 'high', 'test note');
         expect(result).toBeNull();
     });
 
@@ -107,17 +111,21 @@ describe('startStudySession', () => {
 
         const startTime = new Date('2025-01-01T00:00:00Z');
 
-        await startStudySession(startTime, true, 'test-subject')
+        await startStudySession('test session', startTime, true, 'test-location', 'test-subject', 'high', 'test note')
 
-        expect(mockInsert).toHaveBeenCalledWith([
-            {
+        expect(mockInsert).toHaveBeenCalledWith(
+            expect.objectContaining([{
                 user_id: 'test-user-id',
-                start_time: startTime.toISOString(),
+                session_name: 'test session',
+                start_time: '2025-01-01T00:00:00.000Z',
                 end_time: null,
                 is_active: true,
-                is_public: true,
+                is_public: true, 
+                location_name: 'test-location',
                 subject: 'test-subject',
-            },
-        ]);
+                focus_level: 'high',
+                note: 'test note'
+            }])
+        );
     });
 });

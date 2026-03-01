@@ -1,26 +1,26 @@
 import X from '@/assets/icons/X.svg';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 
-export default function TimerConfig() {
+export default function SessionDetails() {
     const router = useRouter();
 
-    const [name, setName] = useState<string | undefined>(undefined);
+    const [sessionName, setSessionName] = useState<string | undefined>(undefined);
     const [location, setLocation] = useState('');
     const [note, setNote] = useState('');
     const [area, setArea] = useState<'Academic' | 'Career'>('Academic');
 
-    const { startTime } = useLocalSearchParams();
+    const [startTime] = useState(() => new Date().toISOString());
     const getSessionTime = (isoString: string) => {
         const hour = new Date(isoString).getHours();
-        if (hour < 6) return 'Night Session';
+        if (hour < 6 || hour >= 20) return 'Night Session';
         if (hour < 12) return 'Morning Session';
         if (hour < 14) return 'Lunch Session';
         if (hour < 18) return 'Afternoon Session';
         return 'Evening Session';
     };
-    const sessionTime = startTime ? getSessionTime(startTime as string): '';
+    const sessionTimePlaceholder = startTime ? getSessionTime(startTime as string): '';
 
     const FOCUS_LEVELS = ['Low', 'Medium', 'High'] as const;
     type FocusLevel = (typeof FOCUS_LEVELS)[number];
@@ -33,7 +33,7 @@ export default function TimerConfig() {
         }
 
         router.replace({
-            params: { name, location, focusLevel, note, area, refresh: 'true' },
+            params: { sessionName: sessionName || sessionTimePlaceholder, location, focusLevel, note, area, refresh: 'true' },
             pathname: '/(tabs)/record',
         });
     };
@@ -49,21 +49,25 @@ export default function TimerConfig() {
 
     const xPos = useRef(new Animated.Value(0)).current;
 
+    const offsetRef = useRef(0);
+
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
 
             onPanResponderGrant: () => {
                 xPos.stopAnimation(value => {
+                    offsetRef.current = value;
                     xPos.setOffset(value);
                     xPos.setValue(0);
                 });
             },
 
-            onPanResponderMove: Animated.event(
-                [null, { dx: xPos }],
-                { useNativeDriver: false }
-            ),
+            onPanResponderMove: (_, gestureState) => {
+                const raw = offsetRef.current + gestureState.dx;
+                const clamped = Math.max(0, Math.min(raw, TRACK_WIDTH));
+                xPos.setValue(clamped - offsetRef.current);
+            },
 
             onPanResponderRelease: () => {
                 xPos.flattenOffset();
@@ -105,7 +109,7 @@ useRef(
             </View>
 
             <Text style={styles.label}>Session Name</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder={sessionTime} placeholderTextColor='#000000' />
+            <TextInput style={styles.input} value={sessionName} onChangeText={setSessionName} placeholder={sessionTimePlaceholder} placeholderTextColor='#000000' />
 
             <Text style={styles.label}>Location</Text>
             <TextInput style={styles.input} value={location} onChangeText={setLocation} />

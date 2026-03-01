@@ -1,11 +1,13 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface SessionPostProps {
     name: string;
     time: string;
     title: string;
     location: string;
-    totalTime: string;
+    totalTime: number;
+    image: string
 }
 
 export default function SessionPost({
@@ -14,7 +16,35 @@ export default function SessionPost({
     title,
     location,
     totalTime,
+    image
 }: SessionPostProps) {
+    const router = useRouter();
+
+    const formatPostedTime = () => {
+        const postedTime = new Date(time);
+        const now = new Date();
+
+        if (postedTime.toLocaleDateString() === now.toLocaleDateString())
+            return postedTime.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        else
+            return postedTime.toLocaleDateString();
+    };
+
+    const formattedDuration = () => {
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime - hours * 3600) / 60);
+
+        if (hours == 0)
+            return `${minutes} min`
+
+        if (minutes == 0)
+            return `${hours} hr`
+
+        return `${hours} hr ${minutes} min`;
+    }
 
     return (
         <View style={styles.card}>
@@ -22,22 +52,44 @@ export default function SessionPost({
                 <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.time}>{time} </Text>
+                    <Text style={styles.time}>{formatPostedTime()} </Text>
                 </View>
             </View>
 
-            <View style={styles.infoRow}>
-                <View>
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.location}>{location} </Text>
+            <Pressable 
+                onPress={() => router.push({
+                    pathname: '/session-posting-details',
+                    params: {
+                        name,
+                        title,
+                        location,
+                        postedTime: formatPostedTime(),
+                        duration: formattedDuration(),
+                        image
+                    }
+                })}
+            >
+                <View style={styles.infoRow}>
+                    <View>
+                        <Text style={styles.title}>{title}</Text>
+                        <Text style={styles.location}>{location} </Text>
+                    </View>
+                    <View style={styles.totalTimeBlock}>
+                        <Text style={styles.totalTimeLabel}>Total Time</Text>
+                        <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
+                    </View>
                 </View>
-                <View style={styles.totalTimeBlock}>
-                    <Text style={styles.totalTimeLabel}>Total Time</Text>
-                    <Text style={styles.totalTimeValue}>{totalTime}</Text>
-                </View>
-            </View>
+            </Pressable>
 
-            <View style={styles.chartPlaceholder} />
+            {image ? (
+                <Image 
+                    source={{ uri: image }} 
+                    style={styles.postImage}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.chartPlaceholder} />
+            )}
 
             <View style={styles.actions}>
                 <Text style={styles.icon}>♡</Text>
@@ -49,11 +101,10 @@ export default function SessionPost({
 const styles = StyleSheet.create({
       card: {
         backgroundColor: '#fff',
-        paddingHorizontal: 26,
-        paddingVertical: 12,
+        paddingHorizontal: 29,
+        paddingVertical: 19,
         marginTop: 2,
         marginBottom: 4,
-        width: 380,
         borderBottomWidth: 1,
         borderColor: '#dedede',
     },
@@ -66,11 +117,13 @@ const styles = StyleSheet.create({
         width: 46,
         height: 46,
         borderRadius: 23,
-        marginRight: 12,
+        marginRight: 15,
     },
     name: {
-        fontSize: 17,
-        color: '#1a1a1a',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     time: {
         fontSize: 15,
@@ -84,27 +137,37 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '500',
-        color: '#1a1a1a',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     location: {
-        fontSize: 15,
-        color: '#666',
-        marginTop: 3,
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeBlock: {
         alignItems: 'flex-end',
     },
     totalTimeLabel: {
-        fontSize: 15,
-        color: '#888',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeValue: {
-        fontSize: 17,
-        color: '#1a1a1a',
-        marginTop: 2,
+        fontSize: 16,
         fontWeight: '500',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    postImage: {
+        width: '100%',
+        paddingVertical: 20,
+        aspectRatio: 3/2,
+        borderRadius: 8,
     },
     chartPlaceholder: {
         height: 150,

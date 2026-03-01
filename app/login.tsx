@@ -75,7 +75,7 @@ export default function LoginScreen() {
           onPress={() => signInWithEmail()} />
       </View>
 
-      <Link href="./signup">
+      <Link href="/(auth)/register">
         Don't have an account? Sign up!
       </Link>
 
