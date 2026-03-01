@@ -17,13 +17,14 @@ export default function SessionPostDetailsScreen() {
   const router = useRouter();
   const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
-  const getPublicUrl = (path: string) => {
+  const getPublicUrl = (bucket: string, path: string) => {
       if (!path) 
           return 'default_avatar_url_here';
-      return `${SUPABASE_URL}/storage/v1/object/public/session_pictures/${path}`;
+      return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  const { name, title, location, postedTime, duration, image } = useLocalSearchParams<{
+  const { pfp, name, title, location, postedTime, duration, image } = useLocalSearchParams<{
+    pfp: string,
     name: string;
     title: string;
     location: string;
@@ -47,11 +48,15 @@ export default function SessionPostDetailsScreen() {
 
       <View style={styles.content}>
         <View style={styles.header}>
-                  <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
-                  <View>
-                      <Text style={styles.name}>{name}</Text>
-                      <Text style={styles.time}>{postedTime} </Text>
-                  </View>
+          <Image 
+              source={{ uri: getPublicUrl('profile_pictures', pfp) }} 
+              style={styles.avatar}
+              resizeMode="cover"
+          />
+          <View>
+             <Text style={styles.name}>{name}</Text>
+            <Text style={styles.time}>{postedTime} </Text>
+          </View>
         </View>
 
         <View style={styles.infoRow}>
@@ -67,7 +72,7 @@ export default function SessionPostDetailsScreen() {
 
         {image ? (
           <Image 
-              source={{ uri: getPublicUrl(image) }} 
+              source={{ uri: getPublicUrl('session_pictures', image) }} 
               style={styles.postImage}
               resizeMode="cover"
           />

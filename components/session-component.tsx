@@ -80,6 +80,7 @@ export default function SessionPost({
                 onPress={() => router.push({
                     pathname: '/session-posting-details',
                     params: {
+                        pfp,
                         name,
                         title,
                         location,

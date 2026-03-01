@@ -1,8 +1,8 @@
-import ClockIcon from '@/assets/icons/clock';
+import AvatarIcon from '@/assets/icons/avatar.svg';
+import ClockIcon from '@/assets/icons/clock.svg';
 import { intervalToDuration } from 'date-fns';
-import { Image as ExpoImage } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 
 interface Friend {
@@ -59,15 +59,15 @@ export default function FriendCard(friend: Friend) {
 
     return (
         <View style={[styles.card]}>
-            <ExpoImage
-                style={styles.avatar}
-                source={getPublicUrl(friend.pfp)}
-                placeholder={require('@/assets/images/profile-icon.png')}
-                contentFit="cover"
-                placeholderContentFit="cover"
-                transition={500}
-                cachePolicy="memory-disk"
-            />
+            { friend.pfp ? (
+                <Image 
+                    source={{ uri: getPublicUrl(friend.pfp) }} 
+                    style={styles.avatar}
+                    resizeMode="cover"
+                />
+            ) : (
+                <AvatarIcon />
+            )}
 
             <View style={styles.contentContainer}>
                 <Text style={styles.nameText}>{friend.full_name}</Text>
@@ -118,10 +118,9 @@ const styles = StyleSheet.create({
         gap: 5
     },
     avatar: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        marginRight: 15,
+        width: 55,
+        height: 55,
+        borderRadius: 27
     },
     nameText: {
         fontSize: 14,
