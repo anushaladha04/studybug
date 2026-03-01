@@ -19,6 +19,13 @@ export default function SessionPost({
     image
 }: SessionPostProps) {
     const router = useRouter();
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/session_pictures/${path}`;
+    };
 
     const formatPostedTime = () => {
         const postedTime = new Date(time);
@@ -45,6 +52,8 @@ export default function SessionPost({
 
         return `${hours} hr ${minutes} min`;
     }
+
+
 
     return (
         <View style={styles.card}>
@@ -83,7 +92,7 @@ export default function SessionPost({
 
             {image ? (
                 <Image 
-                    source={{ uri: image }} 
+                    source={{ uri: getPublicUrl(image) }} 
                     style={styles.postImage}
                     resizeMode="cover"
                 />

@@ -225,7 +225,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
     const { error } = await supabase
         .from('study_sessions')
         .update({
-            image_url: publicUrl,
+            image_url: filePath,
         })
         .eq('session_id', sessionId);
 
@@ -234,7 +234,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
         return null;
     }
 
-    return publicUrl;
+    return filePath;
 }
 
 // Returns the total lifetime study seconds across all completed sessions.

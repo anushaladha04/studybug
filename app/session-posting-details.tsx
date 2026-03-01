@@ -15,6 +15,13 @@ interface SessionPostDetailsProps {
 export default function SessionPostDetailsScreen() {
 
   const router = useRouter();
+  const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+  const getPublicUrl = (path: string) => {
+      if (!path) 
+          return 'default_avatar_url_here';
+      return `${SUPABASE_URL}/storage/v1/object/public/session_pictures/${path}`;
+  };
 
   const { name, title, location, postedTime, duration, image } = useLocalSearchParams<{
     name: string;
@@ -60,7 +67,7 @@ export default function SessionPostDetailsScreen() {
 
         {image ? (
           <Image 
-              source={{ uri: image }} 
+              source={{ uri: getPublicUrl(image) }} 
               style={styles.postImage}
               resizeMode="cover"
           />
