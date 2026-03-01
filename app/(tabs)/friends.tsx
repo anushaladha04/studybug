@@ -74,8 +74,6 @@ export default function FriendsScreen() {
       accuracy: Location.Accuracy.Balanced
     });
 
-    console.log("Coordinates fetched!", location);
-
     setUserLocation({
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,

@@ -27,11 +27,14 @@ type FriendRow = {
 type ActiveStudySessionRow = {
   session_id: string;
   user_id: string;
+  session_name?: string | null,
   subject?: string | null;
   location_name?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
   start_time?: string | null;
+  focus_level?: string | null,
+  note?: string;
 };
 
 type StudyType = 'Academic' | 'Career' | 'Personal';
@@ -253,7 +256,7 @@ export default function MapScreen() {
 
         const { data, error } = await supabase
           .from('study_sessions')
-          .select('session_id, user_id, subject, location_name, latitude, longitude, start_time')
+          .select('session_id, user_id, session_name, subject, location_name, latitude, longitude, start_time, focus_level, note')
           .in('user_id', friendIds)
           .eq('is_active', true)
           .eq('is_public', true)
@@ -282,21 +285,28 @@ export default function MapScreen() {
             if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
             const seed = `${session.user_id}-${session.session_id}`;
-            const studyType = pickDeterministic(seed, STUDY_TYPES);
-            const focusLevel = pickDeterministic(`${seed}-focus`, FOCUS_LEVELS);
+            const rawSubject = session.subject?.trim();
+            const studyType: StudyType = (['Academic', 'Career', 'Personal'].includes(rawSubject as any)) 
+              ? (rawSubject as StudyType) 
+              : 'Academic';
+
+            const rawFocusLevel = session.focus_level?.trim();
+            const focusLevel: FocusLevel = (['High', 'Medium', 'Low'].includes(rawFocusLevel as any)) 
+              ? (rawFocusLevel as FocusLevel) 
+              : 'Low';
 
             return {
               id: session.session_id,
               friendUserId: session.user_id,
               name: friendNameById.get(session.user_id) || 'Friend',
-              studying: session.subject?.trim() || 'Studying',
+              studying: session.session_name?.trim() || 'Studying',
               locationName: session.location_name?.trim() || friendById.get(session.user_id)?.location_name?.trim() || 'Powell Library',
               latitude,
               longitude,
               startedAt: session.start_time ?? friendById.get(session.user_id)?.start_time ?? null,
               studyType,
               focusLevel,
-              note: 'Locked in for a study session.',
+              note: session.note || 'Locked in for a study session.',
               pinColor: FOCUS_COLORS[focusLevel],
             };
           })
