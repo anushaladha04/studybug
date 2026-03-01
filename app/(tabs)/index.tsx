@@ -2,6 +2,7 @@ import SessionPost from '@/components/session-component';
 import { fetchPostsRandomOrder } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
 
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -21,6 +22,12 @@ export default function HomeScreen() {
     const fetchFeed = async () => {
       try {
         const data = await fetchPostsRandomOrder(seed);
+        const SUPABASE_BASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co/storage/v1/object/public/profile_pictures/';
+
+        const pfpUrls = data
+          .filter((item: any) => item.profile_image_path)
+          .map((item: any) => `${SUPABASE_BASE_URL}${item.profile_image_path}`);
+        Image.prefetch(pfpUrls);
 
         setPosts(data);
       } catch (error) {
@@ -46,15 +53,17 @@ export default function HomeScreen() {
           refreshing={refreshing}
           onRefresh={handleRefresh}
           renderItem={({ item }) =>  (
-            <SessionPost
-                name = {item.full_name}
-                time = {item.end_time}
-                title = {item.session_name}
-                location = {item.location_name}
-                totalTime = {item.duration}
-                image = {item.image_url}
-            />
-          )}
+              <SessionPost
+                  pfp = {item.profile_image_path}
+                  name = {item.full_name}
+                  time = {item.end_time}
+                  title = {item.session_name}
+                  location = {item.location_name}
+                  totalTime = {item.duration}
+                  image = {item.image_url}
+              />
+            )
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No posts yet </Text>

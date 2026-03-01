@@ -1,7 +1,9 @@
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface SessionPostProps {
+    pfp: string,
     name: string;
     time: string;
     title: string;
@@ -11,6 +13,7 @@ interface SessionPostProps {
 }
 
 export default function SessionPost({
+    pfp,
     name,
     time,
     title,
@@ -21,10 +24,10 @@ export default function SessionPost({
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
-    const getPublicUrl = (path: string) => {
+    const getPublicUrl = (bucket: string, path: string) => {
         if (!path) 
             return 'default_avatar_url_here';
-        return `${SUPABASE_URL}/storage/v1/object/public/session_pictures/${path}`;
+        return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
     };
 
     const formatPostedTime = () => {
@@ -58,7 +61,15 @@ export default function SessionPost({
     return (
         <View style={styles.card}>
             <View style={styles.header}>
-                <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
+                <ExpoImage
+                    style={styles.avatar}
+                    source={getPublicUrl('profile_pictures', pfp)}
+                    placeholder={require('@/assets/images/profile-icon.png')}
+                    contentFit="cover"
+                    placeholderContentFit="cover"
+                    transition={500}
+                    cachePolicy="memory-disk"
+                />
                 <View>
                     <Text style={styles.name}>{name}</Text>
                     <Text style={styles.time}>{formatPostedTime()} </Text>
@@ -92,7 +103,7 @@ export default function SessionPost({
 
             {image ? (
                 <Image 
-                    source={{ uri: getPublicUrl(image) }} 
+                    source={{ uri: getPublicUrl('session_pictures', image) }} 
                     style={styles.postImage}
                     resizeMode="cover"
                 />

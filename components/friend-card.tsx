@@ -1,10 +1,12 @@
-import AvatarIcon from '@/assets/icons/avatar';
 import ClockIcon from '@/assets/icons/clock';
 import { intervalToDuration } from 'date-fns';
+import { Image as ExpoImage } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+
 interface Friend {
+    pfp: string,
     full_name: string,
     location: string,
     start_time: string,
@@ -14,6 +16,14 @@ interface Friend {
 }
 
 export default function FriendCard(friend: Friend) {
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+    };
+
     const [ now, setNow ] = useState(new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
@@ -49,7 +59,15 @@ export default function FriendCard(friend: Friend) {
 
     return (
         <View style={[styles.card]}>
-            <AvatarIcon />
+            <ExpoImage
+                style={styles.avatar}
+                source={getPublicUrl(friend.pfp)}
+                placeholder={require('@/assets/images/profile-icon.png')}
+                contentFit="cover"
+                placeholderContentFit="cover"
+                transition={500}
+                cachePolicy="memory-disk"
+            />
 
             <View style={styles.contentContainer}>
                 <Text style={styles.nameText}>{friend.full_name}</Text>
@@ -98,6 +116,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         gap: 5
+    },
+    avatar: {
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        marginRight: 15,
     },
     nameText: {
         fontSize: 14,

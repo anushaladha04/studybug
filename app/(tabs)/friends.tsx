@@ -101,6 +101,7 @@ export default function FriendsScreen() {
               contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
                 <FriendCard
+                  pfp = {item.profile_image_path}
                   full_name = {item.full_name}
                   location = {item.location_name}
                   start_time = {item.start_time}
@@ -126,6 +127,7 @@ export default function FriendsScreen() {
                 contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                 renderItem={({ item }) => (
                   <FriendCard
+                      pfp = {item.profile_image_path}
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
@@ -148,6 +150,7 @@ export default function FriendsScreen() {
                   contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16 }}
                   renderItem={({ item }) => (
                     <FriendCard
+                      pfp = {item.profile_image_path}
                       full_name = {item.full_name}
                       location = {item.location_name}
                       start_time = {item.start_time}
