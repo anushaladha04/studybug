@@ -2,6 +2,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+
 interface SessionPostProps {
     pfp: string,
     name: string;
@@ -32,29 +33,14 @@ export default function SessionPost({
 
     const formatPostedTime = () => {
         const postedTime = new Date(time);
-        const now = new Date();
 
-        if (postedTime.toLocaleDateString() === now.toLocaleDateString()) {
-             return postedTime.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+        });
 
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfPosted = new Date(postedTime.getFullYear(), postedTime.getMonth(), postedTime.getDate());
-    
-        const diffInMs = startOfToday.getTime() - startOfPosted.getTime();
-        const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24));
-
-        if (diffInDays === 1) {
-            return "Yesterday";
-        }
-        if (diffInDays < 7) {
-            return `${diffInDays} days ago`;
-        }
+        return formatter.format(postedTime);
             
-        return postedTime.toLocaleDateString();
     };
 
     const formattedDuration = () => {

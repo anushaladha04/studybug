@@ -56,7 +56,7 @@ export default function HomeScreen() {
               <SessionPost
                   pfp = {item.profile_image_path}
                   name = {item.full_name}
-                  time = {item.end_time}
+                  time = {item.start_time}
                   title = {item.session_name}
                   location = {item.location_name}
                   totalTime = {item.duration}
