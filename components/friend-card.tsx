@@ -9,6 +9,7 @@ interface Friend {
     pfp: string,
     full_name: string,
     location: string,
+    distance: string,
     start_time: string,
     end_time: string,
     is_active: boolean;
@@ -83,10 +84,10 @@ export default function FriendCard(friend: Friend) {
                 </View>
 
                 <View style={styles.metricsContainer}>
-                    <Text style={styles.metricText}>0.5 mi {/*Need to add actual data*/}</Text>
+                    <Text style={styles.metricText}>{friend.distance}</Text>
                     <View style={styles.timeContainer}>
                         <ClockIcon />
-                        <Text style={styles.metricText}>{formatTime()}{! friend.is_active && ' ago'}</Text>
+                        <Text style={styles.metricText}>{formatTime()}{ ! friend.is_active && formatTime() !== "Just now" && ' ago'}</Text>
                     </View>
             </View>
         </View>

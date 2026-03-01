@@ -35,7 +35,7 @@ export default function RecordScreen() {
   const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
 
   const [ isPrivacyChosen, setIsPrivacyChosen] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
+  const [ isLocating, setIsLocating ] = useState(false);
 
   const appState = useRef(AppState.currentState);
   const backgroundTime = useRef<number | null>(null);
@@ -60,7 +60,7 @@ export default function RecordScreen() {
     }
 
     let location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Lowest
+      accuracy: Location.Accuracy.Balanced
     });
 
     console.log("Coordinates fetched!");
