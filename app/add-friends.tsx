@@ -1,6 +1,6 @@
-import AvatarIcon from '@/assets/icons/avatar';
+import AvatarIcon from '@/assets/icons/avatar.svg';
 import BackArrow from '@/assets/icons/back-arrow.svg';
-import RightArrow from '@/assets/icons/right-arrow';
+import RightArrow from '@/assets/icons/right-arrow.svg';
 
 import SearchBar from '@/components/search-bar';
 import SearchResultItem from '@/components/search-result-item';
