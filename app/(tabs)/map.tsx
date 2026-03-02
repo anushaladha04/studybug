@@ -1,3 +1,4 @@
+import AvatarIcon from '@/assets/icons/avatar.svg';
 import { LocationUser, StudyMap } from '@/components/map';
 import { fetchAllFriends } from '@/controllers/friends';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +7,7 @@ import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
+  Image,
   PanResponder,
   Pressable,
   ScrollView,
@@ -13,7 +15,7 @@ import {
   Text,
   TextInput,
   useWindowDimensions,
-  View,
+  View
 } from 'react-native';
 
 type FriendRow = {
@@ -22,6 +24,7 @@ type FriendRow = {
   is_active?: boolean | null;
   location_name?: string | null;
   start_time?: string | null;
+  profile_image_path?: string | null
 };
 
 type ActiveStudySessionRow = {
@@ -42,6 +45,7 @@ type FocusLevel = 'High' | 'Medium' | 'Low';
 
 type ActiveFriendMapItem = LocationUser & {
   friendUserId: string;
+  pfpUrl?: string | null;
   startedAt?: string | null;
   studyType: StudyType;
   focusLevel: FocusLevel;
@@ -51,6 +55,7 @@ type ActiveFriendMapItem = LocationUser & {
 type AwayFriendItem = {
   friendUserId: string;
   name: string;
+  pfpUrl?: string | null;
   lastActiveLabel: string;
 };
 
@@ -278,13 +283,30 @@ export default function MapScreen() {
           return;
         }
 
+        const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+        const getPublicUrl = (path: string) => {
+            if (!path) 
+                return null;
+            return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+        };
+
         const mappedActive = ((data ?? []) as ActiveStudySessionRow[])
           .map((session): ActiveFriendMapItem | null => {
             const latitude = Number(session.latitude);
             const longitude = Number(session.longitude);
             if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
-            const seed = `${session.user_id}-${session.session_id}`;
+            const friendRecord = friendById.get(session.user_id);
+    
+            let publicPfpUrl = null;
+            const rawAvatarPath = friendRecord?.profile_image_path;
+            if (rawAvatarPath){
+              publicPfpUrl = getPublicUrl(rawAvatarPath);
+            } else {
+              publicPfpUrl = 'avatar_4.jpg';
+            }
+
             const rawSubject = session.subject?.trim();
             const studyType: StudyType = (['Academic', 'Career', 'Personal'].includes(rawSubject as any)) 
               ? (rawSubject as StudyType) 
@@ -299,6 +321,7 @@ export default function MapScreen() {
               id: session.session_id,
               friendUserId: session.user_id,
               name: friendNameById.get(session.user_id) || 'Friend',
+              pfpUrl: publicPfpUrl, 
               studying: session.session_name?.trim() || 'Studying',
               locationName: session.location_name?.trim() || friendById.get(session.user_id)?.location_name?.trim() || 'Powell Library',
               latitude,
@@ -315,11 +338,21 @@ export default function MapScreen() {
         const activeUserIdSet = new Set(mappedActive.map((item) => item.friendUserId));
         const mappedAway = friends
           .filter((friend) => !activeUserIdSet.has(friend.friend_id))
-          .map((friend) => ({
-            friendUserId: friend.friend_id,
-            name: friend.full_name?.trim() || 'Friend',
-            lastActiveLabel: getAwayLabel(friend.start_time),
-          }));
+          .map((friend) => {
+            let publicPfpUrl = null;
+            if (friend.profile_image_path) {
+              publicPfpUrl = getPublicUrl(friend.profile_image_path);
+            } else {
+              publicPfpUrl = getPublicUrl('avatar_4.jpg');
+            }
+
+            return {
+              friendUserId: friend.friend_id,
+              name: friend.full_name?.trim() || 'Friend',
+              pfpUrl: publicPfpUrl,
+              lastActiveLabel: getAwayLabel(friend.start_time),
+            };
+          });
 
         if (!isMounted) return;
         setActiveFriends(mappedActive);
@@ -660,6 +693,7 @@ export default function MapScreen() {
                     <FriendRowItem
                       key={friend.id}
                       name={friend.name}
+                      pfpUrl={friend.pfpUrl}
                       subtitleLeft={friend.locationName ?? 'Powell Library'}
                       subtitleRight={friend.studyType}
                       rightText={formatDurationLabel(friend.startedAt)}
@@ -681,6 +715,7 @@ export default function MapScreen() {
                     <FriendRowItem
                       key={friend.friendUserId}
                       name={friend.name}
+                      pfpUrl={friend.pfpUrl}
                       subtitleLeft={friend.lastActiveLabel}
                     />
                   ))
@@ -745,12 +780,14 @@ function FilterPill({
 
 function FriendRowItem({
   name,
+  pfpUrl,
   subtitleLeft,
   subtitleRight,
   rightText,
   onPress,
 }: {
   name: string;
+  pfpUrl?: string | null;
   subtitleLeft: string;
   subtitleRight?: string;
   rightText?: string;
@@ -760,7 +797,14 @@ function FriendRowItem({
 
   return (
     <Wrapper style={styles.friendRow} onPress={onPress as any}>
-      <View style={styles.avatarCircle} />
+      {pfpUrl ? (
+        <Image 
+          source={{ uri: pfpUrl }} 
+          style={styles.avatarCircle} 
+        />
+      ) : (
+        <AvatarIcon />
+      )}
       <View style={styles.friendTextBlock}>
         <Text style={styles.friendName}>{name}</Text>
         <View style={styles.friendMetaRow}>
