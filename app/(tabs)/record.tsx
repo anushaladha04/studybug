@@ -22,7 +22,7 @@ interface LocationCoords {
 export default function RecordScreen() {
   const { session } = useAuthContext();
   const router = useRouter();
-  const { sessionName, location, focusLevel, note, area, refresh } = useLocalSearchParams();
+  const { sessionName, location, focusLevel, note, area, refresh } = useLocalSearchParams<{ sessionName: string, location: string, focusLevel: string, note: string, area: string, refresh: string }>();
 
   const [seconds, setSeconds] = useState(0);
   const [isSessionActive, setIsSessionActive] = useState(false);
