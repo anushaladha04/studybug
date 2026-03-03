@@ -13,13 +13,15 @@ interface SearchBarProps {
 export default function SearchBar({ value, onChangeText, onClear, placeholder }: SearchBarProps) {
     return (
         <View style={styles.searchBar}>
-            <SearchIcon width={16} height={16} fill='transparent' styles={styles.searchIcon}/>
+            <SearchIcon width={16} height={16} fill='transparent' style={styles.searchIcon}/>
             <TextInput
                 style={styles.searchInput}
                 placeholder={placeholder}
                 placeholderTextColor="#717171"
                 value={value}
                 onChangeText={onChangeText}
+                autoCapitalize="none"
+                autoCorrect={false}
             />
             {value.length > 0 && (
             <Pressable onPress={onClear} style={styles.clearButton}>

@@ -67,6 +67,8 @@ export default function LoginScreen() {
           placeholder="Password"
           placeholderTextColor={MEDIUM_GRAY}
           secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
           editable={!loading}
         />
         <Pressable

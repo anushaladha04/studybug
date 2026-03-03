@@ -343,10 +343,10 @@ export default function SettingsScreen() {
               <TextInput
                 style={styles.modalInput}
                 value={nameInput}
-                onChangeText={setNameInput}
+                onChangeText={(text) => setNameInput(text.replace(/\p{Extended_Pictographic}/gu, ''))}
                 placeholder="Full name"
                 autoCorrect={false}
-                autoCapitalize="words"
+                autoCapitalize="none"
                 autoFocus
               />
               <Pressable style={styles.modalDone} onPress={handleSaveName}>

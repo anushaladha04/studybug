@@ -1,5 +1,5 @@
 import SessionPost from '@/components/session-component';
-import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
+import { fetchSessionsByUser, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,9 +23,6 @@ export default function ProfileScreen() {
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
   const [sessions, setSessions] = useState<any[]>([]);
-  const [streak, setStreak] = useState<number>(0);
-  const [lifetimeSeconds, setLifetimeSeconds] = useState<number>(0);
-
   useEffect(() => {
     if (!session?.user?.id) return;
     const id = session.user.id;
@@ -33,9 +30,7 @@ export default function ProfileScreen() {
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
       fetchSessionsByUser(id),
-      getStreakDays(id),
-      getLifetimeSeconds(id),
-    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
+    ]).then(([thisWeek, lastWeek, userSessions]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
@@ -43,8 +38,6 @@ export default function ProfileScreen() {
         .filter((s: any) => s.end_time !== null)
         .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
       setSessions(completed);
-      setStreak(streakDays);
-      setLifetimeSeconds(lifetimeSecs);
     });
   }, [session?.user?.id]);
 
@@ -105,16 +98,6 @@ export default function ProfileScreen() {
       <View style={styles.content}>
         {activeTab === 'insights' ? (
           <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingTop: 30, paddingBottom: 12 }}>
-            <View style={{ flexDirection: 'row', gap: 14, marginBottom: 4 }}>
-              <View style={styles.statBlock}>
-                <Text style={styles.statLabel}>Streak</Text>
-                <Text style={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</Text>
-              </View>
-              <View style={styles.statBlock}>
-                <Text style={styles.statLabel}>Lifetime</Text>
-                <Text style={styles.statValue}>{Math.round(lifetimeSeconds / 3600)} hours</Text>
-              </View>
-            </View>
             <WeeklyBarChart durations={weeklyDurations} lastWeekTotal={lastWeekTotal} />
           </ScrollView>
         ) : (
@@ -154,8 +137,8 @@ export default function ProfileScreen() {
                 value={bioInput}
                 onChangeText={setBioInput}
                 placeholder="Write something about yourself"
-                autoCorrect
-                autoCapitalize="sentences"
+                autoCorrect={false}
+                autoCapitalize="none"
                 multiline
                 autoFocus
               />
@@ -482,26 +465,5 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: '#999',
-  },
-  statBlock: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    width: 85,
-    height: 33,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: '500',
-    fontFamily: 'RethinkSans-Regular',
-    color: '#000',
-  },
-  statValue: {
-    fontSize: 9,
-    fontWeight: '500',
-    fontFamily: 'RethinkSans-Regular',
-    color: '#000',
   },
 });
