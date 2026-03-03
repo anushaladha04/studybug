@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, latitude: number, longitude: number, subject: string, focusLevel: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -19,6 +19,8 @@ export async function startStudySession(sessionName: string, startTime: Date, is
                 is_active: true,
                 is_public: isPublic, 
                 location_name: location,
+                latitude: latitude,
+                longitude: longitude,
                 subject: subject,
                 focus_level: focusLevel,
                 note: note
@@ -223,7 +225,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
     const { error } = await supabase
         .from('study_sessions')
         .update({
-            image_url: publicUrl,
+            image_url: filePath,
         })
         .eq('session_id', sessionId);
 
@@ -232,5 +234,50 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
         return null;
     }
 
-    return publicUrl;
+    return filePath;
+}
+
+// Returns the total lifetime study seconds across all completed sessions.
+export async function getLifetimeSeconds(userId: string): Promise<number> {
+    const sessions = await fetchSessionsByUser(userId);
+    if (!sessions) return 0;
+    return sessions.reduce((sum, s) => {
+        if (s.duration != null && s.duration > 0 && s.end_time != null) {
+            return sum + s.duration;
+        }
+        return sum;
+    }, 0);
+}
+
+// Returns the current study streak in days.
+// A day counts if at least one completed session *started* on that local calendar day.
+// Streak counts consecutive days ending at today (if today has a session) or yesterday
+// (if today has no session yet). Going further back stops at the first day with no session.
+export async function getStreakDays(userId: string): Promise<number> {
+    const sessions = await fetchSessionsByUser(userId);
+    if (!sessions) return 0;
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Collect the set of local date strings (YYYY-MM-DD) that have at least one completed session
+    const studiedDates = new Set<string>();
+    for (const s of sessions) {
+        if (!s.start_time || s.duration == null || s.duration === 0 || s.end_time == null) continue;
+        studiedDates.add(toLocalDateString(new Date(s.start_time), timezone));
+    }
+
+    const todayStr = toLocalDateString(new Date(), timezone);
+
+    // If today has no session, start streak check from yesterday
+    let checkStr = studiedDates.has(todayStr)
+        ? todayStr
+        : shiftDateString(todayStr, -1);
+
+    let streak = 0;
+    while (studiedDates.has(checkStr)) {
+        streak++;
+        checkStr = shiftDateString(checkStr, -1);
+    }
+
+    return streak;
 }

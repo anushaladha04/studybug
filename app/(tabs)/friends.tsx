@@ -2,12 +2,19 @@
 import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
 import { fetchAllFriends } from '@/controllers/friends';
+import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+}
+
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'all'>('active');
+  const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
 
   const [ searchQuery, setSearchQuery ] = useState('');
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
@@ -47,8 +54,60 @@ export default function FriendsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchFriends();
+      fetchUserLocation();
     }, [])
   );
+
+  const fetchUserLocation = async () => {
+    let { status } = await Location.getForegroundPermissionsAsync();
+  
+    if (status !== 'granted') {
+      const response = await Location.requestForegroundPermissionsAsync();
+      status = response.status;
+    }
+
+    if (status !== 'granted') {
+      throw new Error('Permission to access location was denied');
+    }
+
+    let location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced
+    });
+
+    setUserLocation({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
+  };
+
+  const getDistanceMiles = (
+    a: { latitude: number; longitude: number }, 
+    b: { latitude: number; longitude: number }
+  ) => {
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const R = 3958.8;
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const sin2 =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(sin2), Math.sqrt(1 - sin2));
+  }
+
+  const renderDistance = (friendLat: number, friendLon: number) => {
+    if (!userLocation) return "Calculating...";
+
+    if (friendLat === null || friendLon === null || friendLat === undefined) {
+      return "No last location"; 
+    }
+    
+    const miles = getDistanceMiles(
+      userLocation, 
+      { latitude: friendLat, longitude: friendLon }
+    );
+    
+    return miles < 0.1 ? "< 0.1 mi" : `${miles.toFixed(1)} mi`;
+  };
 
   const activeFriends = friends.filter(friend => friend.is_active === true);
 
@@ -101,8 +160,10 @@ export default function FriendsScreen() {
               contentContainerStyle={{ alignItems: 'center'}}
               renderItem={({ item }) => (
                 <FriendCard
+                  pfp = {item.profile_image_path}
                   full_name = {item.full_name}
                   location = {item.location_name}
+                  distance = {renderDistance(item.latitude, item.longitude)}
                   start_time = {item.start_time}
                   end_time = {item.end_time}
                   is_active = {item.is_active}
@@ -126,8 +187,10 @@ export default function FriendsScreen() {
                 contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
                 renderItem={({ item }) => (
                   <FriendCard
+                      pfp = {item.profile_image_path}
                       full_name = {item.full_name}
                       location = {item.location_name}
+                      distance = {renderDistance(item.latitude, item.longitude)}
                       start_time = {item.start_time}
                       end_time = {item.end_time}
                       is_active = {item.is_active}
@@ -148,8 +211,10 @@ export default function FriendsScreen() {
                   contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16 }}
                   renderItem={({ item }) => (
                     <FriendCard
+                      pfp = {item.profile_image_path}
                       full_name = {item.full_name}
                       location = {item.location_name}
+                      distance = {renderDistance(item.latitude, item.longitude)}
                       start_time = {item.start_time}
                       end_time = {item.end_time}
                       is_active = {item.is_active}
