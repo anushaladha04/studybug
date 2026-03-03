@@ -108,6 +108,7 @@ export default function ProfileScreen() {
               sessions.map((s) => (
                 <SessionPost
                   key={s.session_id}
+                  pfp={`${imagePath}?v=${profileImageVersion}`}
                   name={profile?.full_name ?? '-'}
                   time={s.end_time}
                   title={s.session_name}

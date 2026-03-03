@@ -1,7 +1,10 @@
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+
 interface SessionPostProps {
+    pfp: string,
     name: string;
     time: string;
     title: string;
@@ -11,6 +14,7 @@ interface SessionPostProps {
 }
 
 export default function SessionPost({
+    pfp,
     name,
     time,
     title,
@@ -19,18 +23,24 @@ export default function SessionPost({
     image
 }: SessionPostProps) {
     const router = useRouter();
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (bucket: string, path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+    };
 
     const formatPostedTime = () => {
         const postedTime = new Date(time);
-        const now = new Date();
 
-        if (postedTime.toLocaleDateString() === now.toLocaleDateString())
-            return postedTime.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        else
-            return postedTime.toLocaleDateString();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+        });
+
+        return formatter.format(postedTime);
+            
     };
 
     const formattedDuration = () => {
@@ -46,10 +56,20 @@ export default function SessionPost({
         return `${hours} hr ${minutes} min`;
     }
 
+
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
-                <Image source={require('@/assets/images/profile-icon.png')} style={styles.avatar} />
+                <ExpoImage
+                    style={styles.avatar}
+                    source={getPublicUrl('profile_pictures', pfp)}
+                    placeholder={require('@/assets/images/profile-icon.png')}
+                    contentFit="cover"
+                    placeholderContentFit="cover"
+                    transition={500}
+                    cachePolicy="memory-disk"
+                />
                 <View>
                     <Text style={styles.name}>{name}</Text>
                     <Text style={styles.time}>{formatPostedTime()} </Text>
@@ -60,6 +80,7 @@ export default function SessionPost({
                 onPress={() => router.push({
                     pathname: '/session-posting-details',
                     params: {
+                        pfp,
                         name,
                         title,
                         location,
@@ -83,7 +104,7 @@ export default function SessionPost({
 
             {image ? (
                 <Image 
-                    source={{ uri: image }} 
+                    source={{ uri: getPublicUrl('session_pictures', image) }} 
                     style={styles.postImage}
                     resizeMode="cover"
                 />
