@@ -1,12 +1,15 @@
-import AvatarIcon from '@/assets/icons/avatar';
-import ClockIcon from '@/assets/icons/clock';
+import AvatarIcon from '@/assets/icons/avatar.svg';
+import ClockIcon from '@/assets/icons/clock.svg';
 import { intervalToDuration } from 'date-fns';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+
 
 interface Friend {
+    pfp: string,
     full_name: string,
     location: string,
+    distance: string,
     start_time: string,
     end_time: string,
     is_active: boolean;
@@ -14,6 +17,14 @@ interface Friend {
 }
 
 export default function FriendCard(friend: Friend) {
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+    };
+
     const [ now, setNow ] = useState(new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
@@ -49,7 +60,15 @@ export default function FriendCard(friend: Friend) {
 
     return (
         <View style={[styles.card]}>
-            <AvatarIcon />
+            { friend.pfp ? (
+                <Image 
+                    source={{ uri: getPublicUrl(friend.pfp) }} 
+                    style={styles.avatar}
+                    resizeMode="cover"
+                />
+            ) : (
+                <AvatarIcon />
+            )}
 
             <View style={styles.contentContainer}>
                 <Text style={styles.nameText}>{friend.full_name}</Text>
@@ -65,10 +84,10 @@ export default function FriendCard(friend: Friend) {
                 </View>
 
                 <View style={styles.metricsContainer}>
-                    <Text style={styles.metricText}>0.5 mi {/*Need to add actual data*/}</Text>
+                    <Text style={styles.metricText}>{friend.distance}</Text>
                     <View style={styles.timeContainer}>
                         <ClockIcon />
-                        <Text style={styles.metricText}>{formatTime()}{! friend.is_active && ' ago'}</Text>
+                        <Text style={styles.metricText}>{formatTime()}{ ! friend.is_active && formatTime() !== "Just now" && ' ago'}</Text>
                     </View>
             </View>
         </View>
@@ -88,7 +107,7 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         elevation: 5,
         height: 97,
-        width: 378,
+        width: '90%',
         borderRadius: 8,
         flexDirection: 'row',
         alignItems: 'center',
@@ -98,6 +117,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         gap: 5
+    },
+    avatar: {
+        width: 55,
+        height: 55,
+        borderRadius: 27
     },
     nameText: {
         fontSize: 14,

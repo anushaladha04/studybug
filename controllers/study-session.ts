@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, subject: string, focusLevel: string, note: string) {
+export async function startStudySession(sessionName: string, startTime: Date, isPublic: boolean, location: string, latitude: number, longitude: number, subject: string, focusLevel: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -19,6 +19,8 @@ export async function startStudySession(sessionName: string, startTime: Date, is
                 is_active: true,
                 is_public: isPublic, 
                 location_name: location,
+                latitude: latitude,
+                longitude: longitude,
                 subject: subject,
                 focus_level: focusLevel,
                 note: note
@@ -223,7 +225,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
     const { error } = await supabase
         .from('study_sessions')
         .update({
-            image_url: publicUrl,
+            image_url: filePath,
         })
         .eq('session_id', sessionId);
 
@@ -232,7 +234,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
         return null;
     }
 
-    return publicUrl;
+    return filePath;
 }
 
 // Returns the total lifetime study seconds across all completed sessions.

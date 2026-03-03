@@ -3,15 +3,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 const GREEN = "#8DBF58";
@@ -67,6 +67,8 @@ export default function LoginScreen() {
           placeholder="Password"
           placeholderTextColor={MEDIUM_GRAY}
           secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
           editable={!loading}
         />
         <Pressable
