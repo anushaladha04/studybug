@@ -56,8 +56,6 @@ export default function SessionPost({
         return `${hours} hr ${minutes} min`;
     }
 
-
-
     return (
         <View style={styles.card}>
             <View style={styles.header}>

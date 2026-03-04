@@ -2,7 +2,7 @@ import { useAuthContext } from '@/hooks/use-auth-context';
 import AuthProvider from '@/providers/auth-provider';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, SplashScreen, useRouter, useSegments } from 'expo-router';
+import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -64,7 +64,7 @@ function RootLayoutNav() {
         <Stack.Screen
           name="session-details"
           options={{
-            presentation: "modal",
+            presentation: "fullScreenModal",
             title: "New Session",
           }}
         />
