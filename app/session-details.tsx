@@ -1,7 +1,10 @@
 import X from '@/assets/icons/X.svg';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import { getNearbyPlaces, getDistanceMiles, PlaceResult } from '@/controllers/nearby-places';
+import * as Location from 'expo-location';
+
 
 export default function SessionDetails() {
     const router = useRouter();
@@ -10,6 +13,45 @@ export default function SessionDetails() {
     const [location, setLocation] = useState('');
     const [note, setNote] = useState('');
     const [area, setArea] = useState<'Academic' | 'Career'>('Academic');
+
+    const [allPlaces, setAllPlaces] = useState<PlaceResult[]>([]);
+    const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
+    const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [closestPlaceName, setClosestPlaceName] = useState('');
+
+    // Fetch location + all nearby places once on mount
+    useEffect(() => {
+        (async () => {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+            const loc = await Location.getCurrentPositionAsync({});
+            const coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+            setUserCoords(coords);
+
+            const places = await getNearbyPlaces(coords, 75);
+            setAllPlaces(places);
+
+            // Default location placeholder to closest place
+            if (places.length > 0) {
+                setClosestPlaceName(places[0].name);
+            }
+        })();
+    }, []);
+
+    // Filter cached places locally on each keystroke
+    useEffect(() => {
+        if (!allPlaces.length) return;
+        const q = location.trim().toLowerCase();
+        if (!q) {
+            setSuggestions(allPlaces.slice(0, 5));
+            return;
+        }
+        const filtered = allPlaces.filter(
+            (p) => p.name.toLowerCase().includes(q)
+        );
+        setSuggestions(filtered.slice(0, 5));
+    }, [location, allPlaces]);
 
     const [startTime] = useState(() => new Date().toISOString());
     const getSessionTime = (isoString: string) => {
@@ -27,13 +69,14 @@ export default function SessionDetails() {
     const [focusLevel, setFocusLevel] = useState<FocusLevel>('Low');
 
     const handleStartSession = () => {
-        if (!location) {
+        const finalLocation = location || closestPlaceName;
+        if (!finalLocation) {
             alert('Please fill in location.');
             return;
         }
 
         router.replace({
-            params: { sessionName: sessionName || sessionTimePlaceholder, location, focusLevel, note, area, refresh: 'true' },
+            params: { sessionName: sessionName || sessionTimePlaceholder, location: finalLocation, focusLevel, note, area, refresh: 'true' },
             pathname: '/(tabs)/record',
         });
     };
@@ -109,10 +152,48 @@ useRef(
             </View>
 
             <Text style={styles.label}>Session Name</Text>
-            <TextInput style={styles.input} value={sessionName} onChangeText={setSessionName} placeholder={sessionTimePlaceholder} placeholderTextColor='#000000' />
+            <TextInput style={styles.input} value={sessionName} onChangeText={setSessionName} placeholder={sessionTimePlaceholder} placeholderTextColor='#000000' autoCorrect={false} />
 
             <Text style={styles.label}>Location</Text>
-            <TextInput style={styles.input} value={location} onChangeText={setLocation} />
+            <TextInput
+                style={styles.input}
+                value={location}
+                placeholder={closestPlaceName}
+                placeholderTextColor='#000000'
+                autoCorrect={false}
+                onChangeText={(text) => { setLocation(text); setShowSuggestions(true); }}
+                onFocus={() => {
+                    setShowSuggestions(true);
+                    if (!location.trim() && allPlaces.length) {
+                        setSuggestions(allPlaces.slice(0, 5));
+                    }
+                }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            />
+            {showSuggestions && suggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                    {suggestions.map((place) => {
+                        const dist = userCoords ? getDistanceMiles(userCoords, place) : null;
+                        return (
+                            <Pressable
+                                key={place.id}
+                                style={styles.suggestionItem}
+                                onPress={() => {
+                                    setLocation(place.name);
+                                    setShowSuggestions(false);
+                                }}
+                            >
+                                <Text style={styles.suggestionName} numberOfLines={1}>{place.name}</Text>
+                                {dist !== null && (
+                                    <Text style={styles.suggestionDist}>
+                                        {dist < 0.1 ? `${Math.round(dist * 5280)} ft` : `${dist.toFixed(1)} mi`}
+                                    </Text>
+                                )}
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            )}
 
             <Text style={styles.label}>Area of Work</Text>
             <View style={styles.toggleRow}>
@@ -193,7 +274,7 @@ useRef(
             </View>
 
             <Text style={styles.label}>Add a Note</Text>
-            <TextInput style={styles.input} value={note} onChangeText={setNote}/>
+            <TextInput style={styles.input} value={note} onChangeText={setNote} autoCorrect={false}/>
 
             <View style={styles.line}/>
 
@@ -255,6 +336,36 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         fontSize: 14,
         fontFamily: 'Rethink Sans',
+    },
+    suggestionsContainer: {
+        marginHorizontal: 20,
+        marginTop: -25,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: '#AFAFAF',
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        zIndex: 10,
+    },
+    suggestionItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#E0E0E0',
+    },
+    suggestionName: {
+        fontSize: 14,
+        fontFamily: 'Rethink Sans',
+        flex: 1,
+    },
+    suggestionDist: {
+        fontSize: 12,
+        fontFamily: 'Rethink Sans',
+        color: '#888',
+        marginLeft: 8,
     },
     track: {
         position: 'absolute',
