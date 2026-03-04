@@ -175,7 +175,7 @@ export default function SettingsScreen() {
           <View style={styles.avatarRow}>
             <View style={[styles.avatar]}>
               <Image
-                source={{ uri: avatarUrl }}
+                source={{ uri: imageUrl }}
                 style={{ width: 89, height: 89, borderRadius: 44.5 }}
               />
             </View>
