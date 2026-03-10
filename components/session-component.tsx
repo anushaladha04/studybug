@@ -1,43 +1,114 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+
 
 interface SessionPostProps {
+    pfp: string,
     name: string;
     time: string;
     title: string;
     location: string;
-    totalTime: string;
+    totalTime: number;
+    image: string
 }
 
 export default function SessionPost({
+    pfp,
     name,
     time,
     title,
     location,
     totalTime,
+    image
 }: SessionPostProps) {
+    const router = useRouter();
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (bucket: string, path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+    };
+
+    const formatPostedTime = () => {
+        const postedTime = new Date(time);
+
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+        });
+
+        return formatter.format(postedTime);
+            
+    };
+
+    const formattedDuration = () => {
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime - hours * 3600) / 60);
+
+        if (hours == 0)
+            return `${minutes} min`
+
+        if (minutes == 0)
+            return `${hours} hr`
+
+        return `${hours} hr ${minutes} min`;
+    }
 
     return (
         <View style={styles.card}>
             <View style={styles.header}>
-                <View style={styles.avatar} />
+                <ExpoImage
+                    style={styles.avatar}
+                    source={getPublicUrl('profile_pictures', pfp)}
+                    placeholder={require('@/assets/images/profile-icon.png')}
+                    contentFit="cover"
+                    placeholderContentFit="cover"
+                    transition={500}
+                    cachePolicy="memory-disk"
+                />
                 <View>
                     <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.time}>{time} </Text>
+                    <Text style={styles.time}>{formatPostedTime()} </Text>
                 </View>
             </View>
 
-            <View style={styles.infoRow}>
-                <View>
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.location}>{location}</Text>
+            <Pressable 
+                onPress={() => router.push({
+                    pathname: '/session-posting-details',
+                    params: {
+                        pfp,
+                        name,
+                        title,
+                        location,
+                        postedTime: formatPostedTime(),
+                        duration: formattedDuration(),
+                        image
+                    }
+                })}
+            >
+                <View style={styles.infoRow}>
+                    <View>
+                        <Text style={styles.title}>{title}</Text>
+                        <Text style={styles.location}>{location} </Text>
+                    </View>
+                    <View style={styles.totalTimeBlock}>
+                        <Text style={styles.totalTimeLabel}>Total Time</Text>
+                        <Text style={styles.totalTimeValue}>{formattedDuration()}</Text>
+                    </View>
                 </View>
-                <View style={styles.totalTimeBlock}>
-                    <Text style={styles.totalTimeLabel}>Total Time</Text>
-                    <Text style={styles.totalTimeValue}>{totalTime}</Text>
-                </View>
-            </View>
+            </Pressable>
 
-            <View style={styles.chartPlaceholder} />
+            {image ? (
+                <Image 
+                    source={{ uri: getPublicUrl('session_pictures', image) }} 
+                    style={styles.postImage}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.chartPlaceholder} />
+            )}
 
             <View style={styles.actions}>
                 <Text style={styles.icon}>♡</Text>
@@ -49,43 +120,34 @@ export default function SessionPost({
 const styles = StyleSheet.create({
       card: {
         backgroundColor: '#fff',
-        paddingHorizontal: 18,
-        paddingTop: 20,
-        paddingBottom: 14,
-        marginVertical: 6,
-        width: 380,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        elevation: 2,
+        paddingHorizontal: 29,
+        paddingVertical: 19,
+        marginTop: 2,
+        marginBottom: 4,
+        borderBottomWidth: 1,
+        borderColor: '#dedede',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 14,
     },
     avatar: {
         width: 46,
         height: 46,
         borderRadius: 23,
-        marginRight: 12,
-        backgroundColor: '#2a2f30',
+        marginRight: 15,
     },
     name: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: '#1a1a1a',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     time: {
-        fontSize: 13,
+        fontSize: 15,
         color: '#888',
         marginTop: 2,
-    },
-    menuDots: {
-        fontSize: 20,
-        color: '#888',
-        paddingLeft: 10,
     },
     infoRow: {
         flexDirection: 'row',
@@ -94,32 +156,42 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: '#1a1a1a',
+        fontSize: 16,
+        fontWeight: '500',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
     },
     location: {
-        fontSize: 15,
-        color: '#666',
-        marginTop: 3,
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeBlock: {
         alignItems: 'flex-end',
     },
     totalTimeLabel: {
-        fontSize: 14,
-        color: '#888',
+        fontSize: 16,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000'
     },
     totalTimeValue: {
-        fontSize: 19,
-        fontWeight: '700',
-        color: '#1a1a1a',
-        marginTop: 2,
+        fontSize: 16,
+        fontWeight: '500',
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    postImage: {
+        width: '100%',
+        paddingVertical: 20,
+        aspectRatio: 3/2,
+        borderRadius: 8,
     },
     chartPlaceholder: {
         height: 150,
         backgroundColor: '#f2f2f2',
-        borderRadius: 14,
+        borderRadius: 7,
         marginTop: 10,
     },
     actions: {

@@ -40,11 +40,19 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysPermissionDescription": "Allow this app to access your location.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": false
+      "reactCompiler": false,
+      "tsconfigPaths": true
     }
   }
 }

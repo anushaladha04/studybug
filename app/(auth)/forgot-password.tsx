@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
         }
 
         Alert.alert('Success', 'Password reset email sent! Please check your inbox.');
-        router.replace('/login');
+        router.replace('/(auth)/login');
     }
 
     return (
@@ -39,7 +39,8 @@ export default function ForgotPasswordScreen() {
                 value={email} 
                 onChangeText={setEmail} 
                 keyboardType="email-address" 
-                autoCapitalize="none" 
+                autoCapitalize="none"
+                autoCorrect={false}
                 placeholder='Email' />
             <View style={styles.buttonContainer}>
                 <Button title="Send Reset Email" onPress={sendPasswordResetEmail} disabled={loading} />

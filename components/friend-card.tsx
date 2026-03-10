@@ -1,26 +1,40 @@
+import AvatarIcon from '@/assets/icons/avatar.svg';
+import ClockIcon from '@/assets/icons/clock.svg';
 import { intervalToDuration } from 'date-fns';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+
 
 interface Friend {
+    pfp: string,
     full_name: string,
     location: string,
+    distance: string,
     start_time: string,
+    end_time: string,
     is_active: boolean;
-    note?: string,
+    note: string,
 }
 
 export default function FriendCard(friend: Friend) {
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+    };
+
     const [ now, setNow ] = useState(new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
         return () => clearInterval(timer);
     }, []);
 
-    const startTime = new Date(friend.start_time);
+    const referenceTime = friend.is_active ? new Date(friend.start_time) : new Date(friend.end_time);
 
     const formatTime = () => {
-        const duration = intervalToDuration({start: startTime, end: now});
+        const duration = intervalToDuration({start: referenceTime, end: now});
         const { months, days, hours, minutes } = duration;
 
         if (months && months > 0) {
@@ -32,39 +46,49 @@ export default function FriendCard(friend: Friend) {
         }
 
         const parts = [];
-        if (hours && hours > 0) parts.push(`${hours} hr`);
-        if (minutes !== undefined && (minutes > 0 || ! hours)) parts.push(`${minutes} min`);
+        if (! hours && ! minutes) 
+            return 'Just now';
+        if (hours && hours > 0) 
+            parts.push(`${hours} hr`);
+        if (minutes !== undefined && (minutes > 0 || ! hours)) 
+            parts.push(`${minutes} min`);
         
         return parts.join(' ');
     };
 
-    //dynamic coloring based on location, needs to fetch data from 
-    // last session of each user on friend's profile
     const location = friend.location;
 
-    const colorStyles = {
-        backgroundColor: location === 'The Study' ? '#c07cc0'
-                        : location === 'Powell Library' ? '#de8787' 
-                        : location === 'Canopy' ? '#65c8f2'
-                        : location === 'Understory' ? '#757ee2'
-                        : location === 'YRL' ? '#f2b065'
-                        : '#52bb97',
-       
-    };
-
     return (
-        <View style={[styles.card, colorStyles]}>
-            <View style={styles.avatar} />
+        <View style={[styles.card]}>
+            { friend.pfp ? (
+                <Image 
+                    source={{ uri: getPublicUrl(friend.pfp) }} 
+                    style={styles.avatar}
+                    resizeMode="cover"
+                />
+            ) : (
+                <AvatarIcon />
+            )}
 
-            <View style={styles.info}>
-                <Text style={styles.label}>{friend.full_name}</Text>
-                <Text style={styles.label}>Location: {location}</Text>
-                {friend.is_active ? (
-                    <Text style={styles.label}>Time studied: {formatTime()}</Text>
-                ) : (
-                    <Text style={styles.label}>Last active: {formatTime()} ago</Text>
-                )}
-                <Text style={styles.label}>Note: {friend.note}</Text>
+            <View style={styles.contentContainer}>
+                <Text style={styles.nameText}>{friend.full_name}</Text>
+                <Text style={styles.detailText}>Location: {location}</Text>
+                <Text style={styles.detailText}>Note: {friend.note}</Text>                
+            </View>
+
+            <View style={[styles.statusBadge, 
+                    !friend.is_active && styles.inactiveBadge]}>
+                    <Text style={styles.statusText}>
+                        {friend.is_active ? 'Active' : 'Inactive'}
+                    </Text>
+                </View>
+
+                <View style={styles.metricsContainer}>
+                    <Text style={styles.metricText}>{friend.distance}</Text>
+                    <View style={styles.timeContainer}>
+                        <ClockIcon />
+                        <Text style={styles.metricText}>{formatTime()}{ ! friend.is_active && formatTime() !== "Just now" && ' ago'}</Text>
+                    </View>
             </View>
         </View>
     );
@@ -72,31 +96,76 @@ export default function FriendCard(friend: Friend) {
 
 const styles = StyleSheet.create({
     card: {
-        marginLeft: 25,
-        marginRight: 25,
-        marginBottom: 10,
-        marginTop: 10,
-        padding: 15,
-        backgroundColor: '#52bb97',
-        height: 120,
-        width: 350,
-        borderRadius: 10,
+        marginVertical: 8,
+        gap: 21,
+        paddingVertical: 9,
+        paddingHorizontal: 14,
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2},
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 5,
+        height: 97,
+        width: '90%',
+        borderRadius: 8,
         flexDirection: 'row',
         alignItems: 'center',
+        position: 'relative'
+    },
+    contentContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        gap: 5
     },
     avatar: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: '#2a2f30',
-        marginLeft: 5,
-        marginRight: 20,
+        width: 55,
+        height: 55,
+        borderRadius: 27
     },
-    info: {
-        flex: 1,
-        gap: 6,
-    },
-    label: {
+    nameText: {
         fontSize: 14,
+        fontWeight: 500,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    detailText: {
+        fontSize: 12,
+        fontWeight: 400,
+        fontFamily: 'Rethink Sans',
+        color: '#000',
+    },
+    statusBadge: {
+        position: 'absolute',
+        top: 9,
+        right: 14,
+        backgroundColor: '#1C9635',
+        paddingHorizontal: 15,
+        paddingVertical: 3,
+        borderRadius: 12,
+    },
+    inactiveBadge: {
+        backgroundColor: '#F33D40'
+    },
+    statusText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    metricsContainer: {
+        position: 'absolute',
+        bottom: 9,
+        right: 14,
+        alignItems: 'flex-end',
+    },
+    metricText: {
+        fontSize: 12,
+        color: '#555',
+    },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 2
     }
 });
