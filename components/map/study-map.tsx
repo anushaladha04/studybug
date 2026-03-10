@@ -1,4 +1,5 @@
 import { isMapboxEnabled } from '@/lib/mapbox-config';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
@@ -33,6 +34,8 @@ interface StudyMapProps {
   userLocation?: { latitude: number; longitude: number } | null;
   showMapboxBadge?: boolean;
   showZoomControls?: boolean;
+  showRecenterControl?: boolean;
+  recenterTrigger?: number;
   showMarkerLabels?: boolean;
 }
 
@@ -48,6 +51,8 @@ export function StudyMap({
   userLocation,
   showMapboxBadge = true,
   showZoomControls = true,
+  showRecenterControl = true,
+  recenterTrigger = 0,
   showMarkerLabels = true,
 }: StudyMapProps) {
   const colorScheme = useColorScheme();
@@ -71,6 +76,17 @@ export function StudyMap({
       animationDuration: 0,
     });
   }, [userLocation]);
+
+  const lastRecenterTriggerRef = React.useRef(recenterTrigger);
+
+  React.useEffect(() => {
+    if (recenterTrigger === lastRecenterTriggerRef.current) {
+      return;
+    }
+
+    lastRecenterTriggerRef.current = recenterTrigger;
+    handleCenterOnUser();
+  }, [recenterTrigger, userLocation]);
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoomLevel + 1, 20);
@@ -209,12 +225,18 @@ export function StudyMap({
           <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
             <Text style={styles.zoomButtonText}>-</Text>
           </TouchableOpacity>
-          {userLocation && (
-            <TouchableOpacity style={[styles.zoomButton, styles.centerButton]} onPress={handleCenterOnUser}>
-              <Text style={styles.zoomButtonText}>o</Text>
-            </TouchableOpacity>
-          )}
         </View>
+      )}
+
+      {showRecenterControl && userLocation && (
+        <TouchableOpacity
+          style={[
+            styles.recenterButton,
+            showZoomControls ? styles.recenterButtonWithZoomControls : null,
+          ]}
+          onPress={handleCenterOnUser}>
+          <Ionicons name="navigate" size={18} color="#1d1d1f" />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -360,12 +382,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e6e6e6',
   },
-  centerButton: {
-    borderBottomWidth: 0,
-  },
   zoomButtonText: {
     fontSize: 20,
     fontWeight: '600',
     color: '#333',
+  },
+  recenterButton: {
+    position: 'absolute',
+    right: 10,
+    bottom: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  recenterButtonWithZoomControls: {
+    bottom: 118,
   },
 });

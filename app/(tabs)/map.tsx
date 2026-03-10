@@ -118,6 +118,7 @@ export default function MapScreen() {
   const [isFriendsSheetCollapsed, setIsFriendsSheetCollapsed] = useState(false);
   const [isFriendsSheetExpanded, setIsFriendsSheetExpanded] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
   const collapsedSheetHeight = 76;
   const defaultSheetHeight = Math.max(250, Math.round(windowHeight * 0.35));
   const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(windowHeight * 0.9));
@@ -512,6 +513,8 @@ export default function MapScreen() {
         userLocation={userLocation}
         showMapboxBadge={false}
         showZoomControls={false}
+        showRecenterControl={false}
+        recenterTrigger={recenterTrigger}
         showMarkerLabels={false}
       />
 
@@ -584,6 +587,21 @@ export default function MapScreen() {
           <View style={styles.locationBanner}>
             <Text style={styles.locationBannerText}>{locationError}</Text>
           </View>
+        )}
+
+        {userLocation && (
+          <Animated.View
+            pointerEvents="box-none"
+            style={[
+              styles.recenterButtonWrap,
+              { bottom: Animated.add(sheetHeightAnim, new Animated.Value(20)) },
+            ]}>
+            <Pressable
+              style={styles.recenterButton}
+              onPress={() => setRecenterTrigger((value) => value + 1)}>
+              <Ionicons name="navigate" size={18} color="#1d1d1f" />
+            </Pressable>
+          </Animated.View>
         )}
 
         <Animated.View style={[styles.bottomSheet, { height: sheetHeightAnim }]}>
@@ -901,6 +919,25 @@ const styles = StyleSheet.create({
   locationBannerText: {
     fontSize: 12,
     color: '#4d4d4d',
+  },
+  recenterButtonWrap: {
+    position: 'absolute',
+    right: 18,
+  },
+  recenterButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
   },
   bottomSheet: {
     position: 'absolute',
