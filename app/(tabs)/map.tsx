@@ -123,21 +123,17 @@ export default function MapScreen() {
   const [selectedFocusLevels, setSelectedFocusLevels] = useState<FocusLevel[]>([...FOCUS_LEVELS]);
   const [showActiveSection, setShowActiveSection] = useState(true);
   const [showAwaySection, setShowAwaySection] = useState(true);
-  const [isFriendsSheetCollapsed, setIsFriendsSheetCollapsed] = useState(false);
   const [isFriendsSheetExpanded, setIsFriendsSheetExpanded] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
-  const collapsedSheetHeight = 76;
   const defaultSheetHeight = Math.max(250, Math.round(windowHeight * 0.35));
   const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(windowHeight * 0.9));
   const sheetHeightAnim = React.useRef(new Animated.Value(defaultSheetHeight)).current;
   const sheetHeightCurrentRef = React.useRef(defaultSheetHeight);
   const dragStartHeightRef = React.useRef(defaultSheetHeight);
-  const collapsedSheetHeightRef = React.useRef(collapsedSheetHeight);
   const defaultSheetHeightRef = React.useRef(defaultSheetHeight);
   const expandedSheetHeightRef = React.useRef(expandedSheetHeight);
   const isFriendsSheetExpandedRef = React.useRef(isFriendsSheetExpanded);
-  collapsedSheetHeightRef.current = collapsedSheetHeight;
   defaultSheetHeightRef.current = defaultSheetHeight;
   expandedSheetHeightRef.current = expandedSheetHeight;
   isFriendsSheetExpandedRef.current = isFriendsSheetExpanded;
@@ -407,8 +403,7 @@ export default function MapScreen() {
   };
 
   const openUserDetails = (user: ActiveFriendMapItem) => {
-    setIsFriendsSheetCollapsed(false);
-    if (sheetHeightCurrentRef.current <= collapsedSheetHeight + 2) {
+    if (sheetHeightCurrentRef.current < defaultSheetHeight - 2) {
       Animated.spring(sheetHeightAnim, {
         toValue: defaultSheetHeight,
         useNativeDriver: false,
@@ -443,20 +438,13 @@ export default function MapScreen() {
     [sheetHeightAnim]
   );
   const setFriendsSheetMode = React.useCallback(
-    (mode: 'collapsed' | 'default' | 'expanded') => {
-      setIsFriendsSheetCollapsed(mode === 'collapsed');
+    (mode: 'default' | 'expanded') => {
       setIsFriendsSheetExpanded(mode === 'expanded');
-      const targetHeight =
-        mode === 'collapsed'
-          ? collapsedSheetHeight
-          : mode === 'expanded'
-            ? expandedSheetHeight
-            : defaultSheetHeight;
+      const targetHeight = mode === 'expanded' ? expandedSheetHeight : defaultSheetHeight;
       animateSheetToHeight(targetHeight);
     },
     [
       animateSheetToHeight,
-      collapsedSheetHeight,
       defaultSheetHeight,
       expandedSheetHeight,
     ]
@@ -465,19 +453,13 @@ export default function MapScreen() {
   setFriendsSheetModeRef.current = setFriendsSheetMode;
 
   useEffect(() => {
-    const targetHeight = isFriendsSheetCollapsed
-      ? collapsedSheetHeight
-      : isFriendsSheetExpanded
-        ? expandedSheetHeight
-        : defaultSheetHeight;
+    const targetHeight = isFriendsSheetExpanded ? expandedSheetHeight : defaultSheetHeight;
 
     sheetHeightCurrentRef.current = targetHeight;
     sheetHeightAnim.setValue(targetHeight);
   }, [
-    collapsedSheetHeight,
     defaultSheetHeight,
     expandedSheetHeight,
-    isFriendsSheetCollapsed,
     isFriendsSheetExpanded,
     sheetHeightAnim,
   ]);
@@ -499,7 +481,7 @@ export default function MapScreen() {
       onPanResponderMove: (_, gestureState) => {
         if (showDetailSheetRef.current) return;
         const nextHeight = Math.max(
-          collapsedSheetHeightRef.current,
+          defaultSheetHeightRef.current,
           Math.min(expandedSheetHeightRef.current, dragStartHeightRef.current - gestureState.dy)
         );
         sheetHeightCurrentRef.current = nextHeight;
@@ -524,16 +506,11 @@ export default function MapScreen() {
         }
 
         if (velocityY > 0.35) {
-          const collapseThreshold =
-            (collapsedSheetHeightRef.current + defaultSheetHeightRef.current) / 2;
-          setFriendsSheetModeRef.current(
-            currentHeight < collapseThreshold ? 'collapsed' : 'default'
-          );
+          setFriendsSheetModeRef.current('default');
           return;
         }
 
         const snapPoints = [
-          { mode: 'collapsed' as const, value: collapsedSheetHeightRef.current },
           { mode: 'default' as const, value: defaultSheetHeightRef.current },
           { mode: 'expanded' as const, value: expandedSheetHeightRef.current },
         ];
@@ -652,19 +629,7 @@ export default function MapScreen() {
             <View style={styles.sheetHandle} />
           </View>
 
-          {isFriendsSheetCollapsed && !showDetailSheet ? (
-            <View style={styles.collapsedSheetHeader}>
-              <Text style={styles.sheetTitle}>Friends</Text>
-              <Pressable
-                hitSlop={8}
-                onPress={() => setFriendsSheetMode('default')}
-                style={styles.closeButton}>
-                <Ionicons name="chevron-up" size={22} color="#707070" />
-              </Pressable>
-            </View>
-          ) : null}
-
-          {!isFriendsSheetCollapsed && showDetailSheet ? (
+          {showDetailSheet ? (
             <View style={styles.sheetContent}>
               <View style={styles.sheetHeaderRow}>
                 <Text style={styles.sheetTitle}>{selectedUser?.name}</Text>
@@ -683,7 +648,7 @@ export default function MapScreen() {
                 <Text style={styles.detailLine}>Note: {selectedUser?.note}</Text>
               </View>
             </View>
-          ) : !isFriendsSheetCollapsed ? (
+          ) : (
             <ScrollView
               style={styles.sheetScroll}
               contentContainerStyle={styles.sheetScrollContent}
@@ -693,7 +658,7 @@ export default function MapScreen() {
                 <Pressable
                   hitSlop={8}
                   onPress={() => {
-                    setFriendsSheetMode('collapsed');
+                    setFriendsSheetMode('default');
                   }}
                   style={styles.closeButton}>
                   <Ionicons name="close" size={26} color="#707070" />
@@ -741,7 +706,7 @@ export default function MapScreen() {
                   <Text style={styles.emptySectionText}>No away friends match this search.</Text>
                 ))}
             </ScrollView>
-          ) : null}
+          )}
         </Animated.View>
       </View>
     </View>
