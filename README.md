@@ -155,5 +155,5 @@ studybug/
 
 ## Contributors
 
-Project Leads: Anusha Ladha & Melissa Shi
+Project Leads: Anusha Ladha & Melissa Shi  
 Developers: June Qi, Léo Lhert, Shane Kuk, Brandon Yang, and Dustin Tran
