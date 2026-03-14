@@ -1,10 +1,9 @@
 # studybug 🐛
+**studybug** is a social productivity app that helps students stay accountable while studying by logging study sessions and sharing progress with friends. The platform combines progress tracking with social motivation, allowing users to view activity feeds, track study hours, and stay consistent through peer accountability. It’s essentially a “Strava for studying,” designed to make studying more engaging and less isolating. [Check out our demo here!](https://docs.google.com/presentation/d/1RR56Ov8RHOEbu8Rjf5Rr4QNz9OQCsQ_BI0xt8XKxV90/edit?usp=sharing)
 
-## What is studybug?
+---
 
-studybug is a social productivity app that helps students stay accountable while studying by logging study sessions and sharing progress with friends. The platform combines progress tracking with social motivation, allowing users to view activity feeds, track study hours, and stay consistent through peer accountability. It’s essentially a “Strava for studying,” designed to make studying more engaging and less isolating. [Check out our demo here!](https://docs.google.com/presentation/d/1RR56Ov8RHOEbu8Rjf5Rr4QNz9OQCsQ_BI0xt8XKxV90/edit?usp=sharing)
-
-**Features:**
+## Features:
 
 - Record study sessions with a timer, name, location, focus level, and notes (public or private)
 - See friends on a map in real time when they have an active session
