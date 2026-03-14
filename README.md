@@ -1,14 +1,10 @@
-# StudyBug
+# studybug 🐛
 
-A social study-tracking app that helps you log focus sessions, see where friends are studying on a map, and stay accountable together.
+## What is studybug?
 
----
+studybug is a social productivity app that helps students stay accountable while studying by logging study sessions and sharing progress with friends. The platform combines progress tracking with social motivation, allowing users to view activity feeds, track study hours, and stay consistent through peer accountability. It’s essentially a “Strava for studying,” designed to make studying more engaging and less isolating. [Check out our demo here!](https://docs.google.com/presentation/d/1RR56Ov8RHOEbu8Rjf5Rr4QNz9OQCsQ_BI0xt8XKxV90/edit?usp=sharing)
 
-## What is StudyBug?
-
-StudyBug is a social study-tracking app that helps you log focus sessions and see where friends are studying on a map so you can stay accountable together. Sessions are tagged with your location (with permission) and stored in the cloud so your data and friend graph sync across devices.
-
-**Core features:**
+**Features:**
 
 - Record study sessions with a timer, name, location, focus level, and notes (public or private)
 - See friends on a map in real time when they have an active session
@@ -156,37 +152,8 @@ studybug/
 
 ---
 
-## Scripts
 
-| Command | Description |
-|--------|-------------|
-| `npm start` | Start Expo dev server |
-| `npm run ios` | Run iOS app (native build, UTF-8 env) |
-| `npm run ios:simulator` | Run iOS targeting iPhone 16 simulator |
-| `npm run ios:xcode` | Open `ios/studybug.xcworkspace` in Xcode |
-| `npm run android` | Run Android app (native build) |
-| `npm run web` | Start for web (Expo web) |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run Jest tests |
+## Contributors
 
----
-
-## Deployment / Release
-
-- **Expo EAS (recommended):** Configure `eas.json` and use `eas build` for iOS/Android and `eas submit` for stores. Set all env vars (Supabase, Mapbox) in EAS secrets or in your CI.
-- **Store readiness:** Update `app.json` (or `app.config.js`) with proper `version`, `ios.bundleIdentifier`, `android.package`, and store metadata. Replace `com.anonymous.studybug` with your own bundle ID / package name.
-- **Backend:** Ensure Supabase project is production-ready (RLS, backups, auth settings). Do not commit `.env`; use secrets in CI and EAS.
-
----
-
-## Documentation in repo
-
-- [MAPBOX_SETUP.md](./MAPBOX_SETUP.md) — Mapbox tokens and native build setup  
-- [MAPBOX_FEATURE_FLAG.md](./MAPBOX_FEATURE_FLAG.md) — Optional map feature flag  
-- [ANDROID_TESTING.md](./ANDROID_TESTING.md) — Android dev build notes  
-
----
-
-## License
-
-See [LICENSE](./LICENSE) in the repository, if present.
+Project Leads: Anusha Ladha & Melissa Shi
+Developers: June Qi, Léo Lhert, Shane Kuk, Brandon Yang, and Dustin Tran
