@@ -1,79 +1,192 @@
-# Welcome to your Expo app 👋
+# StudyBug
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A social study-tracking app that helps you log focus sessions, see where friends are studying on a map, and stay accountable together.
 
-## Get started
+---
 
-1. Install dependencies
+## What is StudyBug?
 
-   ```bash
-   npm install
-   ```
+StudyBug is a social study-tracking app that helps you log focus sessions and see where friends are studying on a map so you can stay accountable together. Sessions are tagged with your location (with permission) and stored in the cloud so your data and friend graph sync across devices.
 
-2. Start the app
+**Core features:**
 
-   ```bash
-   npx expo start
-   ```
+- Record study sessions with a timer, name, location, focus level, and notes (public or private)
+- See friends on a map in real time when they have an active session
+- Home feed of recent study sessions from you and your friends
+- Friend system: send/accept requests, view friends list, see who’s studying where
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Tech Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Layer | Technology |
+|-------|------------|
+| **Framework** | [Expo](https://expo.dev) (SDK 54) with [React Native](https://reactnative.dev) |
+| **Routing** | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based) |
+| **Language** | TypeScript |
+| **Backend / Auth / DB** | [Supabase](https://supabase.com) (PostgreSQL, Auth, Storage) |
+| **Maps** | [Mapbox](https://www.mapbox.com) via [@rnmapbox/maps](https://github.com/rnmapbox/maps) |
+| **State / Data** | React hooks, Supabase client; auth context for session |
+| **UI** | React Native core + Expo modules (e.g. `expo-image`, `expo-location`, `expo-haptics`), custom components |
 
-## Supabase setup
+### Notable dependencies
 
-1. Install dependencies
+- **Auth:** Supabase Auth (email/password, with forgot-password flow).
+- **Storage:** Supabase Storage for profile pictures and session images.
+- **Maps:** `@rnmapbox/maps` — requires **native builds** (not Expo Go).
+- **Navigation:** Expo Router (Stack + Tabs), React Navigation under the hood.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Add environment variables (Expo reads `EXPO_PUBLIC_*` by default). Create a `.env` file in the repo root:
+## Prerequisites
 
-   ```bash
-   EXPO_PUBLIC_SUPABASE_URL=your-project-url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
+- **Node.js** 18+ (LTS recommended)
+- **npm** or **yarn**
+- **Expo CLI** (optional; `npx expo` is enough)
+- **iOS:** macOS with Xcode and CocoaPods (for `expo run:ios`)
+- **Android:** Android Studio and SDK (for `expo run:android`)
+- **Supabase** project ([supabase.com](https://supabase.com))
+- **Mapbox** account and tokens ([mapbox.com](https://www.mapbox.com)) for map features and native builds
 
-   Keep the `.env` file out of git; share values privately.
+---
 
-3. Use the client by importing it:
+## Setup
 
-   ```ts
-   import { supabase } from '../lib/supabase';
-   ```
-
-   Example:
-
-   ```ts
-   const { data, error } = await supabase.from('profiles').select('*');
-   ```
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Clone and install
 
 ```bash
-npm run reset-project
+git clone <repository-url>
+cd studybug
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Environment variables
 
-## Learn more
+Copy the example env and fill in your values:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+cp .env.example .env
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Edit `.env` with:
 
-## Join the community
+```bash
+# Required — Supabase (from project Settings → API)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-Join our community of developers creating universal apps.
+# Required for maps and native builds — Mapbox
+EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_public_token
+MAPBOX_DOWNLOADS_TOKEN=your_mapbox_downloads_token
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Supabase:** Create a project, then get URL and anon key from **Settings → API**.
+- **Mapbox:** Create a public token with `maps:read` and `styles:read`. For native builds, create a **secret Downloads token** with `DOWNLOADS:READ` and set `MAPBOX_DOWNLOADS_TOKEN`.
+
+Keep `.env` out of version control (it should be in `.gitignore`).
+
+### 3. Supabase setup
+
+- Enable **Email** auth in Supabase (and optionally confirm email settings).
+- Create tables and RLS policies to match what the app expects (e.g. `profiles`, sessions, friends, friend_requests). If the repo includes SQL migrations or schema docs, run or follow those.
+- Configure Storage buckets (e.g. `profile_pictures`, any bucket used for session images) and policies so authenticated users can read/write as intended.
+
+### 4. Mapbox (optional but needed for map tab)
+
+- See [MAPBOX_SETUP.md](./MAPBOX_SETUP.md) in this repo for token setup and native build notes.
+- For Android/iOS native builds, `MAPBOX_DOWNLOADS_TOKEN` must be set (e.g. in `.env` or in `android/gradle.properties` / iOS config as documented).
+
+---
+
+## Running the app
+
+### Development (Expo dev server)
+
+```bash
+npm start
+```
+
+Then:
+
+- Press **i** for iOS simulator or **a** for Android emulator (requires native build; see below), or
+- Scan the QR code with **Expo Go** — note: **Mapbox and some native modules do not work in Expo Go**; use a dev build for full functionality.
+
+### Native builds (required for maps and full features)
+
+**iOS (macOS only):**
+
+```bash
+npm run ios
+```
+
+Uses UTF-8 and runs `expo run:ios`. First build can take several minutes. If you hit CocoaPods encoding issues, ensure `LANG=en_US.UTF-8` and `LC_ALL=en_US.UTF-8` (these are set in the `ios` script). To open in Xcode: `npm run ios:xcode`, then build/run from Xcode (⌘R).
+
+**Android:**
+
+```bash
+npm run android
+```
+
+Ensure `MAPBOX_DOWNLOADS_TOKEN` is set for Mapbox SDK download.
+
+---
+
+## Project structure (high level)
+
+```
+studybug/
+├── app/                    # Expo Router screens
+│   ├── (auth)/             # Splash, onboarding, login, register, forgot-password
+│   ├── (tabs)/             # Main tabs: Home, Map, Record, Friends, Profile
+│   ├── session-details.tsx # New session form (name, location, focus, note)
+│   ├── session-summary.tsx # Post-session summary
+│   ├── add-friends.tsx
+│   ├── friend-requests.tsx
+│   └── _layout.tsx        # Root layout, auth redirect
+├── components/             # Reusable UI (e.g. SessionPost, map, end-session popup)
+├── controllers/            # Data/API (feed, study-session, friends, etc.)
+├── lib/                    # Supabase client and shared utilities
+├── hooks/                  # e.g. useAuthContext
+├── assets/                 # Images, icons
+├── ios/                    # Native iOS (Expo prebuild)
+├── android/                 # Native Android (Expo prebuild)
+├── app.json                # Expo config (name, slug, plugins)
+└── package.json
+```
+
+---
+
+## Scripts
+
+| Command | Description |
+|--------|-------------|
+| `npm start` | Start Expo dev server |
+| `npm run ios` | Run iOS app (native build, UTF-8 env) |
+| `npm run ios:simulator` | Run iOS targeting iPhone 16 simulator |
+| `npm run ios:xcode` | Open `ios/studybug.xcworkspace` in Xcode |
+| `npm run android` | Run Android app (native build) |
+| `npm run web` | Start for web (Expo web) |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run Jest tests |
+
+---
+
+## Deployment / Release
+
+- **Expo EAS (recommended):** Configure `eas.json` and use `eas build` for iOS/Android and `eas submit` for stores. Set all env vars (Supabase, Mapbox) in EAS secrets or in your CI.
+- **Store readiness:** Update `app.json` (or `app.config.js`) with proper `version`, `ios.bundleIdentifier`, `android.package`, and store metadata. Replace `com.anonymous.studybug` with your own bundle ID / package name.
+- **Backend:** Ensure Supabase project is production-ready (RLS, backups, auth settings). Do not commit `.env`; use secrets in CI and EAS.
+
+---
+
+## Documentation in repo
+
+- [MAPBOX_SETUP.md](./MAPBOX_SETUP.md) — Mapbox tokens and native build setup  
+- [MAPBOX_FEATURE_FLAG.md](./MAPBOX_FEATURE_FLAG.md) — Optional map feature flag  
+- [ANDROID_TESTING.md](./ANDROID_TESTING.md) — Android dev build notes  
+
+---
+
+## License
+
+See [LICENSE](./LICENSE) in the repository, if present.
