@@ -6,6 +6,7 @@ import EndSessionPopup from "@/components/end-session-popup";
 import LastFocusSession, { StudySessionProps } from '@/components/last-focus-session';
 import { endStudySession, fetchUserLastSession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
+import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
@@ -339,21 +340,24 @@ export default function RecordScreen() {
                   style={styles.pauseButton}
                   onPress={() => setTimerIsActive(false)}
                 >
-                  <Text style={styles.pauseButtonText}>❚❚  Pause</Text>
+                  <FontAwesome6 name='pause' size={16} color='white' />
+                  <Text style={styles.pauseButtonText}>Pause</Text>
                 </Pressable>
               ) : (
                   <Pressable
                     style={styles.pauseButton}
                     onPress={() => setTimerIsActive(true)}
                   >
-                    <Text style={styles.pauseButtonText}>▶  Resume</Text>
+                    <Ionicons name="play" size={16} color="white" />
+                    <Text style={styles.pauseButtonText}>Resume</Text>
                   </Pressable>
               )}
               <Pressable
                 style={styles.stopButton}
                 onPress={() => setEndSessionConfirmation(true)}
               >
-                <Text style={styles.stopButtonText}>■  Stop</Text>
+                <Ionicons name='stop' size={16} color='#8DBF58' />
+                <Text style={styles.stopButtonText}>Stop</Text>
               </Pressable>
             </View>
           </View>
@@ -468,10 +472,12 @@ const styles = StyleSheet.create({
   pauseButton: {
     width: 184,
     height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
     borderRadius: 38,
-    backgroundColor: '#8DBF58'
+    backgroundColor: '#8DBF58',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   pauseButtonText: {
     fontSize: 18,
@@ -483,12 +489,14 @@ const styles = StyleSheet.create({
   stopButton: {
     width: 184,
     height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
     borderRadius: 38,
     color: '#FFF',
     borderWidth: 1,
-    borderColor: '#8DBF58'
+    borderColor: '#8DBF58',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   stopButtonText: {
       fontSize: 18,
@@ -498,14 +506,17 @@ const styles = StyleSheet.create({
       textAlign: 'center'
   },
   lastFocusSessionContainer: {
-    alignItems: 'flex-start',
+    width: '100%',
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   lastFocusSessionHeader: {
     fontSize: 18,
     fontWeight: 500,
     fontFamily: 'Rethink Sans',
     color: '#000',
-    marginBottom: 10
+    textAlign: 'left',
+    width: '90%',
   }
 });

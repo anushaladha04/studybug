@@ -1,5 +1,5 @@
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -36,6 +36,8 @@ function RecordButton({ onPress, children }: BottomTabBarButtonProps) {
 }
 
 export default function TabLayout() {
+  const router = useRouter();
+
   return (
     <Tabs
       screenOptions={{

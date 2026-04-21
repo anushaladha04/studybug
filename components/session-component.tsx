@@ -118,7 +118,7 @@ export default function SessionPost({
 }
 
 const styles = StyleSheet.create({
-      card: {
+    card: {
         backgroundColor: '#fff',
         paddingHorizontal: 29,
         paddingVertical: 19,

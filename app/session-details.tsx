@@ -1,9 +1,9 @@
 import X from '@/assets/icons/X.svg';
+import { getDistanceMiles, getNearbyPlaces, PlaceResult } from '@/controllers/nearby-places';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
-import { getNearbyPlaces, getDistanceMiles, PlaceResult } from '@/controllers/nearby-places';
-import * as Location from 'expo-location';
 
 
 export default function SessionDetails() {
@@ -88,8 +88,6 @@ export default function SessionDetails() {
 
     const segmentWidth = TRACK_WIDTH / (FOCUS_LEVELS.length - 1);
 
-    const [activeIndex, setActiveIndex] = useState(0);
-
     const xPos = useRef(new Animated.Value(0)).current;
 
     const offsetRef = useRef(0);
@@ -126,7 +124,6 @@ export default function SessionDetails() {
                     }).start();
 
                     setFocusLevel(FOCUS_LEVELS[snappedIndex]);
-                    setActiveIndex(snappedIndex);
                 });
             },
         })
