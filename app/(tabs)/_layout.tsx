@@ -35,9 +35,17 @@ function RecordButton({ onPress, children }: BottomTabBarButtonProps) {
   );
 }
 
+let lastActiveTab = 'index';
+export function getLastActiveTab() { return lastActiveTab; }
+
 export default function TabLayout() {
   return (
     <Tabs
+      screenListeners={({ route }) => ({
+        focus: () => {
+          if (route.name !== 'record') lastActiveTab = route.name;
+        },
+      })}
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
