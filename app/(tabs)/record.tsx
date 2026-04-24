@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { getLastActiveTab } from './_layout';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -270,7 +271,8 @@ export default function RecordScreen() {
         style={styles.backButton} 
         onPress={() => {
           Haptics.selectionAsync();
-          router.back();
+          const tab = getLastActiveTab();
+          router.navigate(tab === 'index' ? '/(tabs)/' : `/(tabs)/${tab}` as any);
         }}
       >
         <MinimizeIcon /> 
