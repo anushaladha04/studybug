@@ -1,4 +1,5 @@
 import SessionPost from '@/components/session-component';
+import { fetchFriendCount } from '@/controllers/friends';
 import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const avatarUrl = `${avatarUrlBase}?v=${profileImageVersion}`;
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+  const [friendCount, setFriendCount] = useState(0);
 
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
@@ -36,7 +38,8 @@ export default function ProfileScreen() {
         fetchSessionsByUser(id),
         getStreakDays(id),
         getLifetimeSeconds(id),
-      ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
+        fetchFriendCount()
+      ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs, count]) => {
         console.log('weekly durations:', thisWeek);
         setWeeklyDurations(thisWeek);
         setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
@@ -46,6 +49,7 @@ export default function ProfileScreen() {
         setSessions(completed);
         setStreak(streakDays);
         setLifetimeSeconds(lifetimeSecs);
+        setFriendCount(count)
       });
     }, [session?.user?.id])
   );
@@ -86,6 +90,7 @@ export default function ProfileScreen() {
               <Ionicons name="pencil" size={11} color="#666" />
             </View>
           </Pressable>
+          <Text style={styles.bioText}>Friends: {friendCount}</Text>
         </View>
       </View>
 
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
   profileText: {
     marginLeft: 16,
     flex: 1,
-    height: 89,
+    height: 110,
     overflow: 'hidden',
   },
   nameText: {
@@ -394,7 +399,7 @@ const styles = StyleSheet.create({
   bioRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 2,
     gap: 6,
   },
   bioText: {
@@ -402,7 +407,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'RethinkSans-Regular',
     color: '#333',
-
+    marginTop: 2,
   },
   editIconCircle: {
     width: 18,
