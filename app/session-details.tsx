@@ -243,6 +243,7 @@ useRef(
                     {/* Thumb */}
                     <Animated.View
                         {...panResponder.panHandlers}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10}}
                         style={[
                             styles.thumb,
                             { transform: [{ translateX: Animated.add(xPos, -THUMB_SIZE / 2) }], },
