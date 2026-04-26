@@ -1,8 +1,10 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
 import EmptyHeart from '@/assets/icons/empty-heart.svg';
+import FilledHeart from '@/assets/icons/filled-heart.svg';
 
 import { likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
@@ -38,16 +40,24 @@ export default function SessionPostDetailsScreen() {
     likeCount: string,
     isLiked: string
   }>();
-  
-  const likeStatus = isLiked === 'true';
+
+  const [ numLikes, setNumLikes ] = useState(Number(likeCount));
+  const [ likeStatus, setLikeStatus ] = useState(isLiked === 'true');
 
   const handleLike = async () => {
+      const previousState = likeStatus;
+      const previousCount = numLikes;
+
+      setLikeStatus(!previousState);
+      setNumLikes(previousState ? previousCount - 1 : previousCount + 1);
+
       try {
           await likePost(id);
       } catch (err) {
-          alert("Something went wrong. Please try again.");
+          setLikeStatus(previousState);
+          setNumLikes(previousCount);
       }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -98,7 +108,7 @@ export default function SessionPostDetailsScreen() {
 
           <View style={styles.actions}>
               <Pressable onPress={handleLike}>
-                <EmptyHeart />
+                { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
               </Pressable>
           </View>
       </View>

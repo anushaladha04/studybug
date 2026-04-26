@@ -3,7 +3,7 @@ import FilledHeart from '@/assets/icons/filled-heart.svg';
 import { likePost } from '@/controllers/post-interactions';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
@@ -34,7 +34,7 @@ export default function SessionPost({
 }: SessionPostProps) {
     const [ numLikes, setNumLikes ] = useState(likeCount);
     const [ likeStatus, setLikeStatus ] = useState(isLiked);
-    
+
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
@@ -84,6 +84,29 @@ export default function SessionPost({
         }
     }
 
+    const handleNavigate = useCallback(() => {
+        router.push({
+            pathname: '/session-posting-details',
+            params: {
+                id,
+                pfp,
+                name,
+                title,
+                location,
+                postedTime: formatPostedTime(),
+                duration: formattedDuration(),
+                image,
+                likeCount: numLikes, // Use the state variable, not the initial prop
+                isLiked: likeStatus.toString() // Use the state variable
+            }
+        });
+    }, [id, pfp, name, title, location, numLikes, likeStatus]);
+
+    useEffect(() => {
+        setLikeStatus(isLiked);
+        setNumLikes(likeCount);
+    }, [isLiked, likeCount]);
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
@@ -103,21 +126,7 @@ export default function SessionPost({
             </View>
 
             <Pressable 
-                onPress={() => router.push({
-                    pathname: '/session-posting-details',
-                    params: {
-                        id,
-                        pfp,
-                        name,
-                        title,
-                        location,
-                        postedTime: formatPostedTime(),
-                        duration: formattedDuration(),
-                        image,
-                        likeCount,
-                        isLiked: isLiked.toString()
-                    }
-                })}
+                onPress={handleNavigate}
             >
                 <View style={styles.infoRow}>
                     <View>
