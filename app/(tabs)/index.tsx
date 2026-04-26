@@ -62,6 +62,7 @@ export default function HomeScreen() {
                   location = {item.location_name}
                   totalTime = {item.duration}
                   image = {item.image_url}
+                  likeCount={item.like_count}
               />
             )
           }
