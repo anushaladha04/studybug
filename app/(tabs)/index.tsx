@@ -54,6 +54,7 @@ export default function HomeScreen() {
           onRefresh={handleRefresh}
           renderItem={({ item }) =>  (
               <SessionPost
+                  id = {item.session_id}
                   pfp = {item.profile_image_path}
                   name = {item.full_name}
                   time = {item.start_time}

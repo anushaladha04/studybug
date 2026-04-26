@@ -1,27 +1,32 @@
 import Heart from '@/assets/icons/heart.svg';
+import { likePost } from '@/controllers/post-interactions';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
 interface SessionPostProps {
+    id: string,
     pfp: string,
-    name: string;
-    time: string;
-    title: string;
-    location: string;
-    totalTime: number;
-    image: string
+    name: string,
+    time: string,
+    title: string,
+    location: string,
+    totalTime: number,
+    image: string,
+    likeCount: number
 }
 
 export default function SessionPost({
+    id,
     pfp,
     name,
     time,
     title,
     location,
     totalTime,
-    image
+    image,
+    likeCount
 }: SessionPostProps) {
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
@@ -57,6 +62,14 @@ export default function SessionPost({
         return `${hours} hr ${minutes} min`;
     }
 
+    const handleLike = async () => {
+        try {
+            await likePost(id);
+        } catch (err) {
+            alert("Something went wrong. Please try again.");
+        }
+    }
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
@@ -79,13 +92,15 @@ export default function SessionPost({
                 onPress={() => router.push({
                     pathname: '/session-posting-details',
                     params: {
+                        id,
                         pfp,
                         name,
                         title,
                         location,
                         postedTime: formatPostedTime(),
                         duration: formattedDuration(),
-                        image
+                        image,
+                        likeCount
                     }
                 })}
             >
@@ -112,7 +127,7 @@ export default function SessionPost({
             )}
 
             <View style={styles.actions}>
-                <Pressable onPress={() => console.log("Liked post!")}>
+                <Pressable onPress={handleLike}>
                     <Heart />
                 </Pressable>
             </View>

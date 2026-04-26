@@ -1,7 +1,10 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
+import Heart from '@/assets/icons/heart.svg';
 
+import { likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+
 
 interface SessionPostDetailsProps {
   name: string;
@@ -23,7 +26,8 @@ export default function SessionPostDetailsScreen() {
       return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  const { pfp, name, title, location, postedTime, duration, image } = useLocalSearchParams<{
+  const { id, pfp, name, title, location, postedTime, duration, image, likeCount } = useLocalSearchParams<{
+    id: string,
     pfp: string,
     name: string;
     title: string;
@@ -31,7 +35,16 @@ export default function SessionPostDetailsScreen() {
     postedTime: string;
     duration: string;
     image: string;
+    likeCount: string
   }>();
+
+  const handleLike = async () => {
+        try {
+            await likePost(id);
+        } catch (err) {
+            alert("Something went wrong. Please try again.");
+        }
+    }
 
   return (
     <View style={styles.container}>
@@ -81,7 +94,9 @@ export default function SessionPostDetailsScreen() {
             )}
 
           <View style={styles.actions}>
-              <Text style={styles.icon}>♡</Text>
+              <Pressable onPress={handleLike}>
+                <Heart />
+              </Pressable>
           </View>
       </View>
 
