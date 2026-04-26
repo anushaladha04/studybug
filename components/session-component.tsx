@@ -1,3 +1,4 @@
+import Heart from '@/assets/icons/heart.svg';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -111,7 +112,9 @@ export default function SessionPost({
             )}
 
             <View style={styles.actions}>
-                <Text style={styles.icon}>♡</Text>
+                <Pressable onPress={() => console.log("Liked post!")}>
+                    <Heart />
+                </Pressable>
             </View>
         </View>
     );
