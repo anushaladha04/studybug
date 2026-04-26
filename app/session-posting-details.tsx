@@ -1,5 +1,5 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
-import Heart from '@/assets/icons/heart.svg';
+import EmptyHeart from '@/assets/icons/empty-heart.svg';
 
 import { likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,7 +26,7 @@ export default function SessionPostDetailsScreen() {
       return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  const { id, pfp, name, title, location, postedTime, duration, image, likeCount } = useLocalSearchParams<{
+  const { id, pfp, name, title, location, postedTime, duration, image, likeCount, isLiked } = useLocalSearchParams<{
     id: string,
     pfp: string,
     name: string;
@@ -35,16 +35,19 @@ export default function SessionPostDetailsScreen() {
     postedTime: string;
     duration: string;
     image: string;
-    likeCount: string
+    likeCount: string,
+    isLiked: string
   }>();
+  
+  const likeStatus = isLiked === 'true';
 
   const handleLike = async () => {
-        try {
-            await likePost(id);
-        } catch (err) {
-            alert("Something went wrong. Please try again.");
-        }
-    }
+      try {
+          await likePost(id);
+      } catch (err) {
+          alert("Something went wrong. Please try again.");
+      }
+  };
 
   return (
     <View style={styles.container}>
@@ -95,7 +98,7 @@ export default function SessionPostDetailsScreen() {
 
           <View style={styles.actions}>
               <Pressable onPress={handleLike}>
-                <Heart />
+                <EmptyHeart />
               </Pressable>
           </View>
       </View>

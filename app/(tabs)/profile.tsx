@@ -134,6 +134,7 @@ export default function ProfileScreen() {
                   totalTime={s.duration}
                   image={s.image_url}
                   likeCount={s.like_count}
+                  isLiked={s.is_liked}
                 />
               ))
             )}

@@ -1,7 +1,9 @@
-import Heart from '@/assets/icons/heart.svg';
+import EmptyHeart from '@/assets/icons/empty-heart.svg';
+import FilledHeart from '@/assets/icons/filled-heart.svg';
 import { likePost } from '@/controllers/post-interactions';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
@@ -14,7 +16,8 @@ interface SessionPostProps {
     location: string,
     totalTime: number,
     image: string,
-    likeCount: number
+    likeCount: number,
+    isLiked: boolean
 }
 
 export default function SessionPost({
@@ -26,8 +29,12 @@ export default function SessionPost({
     location,
     totalTime,
     image,
-    likeCount
+    likeCount,
+    isLiked
 }: SessionPostProps) {
+    const [ numLikes, setNumLikes ] = useState(likeCount);
+    const [ likeStatus, setLikeStatus ] = useState(isLiked);
+    
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
@@ -63,10 +70,17 @@ export default function SessionPost({
     }
 
     const handleLike = async () => {
+        const previousState = likeStatus;
+        const previousCount = numLikes;
+
+        setLikeStatus(!previousState);
+        setNumLikes(previousState ? previousCount - 1 : previousCount + 1);
+
         try {
             await likePost(id);
         } catch (err) {
-            alert("Something went wrong. Please try again.");
+            setLikeStatus(previousState);
+            setNumLikes(previousCount);
         }
     }
 
@@ -100,7 +114,8 @@ export default function SessionPost({
                         postedTime: formatPostedTime(),
                         duration: formattedDuration(),
                         image,
-                        likeCount
+                        likeCount,
+                        isLiked: isLiked.toString()
                     }
                 })}
             >
@@ -128,7 +143,8 @@ export default function SessionPost({
 
             <View style={styles.actions}>
                 <Pressable onPress={handleLike}>
-                    <Heart />
+                    { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                    
                 </Pressable>
             </View>
         </View>
