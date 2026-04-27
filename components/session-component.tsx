@@ -151,9 +151,9 @@ export default function SessionPost({
             )}
 
             <View style={styles.actions}>
-                <Pressable onPress={handleLike}>
+                <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
                     { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
-                    
+                    <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
                 </Pressable>
             </View>
         </View>

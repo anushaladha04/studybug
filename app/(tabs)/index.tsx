@@ -50,6 +50,7 @@ export default function HomeScreen() {
       </View>
       <FlatList
           data={posts}
+          extraData={posts}
           keyExtractor={(item) => String(item.session_id)}
           style={{ width: '100%' }}
           contentContainerStyle={styles.listContent}
