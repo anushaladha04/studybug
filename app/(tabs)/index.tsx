@@ -3,7 +3,8 @@ import { fetchPostsRandomOrder } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
 
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
@@ -18,27 +19,29 @@ export default function HomeScreen() {
     setSeed(Math.random());
   };
 
-  useEffect(() => {
-    const fetchFeed = async () => {
-      try {
-        const data = await fetchPostsRandomOrder(seed);
-        const SUPABASE_BASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co/storage/v1/object/public/profile_pictures/';
+  const fetchFeed = useCallback(async () => {
+    try {
+      const data = await fetchPostsRandomOrder(seed);
+      const SUPABASE_BASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co/storage/v1/object/public/profile_pictures/';
 
-        const pfpUrls = data
-          .filter((item: any) => item.profile_image_path)
-          .map((item: any) => `${SUPABASE_BASE_URL}${item.profile_image_path}`);
-        Image.prefetch(pfpUrls);
+      const pfpUrls = data
+        .filter((item: any) => item.profile_image_path)
+        .map((item: any) => `${SUPABASE_BASE_URL}${item.profile_image_path}`);
+      Image.prefetch(pfpUrls);
 
-        setPosts(data);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setRefreshing(false);
-      }
-    };
-
-    fetchFeed();
+      setPosts([...data]);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setRefreshing(false);
+    }
   }, [seed]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchFeed();
+    }, [fetchFeed])
+  );
 
   return (
     <View style={styles.container}>
@@ -47,6 +50,7 @@ export default function HomeScreen() {
       </View>
       <FlatList
           data={posts}
+          extraData={posts}
           keyExtractor={(item) => String(item.session_id)}
           style={{ width: '100%' }}
           contentContainerStyle={styles.listContent}
@@ -54,6 +58,8 @@ export default function HomeScreen() {
           onRefresh={handleRefresh}
           renderItem={({ item }) =>  (
               <SessionPost
+                  key={`${item.session_id}-${item.is_liked}`}
+                  id = {item.session_id}
                   pfp = {item.profile_image_path}
                   name = {item.full_name}
                   time = {item.start_time}
@@ -61,6 +67,8 @@ export default function HomeScreen() {
                   location = {item.location_name}
                   totalTime = {item.duration}
                   image = {item.image_url}
+                  likeCount={item.like_count}
+                  isLiked={item.is_liked}
               />
             )
           }

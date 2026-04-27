@@ -1,7 +1,12 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
+import EmptyHeart from '@/assets/icons/empty-heart.svg';
+import FilledHeart from '@/assets/icons/filled-heart.svg';
 
+import { likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+
 
 interface SessionPostDetailsProps {
   name: string;
@@ -23,7 +28,8 @@ export default function SessionPostDetailsScreen() {
       return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  const { pfp, name, title, location, postedTime, duration, image } = useLocalSearchParams<{
+  const { id, pfp, name, title, location, postedTime, duration, image, likeCount, isLiked } = useLocalSearchParams<{
+    id: string,
     pfp: string,
     name: string;
     title: string;
@@ -31,7 +37,27 @@ export default function SessionPostDetailsScreen() {
     postedTime: string;
     duration: string;
     image: string;
+    likeCount: string,
+    isLiked: string
   }>();
+
+  const [ numLikes, setNumLikes ] = useState(Number(likeCount));
+  const [ likeStatus, setLikeStatus ] = useState(isLiked === 'true');
+
+  const handleLike = async () => {
+      const previousState = likeStatus;
+      const previousCount = numLikes;
+
+      setLikeStatus(!previousState);
+      setNumLikes(previousState ? previousCount - 1 : previousCount + 1);
+
+      try {
+          await likePost(id);
+      } catch (err) {
+          setLikeStatus(previousState);
+          setNumLikes(previousCount);
+      }
+  }
 
   return (
     <View style={styles.container}>
@@ -81,7 +107,10 @@ export default function SessionPostDetailsScreen() {
             )}
 
           <View style={styles.actions}>
-              <Text style={styles.icon}>♡</Text>
+              <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
+              </Pressable>
           </View>
       </View>
 
