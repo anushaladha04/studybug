@@ -92,7 +92,7 @@ export default function RecordScreen() {
     let subscription: { remove: () => void } | undefined;
 
     const init = async () => {
-      const TWELVE_HOURS_MS = 1 * 1 * 60 * 1000;
+      const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
       const sessionId = await AsyncStorage.getItem('activeSessionId');
       const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
 
