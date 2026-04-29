@@ -2,11 +2,13 @@ import AvatarIcon from '@/assets/icons/avatar.svg';
 import { LocationUser, StudyMap } from '@/components/map';
 import { fetchAllFriends } from '@/controllers/friends';
 import { supabase } from '@/lib/supabase';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   PanResponder,
   Pressable,
@@ -123,20 +125,26 @@ export default function MapScreen() {
   const [selectedFocusLevels, setSelectedFocusLevels] = useState<FocusLevel[]>([...FOCUS_LEVELS]);
   const [showActiveSection, setShowActiveSection] = useState(true);
   const [showAwaySection, setShowAwaySection] = useState(true);
-  const [isFriendsSheetExpanded, setIsFriendsSheetExpanded] = useState(false);
+  const [friendsSheetMode, setFriendsSheetModeState] = useState<'collapsed' | 'default' | 'expanded'>('default');
   const [locationError, setLocationError] = useState<string | null>(null);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
-  const defaultSheetHeight = Math.max(250, Math.round(windowHeight * 0.35));
-  const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(windowHeight * 0.9));
+  const [isMapCentered, setIsMapCentered] = useState(false);
+  const tabBarOffset = useBottomTabBarHeight();
+  const availableHeight = windowHeight - tabBarOffset;
+  const defaultSheetHeight = Math.max(300, Math.round(availableHeight * 0.4));
+  const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(availableHeight * 0.9));
   const sheetHeightAnim = React.useRef(new Animated.Value(defaultSheetHeight)).current;
   const sheetHeightCurrentRef = React.useRef(defaultSheetHeight);
   const dragStartHeightRef = React.useRef(defaultSheetHeight);
   const defaultSheetHeightRef = React.useRef(defaultSheetHeight);
   const expandedSheetHeightRef = React.useRef(expandedSheetHeight);
-  const isFriendsSheetExpandedRef = React.useRef(isFriendsSheetExpanded);
+  const collapsedSheetHeight = tabBarOffset + 80;
+  const collapsedSheetHeightRef = React.useRef(collapsedSheetHeight);
+  const friendsSheetModeRef = React.useRef(friendsSheetMode);
   defaultSheetHeightRef.current = defaultSheetHeight;
   expandedSheetHeightRef.current = expandedSheetHeight;
-  isFriendsSheetExpandedRef.current = isFriendsSheetExpanded;
+  collapsedSheetHeightRef.current = collapsedSheetHeight;
+  friendsSheetModeRef.current = friendsSheetMode;
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -296,13 +304,8 @@ export default function MapScreen() {
 
             const friendRecord = friendById.get(session.user_id);
     
-            let publicPfpUrl = null;
-            const rawAvatarPath = friendRecord?.profile_image_path;
-            if (rawAvatarPath){
-              publicPfpUrl = getPublicUrl(rawAvatarPath);
-            } else {
-              publicPfpUrl = 'avatar_4.jpg';
-            }
+            const rawAvatarPath = friendRecord?.profile_image_path || 'avatar_4.jpg';
+            const publicPfpUrl = getPublicUrl(rawAvatarPath);
 
             const rawSubject = session.subject?.trim();
             const studyType: StudyType = (['Academic', 'Career', 'Personal'].includes(rawSubject as any)) 
@@ -318,7 +321,8 @@ export default function MapScreen() {
               id: session.session_id,
               friendUserId: session.user_id,
               name: friendNameById.get(session.user_id) || 'Friend',
-              pfpUrl: publicPfpUrl, 
+              pfpUrl: publicPfpUrl,
+              imageUrl: publicPfpUrl ?? undefined,
               studying: session.session_name?.trim() || 'Studying',
               locationName: session.location_name?.trim() || friendById.get(session.user_id)?.location_name?.trim() || 'Powell Library',
               latitude,
@@ -404,13 +408,7 @@ export default function MapScreen() {
 
   const openUserDetails = (user: ActiveFriendMapItem) => {
     if (sheetHeightCurrentRef.current < defaultSheetHeight - 2) {
-      Animated.spring(sheetHeightAnim, {
-        toValue: defaultSheetHeight,
-        useNativeDriver: false,
-        friction: 9,
-        tension: 90,
-      }).start();
-      sheetHeightCurrentRef.current = defaultSheetHeight;
+      animateSheetToHeight(defaultSheetHeight);
     }
     setSelectedUser(user);
   };
@@ -428,39 +426,42 @@ export default function MapScreen() {
   const animateSheetToHeight = React.useCallback(
     (nextHeight: number) => {
       sheetHeightCurrentRef.current = nextHeight;
-      Animated.spring(sheetHeightAnim, {
+      Animated.timing(sheetHeightAnim, {
         toValue: nextHeight,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
-        friction: 9,
-        tension: 90,
       }).start();
     },
     [sheetHeightAnim]
   );
   const setFriendsSheetMode = React.useCallback(
-    (mode: 'default' | 'expanded') => {
-      setIsFriendsSheetExpanded(mode === 'expanded');
-      const targetHeight = mode === 'expanded' ? expandedSheetHeight : defaultSheetHeight;
+    (mode: 'collapsed' | 'default' | 'expanded') => {
+      setFriendsSheetModeState(mode);
+      const targetHeight =
+        mode === 'expanded' ? expandedSheetHeight :
+        mode === 'collapsed' ? collapsedSheetHeight :
+        defaultSheetHeight;
       animateSheetToHeight(targetHeight);
     },
-    [
-      animateSheetToHeight,
-      defaultSheetHeight,
-      expandedSheetHeight,
-    ]
+    [animateSheetToHeight, collapsedSheetHeight, defaultSheetHeight, expandedSheetHeight]
   );
   const setFriendsSheetModeRef = React.useRef(setFriendsSheetMode);
   setFriendsSheetModeRef.current = setFriendsSheetMode;
 
   useEffect(() => {
-    const targetHeight = isFriendsSheetExpanded ? expandedSheetHeight : defaultSheetHeight;
+    const targetHeight =
+      friendsSheetMode === 'expanded' ? expandedSheetHeight :
+      friendsSheetMode === 'collapsed' ? collapsedSheetHeight :
+      defaultSheetHeight;
 
     sheetHeightCurrentRef.current = targetHeight;
     sheetHeightAnim.setValue(targetHeight);
   }, [
+    collapsedSheetHeight,
     defaultSheetHeight,
     expandedSheetHeight,
-    isFriendsSheetExpanded,
+    friendsSheetMode,
     sheetHeightAnim,
   ]);
 
@@ -481,7 +482,7 @@ export default function MapScreen() {
       onPanResponderMove: (_, gestureState) => {
         if (showDetailSheetRef.current) return;
         const nextHeight = Math.max(
-          defaultSheetHeightRef.current,
+          collapsedSheetHeightRef.current,
           Math.min(expandedSheetHeightRef.current, dragStartHeightRef.current - gestureState.dy)
         );
         sheetHeightCurrentRef.current = nextHeight;
@@ -494,23 +495,27 @@ export default function MapScreen() {
         const tapLike = Math.abs(gestureState.dy) < 8;
 
         if (tapLike) {
-          setFriendsSheetModeRef.current(
-            isFriendsSheetExpandedRef.current ? 'default' : 'expanded'
-          );
+          const cur = friendsSheetModeRef.current;
+          if (cur === 'collapsed') setFriendsSheetModeRef.current('default');
+          else if (cur === 'default') setFriendsSheetModeRef.current('expanded');
+          else setFriendsSheetModeRef.current('default');
           return;
         }
 
         if (velocityY < -0.35) {
-          setFriendsSheetModeRef.current('expanded');
+          const cur = friendsSheetModeRef.current;
+          setFriendsSheetModeRef.current(cur === 'collapsed' ? 'default' : 'expanded');
           return;
         }
 
         if (velocityY > 0.35) {
-          setFriendsSheetModeRef.current('default');
+          const cur = friendsSheetModeRef.current;
+          setFriendsSheetModeRef.current(cur === 'expanded' ? 'default' : 'collapsed');
           return;
         }
 
         const snapPoints = [
+          { mode: 'collapsed' as const, value: collapsedSheetHeightRef.current },
           { mode: 'default' as const, value: defaultSheetHeightRef.current },
           { mode: 'expanded' as const, value: expandedSheetHeightRef.current },
         ];
@@ -536,6 +541,7 @@ export default function MapScreen() {
         showRecenterControl={false}
         recenterTrigger={recenterTrigger}
         showMarkerLabels={false}
+        onCenterStateChange={setIsMapCentered}
       />
 
       <View pointerEvents="box-none" style={styles.overlayLayer}>
@@ -619,7 +625,11 @@ export default function MapScreen() {
             <Pressable
               style={styles.recenterButton}
               onPress={() => setRecenterTrigger((value) => value + 1)}>
-              <Ionicons name="navigate" size={18} color="#1d1d1f" />
+              <Ionicons
+                name={isMapCentered ? 'navigate' : 'navigate-outline'}
+                size={18}
+                color="#1d1d1f"
+              />
             </Pressable>
           </Animated.View>
         )}
@@ -655,14 +665,6 @@ export default function MapScreen() {
               showsVerticalScrollIndicator={false}>
               <View style={styles.sheetHeaderRow}>
                 <Text style={styles.sheetTitle}>Friends</Text>
-                <Pressable
-                  hitSlop={8}
-                  onPress={() => {
-                    setFriendsSheetMode('default');
-                  }}
-                  style={styles.closeButton}>
-                  <Ionicons name="close" size={26} color="#707070" />
-                </Pressable>
               </View>
 
               <SectionHeader

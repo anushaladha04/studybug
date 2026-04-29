@@ -1,7 +1,7 @@
 import { isMapboxEnabled } from '@/lib/mapbox-config';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 let MapboxGL: any = null;
 try {
@@ -37,6 +37,7 @@ interface StudyMapProps {
   showRecenterControl?: boolean;
   recenterTrigger?: number;
   showMarkerLabels?: boolean;
+  onCenterStateChange?: (isCentered: boolean) => void;
 }
 
 const DEFAULT_LOCATION = {
@@ -54,6 +55,7 @@ export function StudyMap({
   showRecenterControl = true,
   recenterTrigger = 0,
   showMarkerLabels = true,
+  onCenterStateChange,
 }: StudyMapProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
@@ -61,8 +63,23 @@ export function StudyMap({
   const cameraRef = React.useRef<any>(null);
   const [zoomLevel, setZoomLevel] = React.useState(14);
   const hasCenteredOnUserRef = React.useRef(false);
+  const [cameraCenter, setCameraCenter] = React.useState<{ longitude: number; latitude: number } | null>(null);
+  const [cameraHeading, setCameraHeading] = React.useState(0);
 
   const centerLocation = userLocation || DEFAULT_LOCATION;
+
+  const isCentered = React.useMemo(() => {
+    if (!userLocation || !cameraCenter) return false;
+    const lngDelta = Math.abs(userLocation.longitude - cameraCenter.longitude);
+    const latDelta = Math.abs(userLocation.latitude - cameraCenter.latitude);
+    const normalizedHeading = ((cameraHeading % 360) + 360) % 360;
+    const headingDelta = Math.min(normalizedHeading, 360 - normalizedHeading);
+    return lngDelta < 0.0001 && latDelta < 0.0001 && headingDelta < 1;
+  }, [userLocation, cameraCenter, cameraHeading]);
+
+  React.useEffect(() => {
+    onCenterStateChange?.(isCentered);
+  }, [isCentered, onCenterStateChange]);
 
   React.useEffect(() => {
     if (!userLocation || !cameraRef.current || hasCenteredOnUserRef.current) {
@@ -105,6 +122,7 @@ export function StudyMap({
     cameraRef.current?.setCamera({
       centerCoordinate: [userLocation.longitude, userLocation.latitude],
       zoomLevel: 14,
+      heading: 0,
       animationDuration: 700,
     });
     setZoomLevel(14);
@@ -154,9 +172,19 @@ export function StudyMap({
       <MapboxGL.MapView
         style={styles.map}
         onCameraChanged={(event: any) => {
-          const nextZoom = event?.properties?.zoom;
-          if (typeof nextZoom === 'number' && Number.isFinite(nextZoom)) {
-            setZoomLevel(nextZoom);
+          const props = event?.properties;
+          if (!props) return;
+          if (typeof props.zoom === 'number' && Number.isFinite(props.zoom)) {
+            setZoomLevel(props.zoom);
+          }
+          if (Array.isArray(props.center) && props.center.length >= 2) {
+            const [lng, lat] = props.center;
+            if (Number.isFinite(lng) && Number.isFinite(lat)) {
+              setCameraCenter({ longitude: lng, latitude: lat });
+            }
+          }
+          if (typeof props.heading === 'number' && Number.isFinite(props.heading)) {
+            setCameraHeading(props.heading);
           }
         }}
         styleURL={theme === 'dark' ? MapboxGL.StyleURL.Dark : MapboxGL.StyleURL.Street}
@@ -203,8 +231,17 @@ export function StudyMap({
               )}
               <View
                 collapsable={false}
-                style={[styles.userPin, user.pinColor ? { backgroundColor: user.pinColor } : null]}>
-                <View collapsable={false} style={styles.pinDot} />
+                style={[
+                  styles.userPin,
+                  user.pinColor
+                    ? { backgroundColor: user.pinColor, borderColor: user.pinColor }
+                    : null,
+                ]}>
+                {user.imageUrl ? (
+                  <Image source={{ uri: user.imageUrl }} style={styles.pinImage} />
+                ) : (
+                  <View collapsable={false} style={styles.pinDot} />
+                )}
               </View>
             </View>
           </MapboxGL.PointAnnotation>
@@ -297,6 +334,12 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+    backgroundColor: '#e7e7e7',
+  },
+  pinImage: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#e7e7e7',
   },
   fallbackMap: {
