@@ -32,21 +32,18 @@ export default function LastFocusSession({ date, totalTime, location, topic }: S
 
 const styles = StyleSheet.create({
   cardContainer: {
-    width: 373,
-    height: 108,
+    marginVertical: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 23,
-    paddingHorizontal: 35,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 5,
+    height: 97,
+    width: '90%',
+    borderRadius: 8,
   },
   dateHeader: {
     fontSize: 16,

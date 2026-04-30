@@ -68,7 +68,6 @@ function RootLayoutNav() {
             title: "New Session",
           }}
         />
-
         <Stack.Screen
           name="session-summary"
           options={{

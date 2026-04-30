@@ -1,9 +1,9 @@
 import X from '@/assets/icons/X.svg';
+import { getDistanceMiles, getNearbyPlaces, PlaceResult } from '@/controllers/nearby-places';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
-import { getNearbyPlaces, getDistanceMiles, PlaceResult } from '@/controllers/nearby-places';
-import * as Location from 'expo-location';
 
 
 export default function SessionDetails() {
@@ -89,8 +89,6 @@ export default function SessionDetails() {
 
     const segmentWidth = TRACK_WIDTH / (FOCUS_LEVELS.length - 1);
 
-    const [activeIndex, setActiveIndex] = useState(0);
-
     const xPos = useRef(new Animated.Value(0)).current;
 
     const offsetRef = useRef(0);
@@ -127,7 +125,6 @@ export default function SessionDetails() {
                     }).start();
 
                     setFocusLevel(FOCUS_LEVELS[snappedIndex]);
-                    setActiveIndex(snappedIndex);
                 });
             },
         })
@@ -247,6 +244,7 @@ export default function SessionDetails() {
                     {/* Thumb */}
                     <Animated.View
                         {...panResponder.panHandlers}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10}}
                         style={[
                             styles.thumb,
                             { transform: [{ translateX: Animated.add(xPos, -THUMB_SIZE / 2) }], },
