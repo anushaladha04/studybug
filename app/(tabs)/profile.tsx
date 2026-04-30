@@ -3,8 +3,8 @@ import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurati
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
@@ -26,27 +26,40 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState<number>(0);
   const [lifetimeSeconds, setLifetimeSeconds] = useState<number>(0);
 
+  const sortSessions = (sessions: any[]) => {
+    return [...sessions] // Spread to avoid mutating the original array
+      .filter((s: any) => s.end_time !== null)
+      .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  };
+
   useEffect(() => {
     if (!session?.user?.id) return;
     const id = session.user.id;
     Promise.all([
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
-      fetchSessionsByUser(id),
+      fetchSessionsByUser(id, id),
       getStreakDays(id),
       getLifetimeSeconds(id),
     ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
-      const completed = (userSessions ?? [])
-        .filter((s: any) => s.end_time !== null)
-        .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
-      setSessions(completed);
+      setSessions(sortSessions(userSessions ?? []));
       setStreak(streakDays);
       setLifetimeSeconds(lifetimeSecs);
     });
   }, [session?.user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!session?.user?.id) return;
+
+      fetchSessionsByUser(session.user.id, session.user.id).then((data) => {
+        setSessions(sortSessions(data ?? []));
+      });
+    }, [session?.user?.id])
+  );
 
   async function handleSaveBio() {
     if (!session?.user?.id) return;
