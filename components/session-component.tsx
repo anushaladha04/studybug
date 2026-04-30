@@ -1,27 +1,40 @@
+import EmptyHeart from '@/assets/icons/empty-heart.svg';
+import FilledHeart from '@/assets/icons/filled-heart.svg';
+import { likePost } from '@/controllers/post-interactions';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
 interface SessionPostProps {
+    id: string,
     pfp: string,
-    name: string;
-    time: string;
-    title: string;
-    location: string;
-    totalTime: number;
-    image: string
+    name: string,
+    time: string,
+    title: string,
+    location: string,
+    totalTime: number,
+    image: string,
+    likeCount: number,
+    isLiked: boolean
 }
 
 export default function SessionPost({
+    id,
     pfp,
     name,
     time,
     title,
     location,
     totalTime,
-    image
+    image,
+    likeCount,
+    isLiked
 }: SessionPostProps) {
+    const [ numLikes, setNumLikes ] = useState(likeCount);
+    const [ likeStatus, setLikeStatus ] = useState(isLiked);
+
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
@@ -56,6 +69,44 @@ export default function SessionPost({
         return `${hours} hr ${minutes} min`;
     }
 
+    const handleLike = async () => {
+        const previousState = likeStatus;
+        const previousCount = numLikes;
+
+        setLikeStatus(!previousState);
+        setNumLikes(previousState ? previousCount - 1 : previousCount + 1);
+
+        try {
+            await likePost(id);
+        } catch (err) {
+            setLikeStatus(previousState);
+            setNumLikes(previousCount);
+        }
+    }
+
+    const handleNavigate = useCallback(() => {
+        router.push({
+            pathname: '/session-posting-details',
+            params: {
+                id,
+                pfp,
+                name,
+                title,
+                location,
+                postedTime: formatPostedTime(),
+                duration: formattedDuration(),
+                image,
+                likeCount: numLikes, // Use the state variable, not the initial prop
+                isLiked: likeStatus.toString() // Use the state variable
+            }
+        });
+    }, [id, pfp, name, title, location, numLikes, likeStatus]);
+
+    useEffect(() => {
+        setLikeStatus(isLiked);
+        setNumLikes(likeCount);
+    }, [isLiked, likeCount]);
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
@@ -75,18 +126,7 @@ export default function SessionPost({
             </View>
 
             <Pressable 
-                onPress={() => router.push({
-                    pathname: '/session-posting-details',
-                    params: {
-                        pfp,
-                        name,
-                        title,
-                        location,
-                        postedTime: formatPostedTime(),
-                        duration: formattedDuration(),
-                        image
-                    }
-                })}
+                onPress={handleNavigate}
             >
                 <View style={styles.infoRow}>
                     <View>
@@ -111,7 +151,10 @@ export default function SessionPost({
             )}
 
             <View style={styles.actions}>
-                <Text style={styles.icon}>♡</Text>
+                <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                    <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
+                </Pressable>
             </View>
         </View>
     );

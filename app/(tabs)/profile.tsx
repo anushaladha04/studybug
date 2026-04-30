@@ -132,6 +132,7 @@ export default function ProfileScreen() {
               sessions.map((s) => (
                 <SessionPost
                   key={s.session_id}
+                  id={s.session_id}
                   pfp={`${imagePath}?v=${profileImageVersion}`}
                   name={profile?.full_name ?? '-'}
                   time={s.end_time}
@@ -139,6 +140,8 @@ export default function ProfileScreen() {
                   location={s.location_name ?? ''}
                   totalTime={s.duration}
                   image={s.image_url}
+                  likeCount={s.like_count}
+                  isLiked={s.is_liked}
                 />
               ))
             )}
