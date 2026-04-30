@@ -17,7 +17,8 @@ interface SessionPostProps {
     totalTime: number,
     image: string,
     likeCount: number,
-    isLiked: boolean
+    isLiked: boolean,
+    onLikeToggle?: (newLikeStatus: boolean) => void;
 }
 
 export default function SessionPost({
@@ -30,7 +31,8 @@ export default function SessionPost({
     totalTime,
     image,
     likeCount,
-    isLiked
+    isLiked,
+    onLikeToggle
 }: SessionPostProps) {
     const [ numLikes, setNumLikes ] = useState(likeCount);
     const [ likeStatus, setLikeStatus ] = useState(isLiked);
@@ -72,15 +74,26 @@ export default function SessionPost({
     const handleLike = async () => {
         const previousState = likeStatus;
         const previousCount = numLikes;
+        const newState = !previousState;
 
-        setLikeStatus(!previousState);
-        setNumLikes(previousState ? previousCount - 1 : previousCount + 1);
+        // 1. Update local UI state
+        setLikeStatus(newState);
+        setNumLikes(newState ? previousCount + 1 : previousCount - 1);
+
+        // 2. Notify the parent (ProfileScreen) immediately
+        if (onLikeToggle) {
+            onLikeToggle(newState);
+        }
 
         try {
             await likePost(id);
         } catch (err) {
+            // Rollback local state on error
             setLikeStatus(previousState);
             setNumLikes(previousCount);
+            if (onLikeToggle) {
+                onLikeToggle(previousState);
+            }
         }
     }
 

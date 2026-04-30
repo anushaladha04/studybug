@@ -57,18 +57,27 @@ export async function endStudySession(sessionId: string, endTime: Date, duration
     }
 }
 
-export async function fetchSessionsByUser(userId: string) {
+export async function fetchSessionsByUser(ownerId: string, currUserId: string) {
     const { data, error } = await supabase
         .from('study_sessions')
-        .select('*')
-        .eq('user_id', userId);
+        .select(`
+            *,
+            post_likes (
+                user_id
+            )
+        `)
+        .eq('user_id', ownerId);
 
     if (error) {
         console.error('Error fetching sessions:', error.message);
         return null;
     }
 
-    return data;
+    return data.map(session => ({
+        ...session,
+        // session.post_likes is an array of objects
+        is_liked: session.post_likes.some((like: any) => like.user_id === currUserId),
+    }));
 }
 
 export async function fetchUserLastSession() {
@@ -116,7 +125,7 @@ function shiftDateString(dateStr: string, days: number): string {
 // for a given week in the user's local timezone, based on session start_time.
 // weekOffset: 0 = this week, 1 = last week, 2 = two weeks ago, etc.
 export async function getWeeklyDurations(userId: string, weekOffset: number = 0): Promise<number[]> {
-    const sessions = await fetchSessionsByUser(userId);
+    const sessions = await fetchSessionsByUser(userId, userId);
     if (!sessions) return [0, 0, 0, 0, 0, 0, 0];
 
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -239,7 +248,7 @@ export async function uploadSessionImage(sessionId: string, imageUri: string) {
 
 // Returns the total lifetime study seconds across all completed sessions.
 export async function getLifetimeSeconds(userId: string): Promise<number> {
-    const sessions = await fetchSessionsByUser(userId);
+    const sessions = await fetchSessionsByUser(userId, userId);
     if (!sessions) return 0;
     return sessions.reduce((sum, s) => {
         if (s.duration != null && s.duration > 0 && s.end_time != null) {
@@ -254,7 +263,7 @@ export async function getLifetimeSeconds(userId: string): Promise<number> {
 // Streak counts consecutive days ending at today (if today has a session) or yesterday
 // (if today has no session yet). Going further back stops at the first day with no session.
 export async function getStreakDays(userId: string): Promise<number> {
-    const sessions = await fetchSessionsByUser(userId);
+    const sessions = await fetchSessionsByUser(userId, userId);
     if (!sessions) return 0;
 
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;

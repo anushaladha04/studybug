@@ -43,6 +43,22 @@ export default function HomeScreen() {
     }, [fetchFeed])
   );
 
+  const handleLocalLikeUpdate = (sessionId: string, newIsLiked: boolean) => {
+  setPosts((currentPosts: any) =>
+    currentPosts.map((post: any) => {
+      if (post.session_id === sessionId) {
+        return {
+          ...post,
+          is_liked: newIsLiked,
+          // If liked, add 1; if unliked, subtract 1
+          like_count: newIsLiked ? post.like_count + 1 : post.like_count - 1,
+        };
+      }
+      return post;
+    })
+  );
+};
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -58,7 +74,7 @@ export default function HomeScreen() {
           onRefresh={handleRefresh}
           renderItem={({ item }) =>  (
               <SessionPost
-                  key={`${item.session_id}-${item.is_liked}`}
+                  key={`${item.session_id}`}
                   id = {item.session_id}
                   pfp = {item.profile_image_path}
                   name = {item.full_name}
@@ -69,6 +85,7 @@ export default function HomeScreen() {
                   image = {item.image_url}
                   likeCount={item.like_count}
                   isLiked={item.is_liked}
+                  onLikeToggle={(newStatus) => handleLocalLikeUpdate(item.session_id, newStatus)}
               />
             )
           }
