@@ -61,6 +61,21 @@ export default function ProfileScreen() {
     }, [session?.user?.id])
   );
 
+  const handleLocalLikeUpdate = (sessionId: string, newIsLiked: boolean) => {
+  setSessions((prevSessions) =>
+    prevSessions.map((s) => {
+      if (s.session_id === sessionId) {
+        return {
+          ...s,
+          is_liked: newIsLiked,
+          like_count: newIsLiked ? s.like_count + 1 : s.like_count - 1,
+        };
+      }
+      return s;
+    })
+  );
+};
+
   async function handleSaveBio() {
     if (!session?.user?.id) return;
     await supabase
@@ -148,6 +163,7 @@ export default function ProfileScreen() {
                   image={s.image_url}
                   likeCount={s.like_count}
                   isLiked={s.is_liked}
+                  onLikeToggle={(newStatus) => handleLocalLikeUpdate(s.session_id, newStatus)}
                 />
               ))
             )}
