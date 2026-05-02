@@ -1,11 +1,12 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
 import EmptyHeart from '@/assets/icons/empty-heart.svg';
 import FilledHeart from '@/assets/icons/filled-heart.svg';
+import CommentBar from '@/components/comment-bar';
 
 import { likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
 interface SessionPostDetailsProps {
@@ -60,61 +61,69 @@ export default function SessionPostDetailsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Pressable
-            style={styles.backButtonContainer}
-            onPress={() => router.back()} 
-            hitSlop={20}
-        >
-            <BackArrow />
-        </Pressable>
-        <Text style={styles.headerTitle}>Study Session</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Image 
-              source={{ uri: getPublicUrl('profile_pictures', pfp) }} 
-              style={styles.avatar}
-              resizeMode="cover"
-          />
-          <View>
-             <Text style={styles.name}>{name}</Text>
-            <Text style={styles.time}>{postedTime} </Text>
-          </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Pressable
+              style={styles.backButtonContainer}
+              onPress={() => router.back()} 
+              hitSlop={20}
+          >
+              <BackArrow />
+          </Pressable>
+          <Text style={styles.headerTitle}>Study Session</Text>
         </View>
 
-        <View style={styles.infoRow}>
-          <View>
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.location}>{location} </Text>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Image 
+                source={{ uri: getPublicUrl('profile_pictures', pfp) }} 
+                style={styles.avatar}
+                resizeMode="cover"
+            />
+            <View>
+              <Text style={styles.name}>{name}</Text>
+              <Text style={styles.time}>{postedTime} </Text>
+            </View>
           </View>
-          <View style={styles.totalTimeBlock}>
-              <Text style={styles.totalTimeLabel}>Total Time</Text>
-              <Text style={styles.totalTimeValue}>{duration}</Text>
+
+          <View style={styles.infoRow}>
+            <View>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.location}>{location} </Text>
+            </View>
+            <View style={styles.totalTimeBlock}>
+                <Text style={styles.totalTimeLabel}>Total Time</Text>
+                <Text style={styles.totalTimeValue}>{duration}</Text>
+            </View>
           </View>
+
+          {image ? (
+            <Image 
+                source={{ uri: getPublicUrl('session_pictures', image) }} 
+                style={styles.postImage}
+                resizeMode="cover"
+            />
+              ) : (
+                  <View style={styles.chartPlaceholder} />
+              )}
+
+            <View style={styles.actions}>
+                <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                  <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
+                </Pressable>
+            </View>
         </View>
-
-        {image ? (
-          <Image 
-              source={{ uri: getPublicUrl('session_pictures', image) }} 
-              style={styles.postImage}
-              resizeMode="cover"
-          />
-            ) : (
-                <View style={styles.chartPlaceholder} />
-            )}
-
-          <View style={styles.actions}>
-              <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
-                <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
-              </Pressable>
-          </View>
+        <View style={styles.stickyFooter}>
+          <CommentBar />
+        </View>
       </View>
-
-    </View>
+    </KeyboardAvoidingView>
+    
   );
 }
 
@@ -263,5 +272,17 @@ const styles = StyleSheet.create({
       fontSize: 24,
       color: '#444',
   },
+  stickyFooter: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#fff', // Or transparent if you want
+    paddingBottom: 30,       // Crucial for "Home Indicator" spacing on iPhone
+    paddingTop: 10,
+    alignItems: 'center',
+  },
+  scrollPadding: {
+      paddingBottom: 100,      // Crucial: prevents content from being hidden behind the bar
+  }
   
 });
