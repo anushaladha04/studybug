@@ -1,3 +1,4 @@
+import Comment from '@/assets/icons/comment.svg';
 import EmptyHeart from '@/assets/icons/empty-heart.svg';
 import FilledHeart from '@/assets/icons/filled-heart.svg';
 import { likePost } from '@/controllers/post-interactions';
@@ -168,6 +169,9 @@ export default function SessionPost({
                     { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
                     <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
                 </Pressable>
+                <Pressable onPress={() => console.log("Comment!")}>
+                    <Comment />
+                </Pressable>
             </View>
         </View>
     );
@@ -253,7 +257,7 @@ const styles = StyleSheet.create({
     actions: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        gap: 20,
+        gap: 5,
         marginTop: 12,
     },
     icon: {

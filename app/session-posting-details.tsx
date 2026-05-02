@@ -186,11 +186,15 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   content: {
-    flex: 1,
+    // flex: 1,
     width: '100%',
     paddingHorizontal: 20,
     alignItems: 'stretch',
     justifyContent: 'flex-start',
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#dedede',
+    borderStyle: 'solid',
   },
   emptyContainer: {
     flex: 1,
