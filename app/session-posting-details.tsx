@@ -87,9 +87,7 @@ export default function SessionPostDetailsScreen() {
 
     try {
       const newComment = await commentOnPost(id, savedText);
-      
-      // Add the real comment from the DB to the list
-      setComments((prev) => [...prev, newComment]);
+      setComments((prev) => [newComment, ...prev]);
     } catch (err) {
       // If it fails, put the text back so they don't lose it
       setCommentText(savedText);

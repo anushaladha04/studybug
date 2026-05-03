@@ -41,7 +41,7 @@ export async function fetchComments(postId: string) {
             )
         `)
         .eq('post_id', postId)
-        .order('commented_at', { ascending: true });
+        .order('commented_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching comments:', error.message);
