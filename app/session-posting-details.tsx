@@ -2,7 +2,7 @@ import BackArrow from '@/assets/icons/back-arrow.svg';
 import EmptyHeart from '@/assets/icons/empty-heart.svg';
 import FilledHeart from '@/assets/icons/filled-heart.svg';
 import CommentBar from '@/components/comment-bar';
-
+import { CommentItem } from '@/components/comment-component';
 import { commentOnPost, fetchComments, likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -99,6 +99,28 @@ export default function SessionPostDetailsScreen() {
     }
   };
 
+  const formatRelativeTime = (dateString: string): string => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'now';
+    
+    const minutes = Math.floor(diffInSeconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 52) return `${weeks}w`;
+    
+    return `${Math.floor(weeks / 52)}y`;
+  }
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -167,20 +189,13 @@ export default function SessionPostDetailsScreen() {
               <Text style={styles.noComments}>No comments yet. Be the first!</Text>
             ) : (
               comments.map((item) => (
-                <View 
-                    key={item.id} 
-                    style={styles.commentItem}
-                >
-                    <View style={styles.commentHeader}>
-                        <Text style={styles.commentUser}>
-                            {item.profiles?.username || 'User'}
-                        </Text>
-                        <Text style={styles.commentDate}>
-                            {new Date(item.commented_at).toLocaleDateString()}
-                        </Text>
-                    </View>
-                    <Text style={styles.commentText}>{item.comment}</Text>
-                </View>
+                <CommentItem 
+                  key={item.id}
+                  username={item.profiles?.username || 'User'}
+                  avatarUrl={getPublicUrl('profile_pictures', item.profiles?.profile_image_path)}
+                  comment={item.comment}
+                  date={formatRelativeTime(item.commented_at)}
+                />
               ))
             )}
           </View>
