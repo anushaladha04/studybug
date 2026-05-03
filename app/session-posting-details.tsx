@@ -3,7 +3,7 @@ import EmptyHeart from '@/assets/icons/empty-heart.svg';
 import FilledHeart from '@/assets/icons/filled-heart.svg';
 import CommentBar from '@/components/comment-bar';
 
-import { likePost } from '@/controllers/post-interactions';
+import { commentOnPost, likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -44,6 +44,8 @@ export default function SessionPostDetailsScreen() {
 
   const [ numLikes, setNumLikes ] = useState(Number(likeCount));
   const [ likeStatus, setLikeStatus ] = useState(isLiked === 'true');
+  const [ commentText, setCommentText ] = useState('');
+  const [ comments, setComments ] = useState<any[]>([]);
 
   const handleLike = async () => {
       const previousState = likeStatus;
@@ -59,6 +61,38 @@ export default function SessionPostDetailsScreen() {
           setNumLikes(previousCount);
       }
   }
+
+  const handleComment = async () => {
+    if (!commentText.trim()) return;
+
+    const originalText = commentText;
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticComment = {
+        id: tempId,
+        comment: originalText,
+        commented_at: new Date().toISOString(),
+        user_id: 'current-user-id',
+        isOptimistic: true,
+    };
+
+    setComments((prev) => [...prev, optimisticComment]);
+    setCommentText(''); // Clear input for that "snappy" feel
+
+    try {
+        // 3. Call the Controller
+        const realComment = await commentOnPost(id, originalText);
+
+        // 4. THE SWAP: Replace the temp object with the real one from DB
+        setComments((prev) => 
+            prev.map((c) => (c.id === tempId ? realComment : c))
+        );
+    } catch (err) {
+        setComments((prev) => prev.filter((c) => c.id !== tempId));
+        setCommentText(originalText); 
+        alert("Failed to post comment. Please try again.");
+    }
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -119,7 +153,11 @@ export default function SessionPostDetailsScreen() {
             </View>
         </View>
         <View style={styles.stickyFooter}>
-          <CommentBar />
+          <CommentBar 
+            value={commentText} 
+            onChangeText={setCommentText} 
+            onSend={handleComment} 
+          />
         </View>
       </View>
     </KeyboardAvoidingView>
