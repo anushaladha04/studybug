@@ -40,17 +40,14 @@ const styles = StyleSheet.create({
         height: 42,
         backgroundColor: '#f5f5f5',
         borderRadius: 25,
-        paddingHorizontal: 7,
+        paddingHorizontal: 10,
         paddingVertical: 5,
         gap: 10,
-        // iOS Shadow properties
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-
-        // Android Shadow property
-        elevation: 5, 
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
     },
     input: {
         flex: 1,

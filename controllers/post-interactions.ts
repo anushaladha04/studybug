@@ -13,10 +13,20 @@ export async function likePost(postId: string) : Promise<void> {
     return;
 }
 
-export async function commentOnPost() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user ) 
-        return [];
+export async function commentOnPost(postId: string, commentText: string) {
+    const { error } = await supabase.rpc('handle_post_comment', {
+        curr_post_id: postId,
+        curr_comment: commentText
+    });
+
+    if (error) {
+        console.error('Error commenting on post: ', error.message);
+        return;
+    }
 
     return;
+}
+
+export async function fetchComments() {
+    
 }
