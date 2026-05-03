@@ -29,7 +29,7 @@ export default function SessionPostDetailsScreen() {
       return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  const { id, pfp, name, title, location, postedTime, duration, image, likeCount, isLiked } = useLocalSearchParams<{
+  const { id, pfp, name, title, location, postedTime, duration, image, likeCount, isLiked, focusKeyboard } = useLocalSearchParams<{
     id: string,
     pfp: string,
     name: string;
@@ -39,7 +39,8 @@ export default function SessionPostDetailsScreen() {
     duration: string;
     image: string;
     likeCount: string,
-    isLiked: string
+    isLiked: string,
+    focusKeyboard: string
   }>();
 
   const [ numLikes, setNumLikes ] = useState(Number(likeCount));
@@ -205,6 +206,7 @@ export default function SessionPostDetailsScreen() {
             onSend={handleComment}
             isLoading={isPostingNewComment}
             disabled={isPostingNewComment || !commentText.trim()}
+            autoFocus={focusKeyboard === 'true'}
           />
         </View>
       </View>

@@ -6,9 +6,10 @@ interface CommentBarProps {
     onSend: () => void;
     disabled?: boolean;
     isLoading?: boolean;
+    autoFocus?: boolean;
 }
 
-export default function CommentBar({ value, onChangeText, onSend, disabled, isLoading }: CommentBarProps) {
+export default function CommentBar({ value, onChangeText, onSend, disabled, isLoading, autoFocus }: CommentBarProps) {
     return (
         <View style={styles.commentBar}>
             <TextInput
@@ -19,6 +20,7 @@ export default function CommentBar({ value, onChangeText, onSend, disabled, isLo
                 onChangeText={onChangeText}
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoFocus={autoFocus}
                 editable={!isLoading}
             />
             <Pressable 

@@ -86,6 +86,7 @@ export default function HomeScreen() {
                   likeCount={item.like_count}
                   isLiked={item.is_liked}
                   onLikeToggle={(newStatus) => handleLocalLikeUpdate(item.session_id, newStatus)}
+                  commentCount={item.comment_count}
               />
             )
           }
