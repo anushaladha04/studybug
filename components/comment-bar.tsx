@@ -1,12 +1,14 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface CommentBarProps {
     value: string;
     onChangeText: (text: string) => void;
     onSend: () => void;
+    disabled?: boolean;
+    isLoading?: boolean;
 }
 
-export default function CommentBar({ value, onChangeText, onSend }: CommentBarProps) {
+export default function CommentBar({ value, onChangeText, onSend, disabled, isLoading }: CommentBarProps) {
     return (
         <View style={styles.commentBar}>
             <TextInput
@@ -17,9 +19,23 @@ export default function CommentBar({ value, onChangeText, onSend }: CommentBarPr
                 onChangeText={onChangeText}
                 autoCapitalize="none"
                 autoCorrect={false}
+                editable={!isLoading}
             />
-            <Pressable onPress={onSend} hitSlop={10}>
-                <Text style={styles.sendText}>Send</Text>
+            <Pressable 
+                onPress={onSend} 
+                hitSlop={10} 
+                disabled={disabled || isLoading}
+            >
+                {isLoading ? (
+                    <ActivityIndicator size="small" color="#000" />
+                ) : (
+                    <Text style={[
+                        styles.sendText, 
+                        (disabled || value.trim() === '') && { color: '#A1A1A1' } // Dim if empty or disabled
+                    ]}>
+                        Send
+                    </Text>
+                )}
             </Pressable>
         </View>
         

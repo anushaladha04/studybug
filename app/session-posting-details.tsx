@@ -3,10 +3,10 @@ import EmptyHeart from '@/assets/icons/empty-heart.svg';
 import FilledHeart from '@/assets/icons/filled-heart.svg';
 import CommentBar from '@/components/comment-bar';
 
-import { commentOnPost, likePost } from '@/controllers/post-interactions';
+import { commentOnPost, fetchComments, likePost } from '@/controllers/post-interactions';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 
 interface SessionPostDetailsProps {
@@ -46,6 +46,22 @@ export default function SessionPostDetailsScreen() {
   const [ likeStatus, setLikeStatus ] = useState(isLiked === 'true');
   const [ commentText, setCommentText ] = useState('');
   const [ comments, setComments ] = useState<any[]>([]);
+  const [ isLoadingComments, setIsLoadingComments ] = useState(true);
+  const [ isPostingNewComment, setIsPostingNewComment ] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+        try {
+            const data = await fetchComments(id);
+            setComments(data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoadingComments(false);
+        }
+    }
+    loadData();
+  }, [id]);
 
   const handleLike = async () => {
       const previousState = likeStatus;
@@ -63,34 +79,23 @@ export default function SessionPostDetailsScreen() {
   }
 
   const handleComment = async () => {
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || isPostingNewComment) return;
 
-    const originalText = commentText;
-    const tempId = `temp-${Date.now()}`;
-
-    const optimisticComment = {
-        id: tempId,
-        comment: originalText,
-        commented_at: new Date().toISOString(),
-        user_id: 'current-user-id',
-        isOptimistic: true,
-    };
-
-    setComments((prev) => [...prev, optimisticComment]);
-    setCommentText(''); // Clear input for that "snappy" feel
+    const savedText = commentText; // Save it in case of error
+    setCommentText('');            // Clear input immediately for UX
+    setIsPostingNewComment(true);         // Start loading spinner
 
     try {
-        // 3. Call the Controller
-        const realComment = await commentOnPost(id, originalText);
-
-        // 4. THE SWAP: Replace the temp object with the real one from DB
-        setComments((prev) => 
-            prev.map((c) => (c.id === tempId ? realComment : c))
-        );
+      const newComment = await commentOnPost(id, savedText);
+      
+      // Add the real comment from the DB to the list
+      setComments((prev) => [...prev, newComment]);
     } catch (err) {
-        setComments((prev) => prev.filter((c) => c.id !== tempId));
-        setCommentText(originalText); 
-        alert("Failed to post comment. Please try again.");
+      // If it fails, put the text back so they don't lose it
+      setCommentText(savedText);
+      alert("Couldn't post comment. Please try again.");
+    } finally {
+      setIsPostingNewComment(false); // Stop loading spinner
     }
   };
 
@@ -100,63 +105,93 @@ export default function SessionPostDetailsScreen() {
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Pressable
-              style={styles.backButtonContainer}
-              onPress={() => router.back()} 
-              hitSlop={20}
-          >
-              <BackArrow />
-          </Pressable>
-          <Text style={styles.headerTitle}>Study Session</Text>
-        </View>
-
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Image 
-                source={{ uri: getPublicUrl('profile_pictures', pfp) }} 
-                style={styles.avatar}
-                resizeMode="cover"
-            />
-            <View>
-              <Text style={styles.name}>{name}</Text>
-              <Text style={styles.time}>{postedTime} </Text>
-            </View>
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.headerContainer}>
+            <Pressable
+                style={styles.backButtonContainer}
+                onPress={() => router.back()} 
+                hitSlop={20}
+            >
+                <BackArrow />
+            </Pressable>
+            <Text style={styles.headerTitle}>Study Session</Text>
           </View>
 
-          <View style={styles.infoRow}>
-            <View>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.location}>{location} </Text>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Image 
+                  source={{ uri: getPublicUrl('profile_pictures', pfp) }} 
+                  style={styles.avatar}
+                  resizeMode="cover"
+              />
+              <View>
+                <Text style={styles.name}>{name}</Text>
+                <Text style={styles.time}>{postedTime} </Text>
+              </View>
             </View>
-            <View style={styles.totalTimeBlock}>
-                <Text style={styles.totalTimeLabel}>Total Time</Text>
-                <Text style={styles.totalTimeValue}>{duration}</Text>
+
+            <View style={styles.infoRow}>
+              <View>
+                  <Text style={styles.title}>{title}</Text>
+                  <Text style={styles.location}>{location} </Text>
+              </View>
+              <View style={styles.totalTimeBlock}>
+                  <Text style={styles.totalTimeLabel}>Total Time</Text>
+                  <Text style={styles.totalTimeValue}>{duration}</Text>
+              </View>
             </View>
+
+            {image ? (
+              <Image 
+                  source={{ uri: getPublicUrl('session_pictures', image) }} 
+                  style={styles.postImage}
+                  resizeMode="cover"
+              />
+                ) : (
+                    <View style={styles.chartPlaceholder} />
+                )}
+
+              <View style={styles.actions}>
+                  <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                    <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
+                  </Pressable>
+              </View>
           </View>
-
-          {image ? (
-            <Image 
-                source={{ uri: getPublicUrl('session_pictures', image) }} 
-                style={styles.postImage}
-                resizeMode="cover"
-            />
-              ) : (
-                  <View style={styles.chartPlaceholder} />
-              )}
-
-            <View style={styles.actions}>
-                <Pressable onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
-                  <Text style={{ marginLeft: 5 }}>{numLikes}</Text>
-                </Pressable>
-            </View>
-        </View>
+          <View style={styles.commentsSection}>
+            <Text style={styles.sectionTitle}>Comments</Text>
+            
+            {isLoadingComments ? (
+              <ActivityIndicator color="#000" style={{ marginTop: 20 }} />
+            ) : comments.length === 0 ? (
+              <Text style={styles.noComments}>No comments yet. Be the first!</Text>
+            ) : (
+              comments.map((item) => (
+                <View 
+                    key={item.id} 
+                    style={styles.commentItem}
+                >
+                    <View style={styles.commentHeader}>
+                        <Text style={styles.commentUser}>
+                            {item.profiles?.username || 'User'}
+                        </Text>
+                        <Text style={styles.commentDate}>
+                            {new Date(item.commented_at).toLocaleDateString()}
+                        </Text>
+                    </View>
+                    <Text style={styles.commentText}>{item.comment}</Text>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
         <View style={styles.stickyFooter}>
           <CommentBar 
             value={commentText} 
             onChangeText={setCommentText} 
-            onSend={handleComment} 
+            onSend={handleComment}
+            isLoading={isPostingNewComment}
+            disabled={isPostingNewComment || !commentText.trim()}
           />
         </View>
       </View>
@@ -170,7 +205,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingTop: 13,
-    alignItems: 'center',
+    // alignItems: 'center',
   },
   card: {
     backgroundColor: '#fff',
@@ -310,6 +345,55 @@ const styles = StyleSheet.create({
       fontSize: 24,
       color: '#444',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: 'Rethink Sans',
+    marginBottom: 15,
+    color: '#000',
+  },
+  commentsSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  commentItem: {
+    marginBottom: 15,
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    maxWidth: '85%',
+  },
+  commentText: {
+    fontSize: 14,
+    fontFamily: 'Rethink Sans',
+    color: '#333',
+  },
+  commentDate: {
+    fontSize: 10,
+    color: '#888',
+    marginTop: 4,
+    textAlign: 'right',
+  },
+  scrollPadding: {
+    paddingBottom: 120, // Enough space so the last comment isn't hidden by the CommentBar
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  commentUser: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Rethink Sans',
+  },
+  noComments: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 20,
+    fontFamily: 'Rethink Sans',
+  },
   stickyFooter: {
     position: 'absolute',
     bottom: 0,
@@ -319,8 +403,5 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     alignItems: 'center',
   },
-  scrollPadding: {
-      paddingBottom: 100,      // Crucial: prevents content from being hidden behind the bar
-  }
   
 });

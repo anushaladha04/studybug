@@ -27,6 +27,25 @@ export async function commentOnPost(postId: string, commentText: string) {
     return data;
 }
 
-export async function fetchComments() {
-    
+export async function fetchComments(postId: string) {
+    const { data, error } = await supabase
+        .from('post_comments')
+        .select(`
+            id,
+            comment,
+            commented_at,
+            user_id,
+            profiles (
+                username,
+                profile_image_path
+            )
+        `)
+        .eq('post_id', postId)
+        .order('commented_at', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching comments:', error.message);
+        return [];
+    }
+    return data;
 }
