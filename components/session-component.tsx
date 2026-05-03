@@ -175,11 +175,11 @@ export default function SessionPost({
             <View style={styles.actions}>
                 <Pressable onPress={handleLike} style={styles.actionItem}>
                     { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
-                    <Text style={styles.actionText}>{numLikes}</Text>
+                    <Text style={styles.actionText}>{numLikes || ''}</Text>
                 </Pressable>
                 <Pressable onPress={() => handleNavigate(true)} style={styles.actionItem}>
                     <Comment />
-                    <Text style={styles.actionText}>{numComments}</Text>
+                    <Text style={styles.actionText}>{numComments || ''}</Text>
                 </Pressable>
             </View>
         </View>
