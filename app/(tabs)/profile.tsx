@@ -1,10 +1,11 @@
 import SessionPost from '@/components/session-component';
+import { fetchFriendCount } from '@/controllers/friends';
 import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const avatarUrl = `${avatarUrlBase}?v=${profileImageVersion}`;
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+  const [friendCount, setFriendCount] = useState(0);
 
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
@@ -26,27 +28,55 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState<number>(0);
   const [lifetimeSeconds, setLifetimeSeconds] = useState<number>(0);
 
+  const sortSessions = (sessions: any[]) => {
+    return [...sessions] // Spread to avoid mutating the original array
+      .filter((s: any) => s.end_time !== null)
+      .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  };
+
   useEffect(() => {
     if (!session?.user?.id) return;
     const id = session.user.id;
     Promise.all([
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
-      fetchSessionsByUser(id),
+      fetchSessionsByUser(id, id),
       getStreakDays(id),
       getLifetimeSeconds(id),
     ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
-      const completed = (userSessions ?? [])
-        .filter((s: any) => s.end_time !== null)
-        .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
-      setSessions(completed);
+      setSessions(sortSessions(userSessions ?? []));
       setStreak(streakDays);
       setLifetimeSeconds(lifetimeSecs);
     });
   }, [session?.user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!session?.user?.id) return;
+
+      fetchSessionsByUser(session.user.id, session.user.id).then((data) => {
+        setSessions(sortSessions(data ?? []));
+      });
+    }, [session?.user?.id])
+  );
+
+  const handleLocalLikeUpdate = (sessionId: string, newIsLiked: boolean) => {
+  setSessions((prevSessions) =>
+    prevSessions.map((s) => {
+      if (s.session_id === sessionId) {
+        return {
+          ...s,
+          is_liked: newIsLiked,
+          like_count: newIsLiked ? s.like_count + 1 : s.like_count - 1,
+        };
+      }
+      return s;
+    })
+  );
+};
 
   async function handleSaveBio() {
     if (!session?.user?.id) return;
@@ -84,6 +114,7 @@ export default function ProfileScreen() {
               <Ionicons name="pencil" size={11} color="#666" />
             </View>
           </Pressable>
+          <Text style={styles.bioText}>Friends: {friendCount}</Text>
         </View>
       </View>
 
@@ -130,11 +161,12 @@ export default function ProfileScreen() {
                   name={profile?.full_name ?? '-'}
                   time={s.end_time}
                   title={s.session_name}
-                  location={s.subject ?? ''}
+                  location={s.location_name ?? ''}
                   totalTime={s.duration}
                   image={s.image_url}
                   likeCount={s.like_count}
                   isLiked={s.is_liked}
+                  onLikeToggle={(newStatus) => handleLocalLikeUpdate(s.session_id, newStatus)}
                 />
               ))
             )}
@@ -376,7 +408,7 @@ const styles = StyleSheet.create({
   profileText: {
     marginLeft: 16,
     flex: 1,
-    height: 89,
+    height: 110,
     overflow: 'hidden',
   },
   nameText: {
@@ -395,7 +427,7 @@ const styles = StyleSheet.create({
   bioRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 2,
     gap: 6,
   },
   bioText: {
@@ -403,7 +435,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'RethinkSans-Regular',
     color: '#333',
-
+    marginTop: 2,
   },
   editIconCircle: {
     width: 18,

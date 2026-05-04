@@ -1,5 +1,5 @@
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -39,6 +39,8 @@ let lastActiveTab = 'index';
 export function getLastActiveTab() { return lastActiveTab; }
 
 export default function TabLayout() {
+  const router = useRouter();
+
   return (
     <Tabs
       screenListeners={({ route }) => ({

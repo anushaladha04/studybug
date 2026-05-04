@@ -6,6 +6,7 @@ import EndSessionPopup from "@/components/end-session-popup";
 import LastFocusSession, { StudySessionProps } from '@/components/last-focus-session';
 import { endStudySession, fetchUserLastSession, startStudySession } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
+import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
@@ -29,14 +30,16 @@ export default function RecordScreen() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [timerIsActive, setTimerIsActive] = useState(false);
   const [currentSessionId, setCurrentSessionId ] = useState('');
-  const [sessionInfo, setSessionInfo] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
   const [endSessionConfirmation, setEndSessionConfirmation] = useState(false);
   const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
 
-  const [ isPrivacyChosen, setIsPrivacyChosen] = useState(false);
+  const isPrivacyChosen = useRef(false);
   const [ isLocating, setIsLocating ] = useState(false);
+
+  const [restoredSessionName, setRestoredSessionName] = useState<string | null>(null);
+  const [restoredLocation, setRestoredLocation] = useState<string | null>(null);
 
   const appState = useRef(AppState.currentState);
   const backgroundTime = useRef<number | null>(null);
@@ -64,8 +67,6 @@ export default function RecordScreen() {
       accuracy: Location.Accuracy.Balanced
     });
 
-    console.log("Coordinates fetched!");
-
     return {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
@@ -73,46 +74,82 @@ export default function RecordScreen() {
   };
 
   useEffect(() => {
-  const loadPreference = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('preferredVisibility');
-      if (saved !== null) {
-        setIsPublic(saved === 'true');
-      }
-      setIsPrivacyChosen(true); 
-    } catch (e) {
-      console.error("Failed to load privacy preference", e);
-      setIsPrivacyChosen(true); // Set to true anyway so the app doesn't hang
-    }
-  };
-  loadPreference();
-}, []);
-
-  // Check for incomplete session on mount
-  useEffect(() => {
-    const checkIncompleteSession = async () => {
-      const sessionId = await AsyncStorage.getItem('activeSessionId');
-      if (sessionId) {
-        // Found an incomplete session - end it automatically
-        const endTime = new Date();
-        const savedSeconds = await AsyncStorage.getItem('sessionSeconds');
-        const duration = savedSeconds ? parseInt(savedSeconds, 10) : 0;
-        await endStudySession(sessionId, endTime, duration);
-        // Clear AsyncStorage
-        await AsyncStorage.removeItem('activeSessionId');
-        await AsyncStorage.removeItem('sessionStartTime');
-        await AsyncStorage.removeItem('sessionSeconds');
-        console.log('Ended incomplete session from previous app run');
+    const loadPreference = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('preferredVisibility');
+        if (saved !== null) {
+          setIsPublic(saved === 'true');
+        }
+        isPrivacyChosen.current = true;
+      } catch (e) {
+        isPrivacyChosen.current = true;
       }
     };
-    checkIncompleteSession();
+    loadPreference();
+  }, []);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    let subscription: { remove: () => void } | undefined;
+
+    const init = async () => {
+      const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+      const sessionId = await AsyncStorage.getItem('activeSessionId');
+      const lastActiveStr = await AsyncStorage.getItem('lastActiveTime');
+
+      if (sessionId && lastActiveStr) {
+        const lastActive = parseInt(lastActiveStr, 10);
+        if (Date.now() - lastActive >= TWELVE_HOURS_MS) {
+          const endTime = new Date(lastActive);
+          const savedSeconds = await AsyncStorage.getItem('sessionSeconds');
+          const duration = savedSeconds ? parseInt(savedSeconds, 10) : 0;
+          await endStudySession(sessionId, endTime, duration);
+          await AsyncStorage.removeItem('activeSessionId');
+          await AsyncStorage.removeItem('sessionStartTime');
+          await AsyncStorage.removeItem('sessionSeconds');
+          await AsyncStorage.removeItem('activeSessionName');
+          await AsyncStorage.removeItem('activeSessionLocation');
+          console.log('record.tsx: Ended stale session - app inactive for >= 12 hours');
+        } else {
+          const startTimeStr = await AsyncStorage.getItem('sessionStartTime');
+          if (startTimeStr) {
+            const startTime = new Date(startTimeStr);
+            const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
+            const savedName = await AsyncStorage.getItem('activeSessionName');
+            const savedLoc = await AsyncStorage.getItem('activeSessionLocation');
+            setCurrentSessionId(sessionId);
+            setSeconds(elapsed);
+            setIsSessionActive(true);
+            setTimerIsActive(true);
+            if (savedName) setRestoredSessionName(savedName);
+            if (savedLoc) setRestoredLocation(savedLoc);
+            console.log('record.tsx: Restored active session from previous app run');
+          }
+        }
+      }
+
+      const updateLastActive = () => {
+        AsyncStorage.setItem('lastActiveTime', Date.now().toString());
+      };
+      updateLastActive();
+      interval = setInterval(updateLastActive, 60 * 1000);
+      subscription = AppState.addEventListener('change', () => {
+        updateLastActive();
+      });
+    };
+
+    init();
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (subscription) subscription.remove();
+    };
   }, []);
 
   useEffect(() => {
   const trigger = async () => {
-    if (refresh === 'true' && isPrivacyChosen) {      
+    if (refresh === 'true') {
       const success = await startSessionTrigger();
-      setSessionInfo(`Session: ${sessionName}\nLocation: ${location}\nFocus Level: ${focusLevel}\nArea: ${area}\nNote: ${note}`);
 
       if (success) {
         router.setParams({ refresh: 'false' });
@@ -123,7 +160,8 @@ export default function RecordScreen() {
   trigger();
 }, [refresh, isPrivacyChosen]);
 
-  const startSessionTrigger = async () => {
+/* so apparently this function gets called during ALL refreshes now, not just when a session is started. ¯\_(ツ)_/¯ */
+const startSessionTrigger = async () => {
     if (isLocating) return;
     setIsLocating(true);
     try {
@@ -133,17 +171,14 @@ export default function RecordScreen() {
       const currentIsPublic = savedVisibility !== null 
         ? savedVisibility === 'true' 
         : isPublic;
-      console.log("Private or public:", currentIsPublic);
 
       let latitude = null;
       let longitude = null;
 
       if (currentIsPublic) {
-        console.log("Fetching location...")
         const coordinates = await getLocation();
         latitude = coordinates.latitude;
         longitude = coordinates.longitude;
-        console.log("Fetched location!!!")
       }
 
       const sessionId = await startStudySession(
@@ -164,6 +199,8 @@ export default function RecordScreen() {
         setTimerIsActive(true);
         await AsyncStorage.setItem('activeSessionId', sessionId);
         await AsyncStorage.setItem('sessionStartTime', startTime.toISOString());
+        await AsyncStorage.setItem('activeSessionName', sessionName ?? '');
+        await AsyncStorage.setItem('activeSessionLocation', location ?? '');
         return true;
       }
       return false;
@@ -182,16 +219,18 @@ export default function RecordScreen() {
     await AsyncStorage.removeItem('activeSessionId');
     await AsyncStorage.removeItem('sessionStartTime');
     await AsyncStorage.removeItem('sessionSeconds');
+    await AsyncStorage.removeItem('activeSessionName');
+    await AsyncStorage.removeItem('activeSessionLocation');
     const endTime = new Date();
     endStudySession(currentSessionId, endTime, seconds);
     setTimerIsActive(false);
 
     router.push({
       pathname: '/session-summary',
-      params: { 
+      params: {
         sessionId: currentSessionId,
-        sessionName: sessionName,
-        location: location,
+        sessionName: sessionName ?? restoredSessionName ?? '',
+        location: location ?? restoredLocation ?? '',
         duration: seconds
       }
     });
@@ -277,6 +316,8 @@ export default function RecordScreen() {
       >
         <MinimizeIcon /> 
       </Pressable>
+
+      {/* public/private toggle */}
       <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => togglePublic()}>
         <PubPrivBg width={165} height={42} />
         <PubPrivToggle
@@ -299,8 +340,8 @@ export default function RecordScreen() {
         </View>
       </Pressable>
 
-      {/* Timer: rectangle inside a circle */}
       <View style={styles.mainContent}>
+        {/* our beautiful timer */}
         <View style={styles.timerCircle}>
           <View style={styles.timerRect}>
             <Text style={styles.timerText}>{formatTime(seconds)}</Text>
@@ -309,6 +350,7 @@ export default function RecordScreen() {
 
         {!isSessionActive ? (
           <>
+          {/* no timer active = display 'begin session' button, which routes to session-details*/}
             <Pressable
                 style={styles.beginSessionButton}
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/session-details'); }}
@@ -334,6 +376,7 @@ export default function RecordScreen() {
               )}
           </>
         ) : (
+          // timer is active = show pause/resume/stop options
           <View style={styles.controlsContainer}>
             <View style={styles.buttonRow}>
               {timerIsActive ? (
@@ -341,21 +384,24 @@ export default function RecordScreen() {
                   style={styles.pauseButton}
                   onPress={() => setTimerIsActive(false)}
                 >
-                  <Text style={styles.pauseButtonText}>❚❚  Pause</Text>
+                  <FontAwesome6 name='pause' size={16} color='white' />
+                  <Text style={styles.pauseButtonText}>Pause</Text>
                 </Pressable>
               ) : (
                   <Pressable
                     style={styles.pauseButton}
                     onPress={() => setTimerIsActive(true)}
                   >
-                    <Text style={styles.pauseButtonText}>▶  Resume</Text>
+                    <Ionicons name="play" size={16} color="white" />
+                    <Text style={styles.pauseButtonText}>Resume</Text>
                   </Pressable>
               )}
               <Pressable
                 style={styles.stopButton}
                 onPress={() => setEndSessionConfirmation(true)}
               >
-                <Text style={styles.stopButtonText}>■  Stop</Text>
+                <Ionicons name='stop' size={16} color='#8DBF58' />
+                <Text style={styles.stopButtonText}>Stop</Text>
               </Pressable>
             </View>
           </View>
@@ -470,10 +516,12 @@ const styles = StyleSheet.create({
   pauseButton: {
     width: 184,
     height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
     borderRadius: 38,
-    backgroundColor: '#8DBF58'
+    backgroundColor: '#8DBF58',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   pauseButtonText: {
     fontSize: 18,
@@ -485,12 +533,14 @@ const styles = StyleSheet.create({
   stopButton: {
     width: 184,
     height: 43,
-    paddingVertical: 11.18,
-    paddingHorizontal: 27.33,
     borderRadius: 38,
     color: '#FFF',
     borderWidth: 1,
-    borderColor: '#8DBF58'
+    borderColor: '#8DBF58',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   stopButtonText: {
       fontSize: 18,
@@ -500,14 +550,17 @@ const styles = StyleSheet.create({
       textAlign: 'center'
   },
   lastFocusSessionContainer: {
-    alignItems: 'flex-start',
+    width: '100%',
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   lastFocusSessionHeader: {
     fontSize: 18,
     fontWeight: 500,
     fontFamily: 'Rethink Sans',
     color: '#000',
-    marginBottom: 10
+    textAlign: 'left',
+    width: '90%',
   }
 });
