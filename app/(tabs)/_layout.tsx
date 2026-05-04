@@ -18,6 +18,7 @@ import TimerInactive from '@/assets/images/timer-inactive.svg';
 import * as Haptics from 'expo-haptics';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { useFriendRequestsContext } from '@/hooks/use-friend-requests-context';
 
 function RecordButton({ onPress, children }: BottomTabBarButtonProps) {
   return (
@@ -40,6 +41,7 @@ export function getLastActiveTab() { return lastActiveTab; }
 
 export default function TabLayout() {
   const router = useRouter();
+  const { pendingCount } = useFriendRequestsContext();
 
   return (
     <Tabs
@@ -123,9 +125,23 @@ export default function TabLayout() {
         options={{
           title: 'Friends',
           tabBarIcon: ({ focused }) => (
-            focused
-              ? <FriendsActive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
-              : <FriendsInactive width={52.08} height={51.24} style={{ transform: [{ translateY: 50 }] }} />
+            <View style={{ transform: [{ translateY: 50 }] }}>
+              {focused
+                ? <FriendsActive width={52.08} height={51.24} />
+                : <FriendsInactive width={52.08} height={51.24} />
+              }
+              {pendingCount > 0 && (
+                <View style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: '#FE585B',
+                }} />
+              )}
+            </View>
           ),
         }}
       />
