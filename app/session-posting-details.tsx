@@ -154,55 +154,15 @@ export default function SessionPostDetailsScreen() {
             </View>
 
             <View style={styles.infoRow}>
-              {/* Left Side: Container for Title + Location */}
-              <View style={{ flex: 1, marginRight: 15 }}>
-                <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-                  {title}
-                </Text>
-
-                {/* Location Row */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <Text
-                    style={[styles.location, { flexShrink: 1 }]}
-                    numberOfLines={isLocationExpanded ? undefined : 1}
-                    ellipsizeMode="tail"
-                  >
-                    {location}
-                  </Text>
-
-                  {/* Hidden Measurer - Always active until button is found */}
-                  {!showMoreBtn && (
-                    <Text
-                      style={{ position: 'absolute', width: '100%', opacity: 0, zIndex: -1 }}
-                      onTextLayout={(e) => {
-                        if (e.nativeEvent.lines.length > 1) {
-                          setShowMoreBtn(true);
-                        }
-                      }}
-                    >
-                      {location}
-                    </Text>
-                  )}
-
-                  {/* The Button - Stays to the right of truncated text */}
-                  {showMoreBtn && !isLocationExpanded && (
-                    <Pressable 
-                      onPress={() => setIsLocationExpanded(true)} 
-                      hitSlop={10}
-                      style={{ marginLeft: 4 }}
-                    >
-                      <Text style={styles.moreText}>more</Text>
-                    </Pressable>
-                  )}
-                </View>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={styles.title}>{title}</Text>
+                  <Text style={styles.location}>{location}</Text>
               </View>
-
-              {/* Right Side: Total Time - PREVENT PUSHING */}
-              <View style={[styles.totalTimeBlock, { flexShrink: 0, minWidth: 80 }]}>
-                <Text style={styles.totalTimeLabel}>Total Time</Text>
-                <Text style={styles.totalTimeValue}>{duration}</Text>
+              <View style={styles.totalTimeBlock}>
+                  <Text style={styles.totalTimeLabel}>Total Time</Text>
+                  <Text style={styles.totalTimeValue}>{duration}</Text>
               </View>
-            </View>
+          </View>
 
             {image ? (
               <Image 
