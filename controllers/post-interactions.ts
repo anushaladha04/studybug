@@ -13,10 +13,39 @@ export async function likePost(postId: string) : Promise<void> {
     return;
 }
 
-export async function commentOnPost() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user ) 
-        return [];
+export async function commentOnPost(postId: string, commentText: string) {
+    const { data, error } = await supabase.rpc('handle_post_comment', {
+        curr_post_id: postId,
+        curr_comment: commentText
+    });
 
-    return;
+    if (error) {
+        console.error('Error commenting on post: ', error.message);
+        return [];
+    }
+
+    return data;
+}
+
+export async function fetchComments(postId: string) {
+    const { data, error } = await supabase
+        .from('post_comments')
+        .select(`
+            id,
+            comment,
+            commented_at,
+            user_id,
+            profiles (
+                username,
+                profile_image_path
+            )
+        `)
+        .eq('post_id', postId)
+        .order('commented_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching comments:', error.message);
+        return [];
+    }
+    return data;
 }
