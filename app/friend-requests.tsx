@@ -1,5 +1,6 @@
 import BackArrow from '@/assets/icons/back-arrow.svg';
 import { acceptFriendRequest, fetchFriendRequests } from '@/controllers/friends';
+import { useFriendRequestsContext } from '@/hooks/use-friend-requests-context';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -8,11 +9,13 @@ export default function FriendRequestsScreen() {
     const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
 
     const router = useRouter();
-    
+    const { refresh } = useFriendRequestsContext();
+
     const handleAcceptRequest = async (from: string) => {
         try {
           await acceptFriendRequest(from);
           setFriendRequests(prev => prev.filter(request => request.friend_id !== from));
+          await refresh();
         } catch (error) {
           console.error(error);
         }

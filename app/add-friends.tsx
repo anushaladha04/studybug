@@ -6,6 +6,7 @@ import SearchBar from '@/components/search-bar';
 import SearchResultItem from '@/components/search-result-item';
 import { acceptFriendRequest, fetchByUsernameWithFriendshipStatus, requestFriend } from '@/controllers/friends';
 
+import { useFriendRequestsContext } from '@/hooks/use-friend-requests-context';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -15,6 +16,7 @@ export default function AddFriendsScreen() {
   const [ searchResults, setSearchResults ] = useState<any[]>([]);
 
   const router = useRouter();
+  const { pendingCount } = useFriendRequestsContext();
 
   const isSearching = searchQuery.length > 0;
 
@@ -120,6 +122,11 @@ export default function AddFriendsScreen() {
             </View>
 
             <Text style={styles.requestText}>Friend Requests</Text>
+            {pendingCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingCount}</Text>
+              </View>
+            )}
             <RightArrow />
           </Pressable>
         )}
@@ -196,6 +203,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Rethink Sans',
     fontWeight: '400',
     color: '#000',
+  },
+  badge: {
+    backgroundColor: '#FE585B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   content: {
     flex: 1,

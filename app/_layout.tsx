@@ -1,5 +1,6 @@
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AuthProvider from '@/providers/auth-provider';
+import FriendRequestsProvider from '@/providers/friend-requests-provider';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
@@ -97,7 +98,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <FriendRequestsProvider>
+        <RootLayoutNav />
+      </FriendRequestsProvider>
     </AuthProvider>
   );
 }

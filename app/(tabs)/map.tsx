@@ -2,11 +2,13 @@ import AvatarIcon from '@/assets/icons/avatar.svg';
 import { LocationUser, StudyMap } from '@/components/map';
 import { fetchAllFriends } from '@/controllers/friends';
 import { supabase } from '@/lib/supabase';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   PanResponder,
   Pressable,
@@ -123,23 +125,26 @@ export default function MapScreen() {
   const [selectedFocusLevels, setSelectedFocusLevels] = useState<FocusLevel[]>([...FOCUS_LEVELS]);
   const [showActiveSection, setShowActiveSection] = useState(true);
   const [showAwaySection, setShowAwaySection] = useState(true);
-  const [isFriendsSheetCollapsed, setIsFriendsSheetCollapsed] = useState(false);
-  const [isFriendsSheetExpanded, setIsFriendsSheetExpanded] = useState(false);
+  const [friendsSheetMode, setFriendsSheetModeState] = useState<'collapsed' | 'default' | 'expanded'>('default');
   const [locationError, setLocationError] = useState<string | null>(null);
-  const collapsedSheetHeight = 76;
-  const defaultSheetHeight = Math.max(250, Math.round(windowHeight * 0.35));
-  const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(windowHeight * 0.9));
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
+  const [isMapCentered, setIsMapCentered] = useState(false);
+  const tabBarOffset = useBottomTabBarHeight();
+  const availableHeight = windowHeight - tabBarOffset;
+  const defaultSheetHeight = Math.max(300, Math.round(availableHeight * 0.4));
+  const expandedSheetHeight = Math.max(defaultSheetHeight, Math.round(availableHeight * 0.9));
   const sheetHeightAnim = React.useRef(new Animated.Value(defaultSheetHeight)).current;
   const sheetHeightCurrentRef = React.useRef(defaultSheetHeight);
   const dragStartHeightRef = React.useRef(defaultSheetHeight);
-  const collapsedSheetHeightRef = React.useRef(collapsedSheetHeight);
   const defaultSheetHeightRef = React.useRef(defaultSheetHeight);
   const expandedSheetHeightRef = React.useRef(expandedSheetHeight);
-  const isFriendsSheetExpandedRef = React.useRef(isFriendsSheetExpanded);
-  collapsedSheetHeightRef.current = collapsedSheetHeight;
+  const collapsedSheetHeight = tabBarOffset + 80;
+  const collapsedSheetHeightRef = React.useRef(collapsedSheetHeight);
+  const friendsSheetModeRef = React.useRef(friendsSheetMode);
   defaultSheetHeightRef.current = defaultSheetHeight;
   expandedSheetHeightRef.current = expandedSheetHeight;
-  isFriendsSheetExpandedRef.current = isFriendsSheetExpanded;
+  collapsedSheetHeightRef.current = collapsedSheetHeight;
+  friendsSheetModeRef.current = friendsSheetMode;
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -299,13 +304,8 @@ export default function MapScreen() {
 
             const friendRecord = friendById.get(session.user_id);
     
-            let publicPfpUrl = null;
-            const rawAvatarPath = friendRecord?.profile_image_path;
-            if (rawAvatarPath){
-              publicPfpUrl = getPublicUrl(rawAvatarPath);
-            } else {
-              publicPfpUrl = 'avatar_4.jpg';
-            }
+            const rawAvatarPath = friendRecord?.profile_image_path || 'avatar_4.jpg';
+            const publicPfpUrl = getPublicUrl(rawAvatarPath);
 
             const rawSubject = session.subject?.trim();
             const studyType: StudyType = (['Academic', 'Career', 'Personal'].includes(rawSubject as any)) 
@@ -321,7 +321,8 @@ export default function MapScreen() {
               id: session.session_id,
               friendUserId: session.user_id,
               name: friendNameById.get(session.user_id) || 'Friend',
-              pfpUrl: publicPfpUrl, 
+              pfpUrl: publicPfpUrl,
+              imageUrl: publicPfpUrl ?? undefined,
               studying: session.session_name?.trim() || 'Studying',
               locationName: session.location_name?.trim() || friendById.get(session.user_id)?.location_name?.trim() || 'Powell Library',
               latitude,
@@ -406,15 +407,8 @@ export default function MapScreen() {
   };
 
   const openUserDetails = (user: ActiveFriendMapItem) => {
-    setIsFriendsSheetCollapsed(false);
-    if (sheetHeightCurrentRef.current <= collapsedSheetHeight + 2) {
-      Animated.spring(sheetHeightAnim, {
-        toValue: defaultSheetHeight,
-        useNativeDriver: false,
-        friction: 9,
-        tension: 90,
-      }).start();
-      sheetHeightCurrentRef.current = defaultSheetHeight;
+    if (sheetHeightCurrentRef.current < defaultSheetHeight - 2) {
+      animateSheetToHeight(defaultSheetHeight);
     }
     setSelectedUser(user);
   };
@@ -432,43 +426,34 @@ export default function MapScreen() {
   const animateSheetToHeight = React.useCallback(
     (nextHeight: number) => {
       sheetHeightCurrentRef.current = nextHeight;
-      Animated.spring(sheetHeightAnim, {
+      Animated.timing(sheetHeightAnim, {
         toValue: nextHeight,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
-        friction: 9,
-        tension: 90,
       }).start();
     },
     [sheetHeightAnim]
   );
   const setFriendsSheetMode = React.useCallback(
     (mode: 'collapsed' | 'default' | 'expanded') => {
-      setIsFriendsSheetCollapsed(mode === 'collapsed');
-      setIsFriendsSheetExpanded(mode === 'expanded');
+      setFriendsSheetModeState(mode);
       const targetHeight =
-        mode === 'collapsed'
-          ? collapsedSheetHeight
-          : mode === 'expanded'
-            ? expandedSheetHeight
-            : defaultSheetHeight;
+        mode === 'expanded' ? expandedSheetHeight :
+        mode === 'collapsed' ? collapsedSheetHeight :
+        defaultSheetHeight;
       animateSheetToHeight(targetHeight);
     },
-    [
-      animateSheetToHeight,
-      collapsedSheetHeight,
-      defaultSheetHeight,
-      expandedSheetHeight,
-    ]
+    [animateSheetToHeight, collapsedSheetHeight, defaultSheetHeight, expandedSheetHeight]
   );
   const setFriendsSheetModeRef = React.useRef(setFriendsSheetMode);
   setFriendsSheetModeRef.current = setFriendsSheetMode;
 
   useEffect(() => {
-    const targetHeight = isFriendsSheetCollapsed
-      ? collapsedSheetHeight
-      : isFriendsSheetExpanded
-        ? expandedSheetHeight
-        : defaultSheetHeight;
+    const targetHeight =
+      friendsSheetMode === 'expanded' ? expandedSheetHeight :
+      friendsSheetMode === 'collapsed' ? collapsedSheetHeight :
+      defaultSheetHeight;
 
     sheetHeightCurrentRef.current = targetHeight;
     sheetHeightAnim.setValue(targetHeight);
@@ -476,8 +461,7 @@ export default function MapScreen() {
     collapsedSheetHeight,
     defaultSheetHeight,
     expandedSheetHeight,
-    isFriendsSheetCollapsed,
-    isFriendsSheetExpanded,
+    friendsSheetMode,
     sheetHeightAnim,
   ]);
 
@@ -511,23 +495,22 @@ export default function MapScreen() {
         const tapLike = Math.abs(gestureState.dy) < 8;
 
         if (tapLike) {
-          setFriendsSheetModeRef.current(
-            isFriendsSheetExpandedRef.current ? 'default' : 'expanded'
-          );
+          const cur = friendsSheetModeRef.current;
+          if (cur === 'collapsed') setFriendsSheetModeRef.current('default');
+          else if (cur === 'default') setFriendsSheetModeRef.current('expanded');
+          else setFriendsSheetModeRef.current('default');
           return;
         }
 
         if (velocityY < -0.35) {
-          setFriendsSheetModeRef.current('expanded');
+          const cur = friendsSheetModeRef.current;
+          setFriendsSheetModeRef.current(cur === 'collapsed' ? 'default' : 'expanded');
           return;
         }
 
         if (velocityY > 0.35) {
-          const collapseThreshold =
-            (collapsedSheetHeightRef.current + defaultSheetHeightRef.current) / 2;
-          setFriendsSheetModeRef.current(
-            currentHeight < collapseThreshold ? 'collapsed' : 'default'
-          );
+          const cur = friendsSheetModeRef.current;
+          setFriendsSheetModeRef.current(cur === 'expanded' ? 'default' : 'collapsed');
           return;
         }
 
@@ -555,7 +538,10 @@ export default function MapScreen() {
         userLocation={userLocation}
         showMapboxBadge={false}
         showZoomControls={false}
+        showRecenterControl={false}
+        recenterTrigger={recenterTrigger}
         showMarkerLabels={false}
+        onCenterStateChange={setIsMapCentered}
       />
 
       <View pointerEvents="box-none" style={styles.overlayLayer}>
@@ -629,24 +615,31 @@ export default function MapScreen() {
           </View>
         )}
 
+        {userLocation && (
+          <Animated.View
+            pointerEvents="box-none"
+            style={[
+              styles.recenterButtonWrap,
+              { bottom: Animated.add(sheetHeightAnim, new Animated.Value(20)) },
+            ]}>
+            <Pressable
+              style={styles.recenterButton}
+              onPress={() => setRecenterTrigger((value) => value + 1)}>
+              <Ionicons
+                name={isMapCentered ? 'navigate' : 'navigate-outline'}
+                size={18}
+                color="#1d1d1f"
+              />
+            </Pressable>
+          </Animated.View>
+        )}
+
         <Animated.View style={[styles.bottomSheet, { height: sheetHeightAnim }]}>
           <View style={styles.sheetTopBar} {...friendsSheetHandlePanResponder.panHandlers}>
             <View style={styles.sheetHandle} />
           </View>
 
-          {isFriendsSheetCollapsed && !showDetailSheet ? (
-            <View style={styles.collapsedSheetHeader}>
-              <Text style={styles.sheetTitle}>Friends</Text>
-              <Pressable
-                hitSlop={8}
-                onPress={() => setFriendsSheetMode('default')}
-                style={styles.closeButton}>
-                <Ionicons name="chevron-up" size={22} color="#707070" />
-              </Pressable>
-            </View>
-          ) : null}
-
-          {!isFriendsSheetCollapsed && showDetailSheet ? (
+          {showDetailSheet ? (
             <View style={styles.sheetContent}>
               <View style={styles.sheetHeaderRow}>
                 <Text style={styles.sheetTitle}>{selectedUser?.name}</Text>
@@ -665,21 +658,13 @@ export default function MapScreen() {
                 <Text style={styles.detailLine}>Note: {selectedUser?.note}</Text>
               </View>
             </View>
-          ) : !isFriendsSheetCollapsed ? (
+          ) : (
             <ScrollView
               style={styles.sheetScroll}
               contentContainerStyle={styles.sheetScrollContent}
               showsVerticalScrollIndicator={false}>
               <View style={styles.sheetHeaderRow}>
                 <Text style={styles.sheetTitle}>Friends</Text>
-                <Pressable
-                  hitSlop={8}
-                  onPress={() => {
-                    setFriendsSheetMode('collapsed');
-                  }}
-                  style={styles.closeButton}>
-                  <Ionicons name="close" size={26} color="#707070" />
-                </Pressable>
               </View>
 
               <SectionHeader
@@ -723,7 +708,7 @@ export default function MapScreen() {
                   <Text style={styles.emptySectionText}>No away friends match this search.</Text>
                 ))}
             </ScrollView>
-          ) : null}
+          )}
         </Animated.View>
       </View>
     </View>
@@ -955,6 +940,25 @@ const styles = StyleSheet.create({
   locationBannerText: {
     fontSize: 12,
     color: '#4d4d4d',
+  },
+  recenterButtonWrap: {
+    position: 'absolute',
+    right: 18,
+  },
+  recenterButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
   },
   bottomSheet: {
     position: 'absolute',
