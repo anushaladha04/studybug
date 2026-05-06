@@ -16,7 +16,7 @@ export default function IntroScreen() {
 
   const finishOnboarding = async () => {
     await AsyncStorage.setItem("onboarding_seen", "true");
-    router.replace("/(auth)/onboarding");
+    router.replace("/(tabs)");
   };
 
   const handleNext = async () => {
