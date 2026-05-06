@@ -86,6 +86,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'RethinkSans-Regular': require('../assets/fonts/RethinkSans-Regular.ttf'),
     'RethinkSans-Medium': require('../assets/fonts/RethinkSans-Medium.ttf'),
+    'RethinkSans-SemiBold': require('../assets/fonts/RethinkSans-SemiBold.ttf'),
+    'RethinkSans-Bold': require('../assets/fonts/RethinkSans-Bold.ttf'),
   });
 
   useEffect(() => {

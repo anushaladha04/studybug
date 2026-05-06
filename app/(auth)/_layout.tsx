@@ -8,6 +8,10 @@ export default function AuthLayout() {
         options={{ headerShown: false, title: "Splash" }}
       />
       <Stack.Screen
+        name="intro"
+        options={{ headerShown: false, title: "Intro", animation: "fade" }}
+      />
+      <Stack.Screen
         name="onboarding"
         options={{
           headerShown: false,

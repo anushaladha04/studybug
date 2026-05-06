@@ -26,7 +26,7 @@ export default function Splash() {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  const goToOnboarding = () => router.replace("/(auth)/onboarding");
+  const goToOnboarding = () => router.replace("/(auth)/intro");
 
   const triggerExit = () => {
     scale.value = withTiming(1.15, { duration: 350 });
