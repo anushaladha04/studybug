@@ -1,5 +1,6 @@
 import StudybugText from "@/assets/images/Studybugtext.svg";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -11,12 +12,19 @@ const TOTAL_FEATURE_PAGES = 6;
 
 export default function IntroScreen() {
   const router = useRouter();
-  // page 0 = welcome, pages 1–6 = feature slides
+  const { refreshProfile } = useAuthContext();
   const [page, setPage] = useState(0);
 
   const finishOnboarding = async () => {
-    await AsyncStorage.setItem("onboarding_seen", "true");
-    router.replace("/(tabs)");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ has_completed_onboarding: true })
+        .eq("id", user.id);
+    }
+    router.replace("/(auth)/splash?postOnboarding=true");
+    refreshProfile();
   };
 
   const handleNext = async () => {

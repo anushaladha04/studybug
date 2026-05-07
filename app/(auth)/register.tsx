@@ -65,7 +65,6 @@ export default function RegisterScreen() {
     }
 
     setLoading(false);
-    router.replace("/(auth)/intro");
   }
 
   return (

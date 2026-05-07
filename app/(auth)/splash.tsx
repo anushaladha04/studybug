@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
@@ -22,11 +22,15 @@ const CENTER_CIRCLE_SIZE = 48;
 const ROTATION_DURATION_MS = 2000;
 
 export default function Splash() {
+  const { postOnboarding } = useLocalSearchParams<{ postOnboarding?: string }>();
   const swirl = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  const goToOnboarding = () => router.replace("/(auth)/onboarding");
+  const goToOnboarding = () =>
+    postOnboarding === "true"
+      ? router.replace("/(tabs)")
+      : router.replace("/(auth)/onboarding");
 
   const triggerExit = () => {
     scale.value = withTiming(1.15, { duration: 350 });
