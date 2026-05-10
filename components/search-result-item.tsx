@@ -16,11 +16,11 @@ interface SearchResultItemProps {
 export default function SearchResultItem({ item, onFollow, onAccept }: SearchResultItemProps) {
   const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
-    const getPublicUrl = (path: string) => {
-        if (!path) 
-            return 'default_avatar_url_here';
-        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
-    };
+  const getPublicUrl = (path: string) => {
+      if (!path) 
+          return 'default_avatar_url_here';
+      return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+  };
   return (
     <View style={styles.resultItem}>
         { item.profile_image_path ? (
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(174, 232, 71, 0.36)'
+    backgroundColor: '#8DBF58',
+    borderColor: '#8DBF58'
   },
   addButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontWeight: '400',
     fontSize: 14,
     fontFamily: 'Rethink Sans'
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(28, 150, 53, 0.36)'
+    backgroundColor: '#1C9635',
+    borderColor: '#1C9635'
   }
 });

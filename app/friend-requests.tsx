@@ -159,11 +159,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(174, 232, 71, 0.36)'
+    backgroundColor: '#8DBF58',
+    borderColor: '#8DBF58'
   },
   acceptButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontWeight: '400',
     fontSize: 14,
     fontFamily: 'Rethink Sans'
