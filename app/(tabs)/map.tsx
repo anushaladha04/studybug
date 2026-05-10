@@ -2,8 +2,9 @@ import AvatarIcon from '@/assets/icons/avatar.svg';
 import { LocationUser, StudyMap } from '@/components/map';
 import { fetchAllFriends } from '@/controllers/friends';
 import { supabase } from '@/lib/supabase';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { intervalToDuration } from 'date-fns';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
@@ -82,16 +83,35 @@ const pickDeterministic = <T,>(seed: string, options: T[]): T => {
   return options[hashString(seed) % options.length];
 };
 
+const [ now, setNow ] = useState(new Date());
+useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+}, []);
+
 const formatDurationLabel = (startTime?: string | null) => {
   if (!startTime) return '1 hr 30 min';
   const start = new Date(startTime);
-  if (Number.isNaN(start.getTime())) return '1 hr 30 min';
-  const minutes = Math.max(1, Math.floor((Date.now() - start.getTime()) / 60000));
-  const hours = Math.floor(minutes / 60);
-  const rem = minutes % 60;
-  if (hours <= 0) return `${rem} min`;
-  if (rem === 0) return `${hours} hr`;
-  return `${hours} hr ${rem} min`;
+  const duration = intervalToDuration({start: start, end: now});
+  const { months, days, hours, minutes } = duration;
+
+  if (months && months > 0) {
+      return `${months} ${months === 1 ? 'month' : 'months'}`;
+  }
+
+  if (days && days > 0) {
+      return `${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+
+  const parts = [];
+  if (! hours && ! minutes) 
+      return 'Just now';
+  if (hours && hours > 0) 
+      parts.push(`${hours} hr`);
+  if (minutes !== undefined && (minutes > 0 || ! hours)) 
+      parts.push(`${minutes} min`);
+  
+  return parts.join(' ');
 };
 
 const getAwayLabel = (startTime?: string | null) => {
