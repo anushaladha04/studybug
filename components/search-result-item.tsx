@@ -1,5 +1,5 @@
 import AvatarIcon from '@/assets/icons/avatar';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface SearchResultItemProps {
   item: {
@@ -7,15 +7,31 @@ interface SearchResultItemProps {
     full_name: string;
     username: string;
     friendship_status: 'none' | 'requested' | 'pending_approval' | 'friends';
+    profile_image_path: string;
   };
   onFollow: (id: string) => void;
   onAccept: (id: string) => void;
 }
 
 export default function SearchResultItem({ item, onFollow, onAccept }: SearchResultItemProps) {
+  const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+    };
   return (
     <View style={styles.resultItem}>
-        <AvatarIcon />
+        { item.profile_image_path ? (
+            <Image 
+                source={{ uri: getPublicUrl(item.profile_image_path) }} 
+                style={styles.avatar}
+                resizeMode="cover"
+            />
+        ) : (
+            <AvatarIcon />
+        )}
         <View style={styles.userInfo}>
         <Text style={styles.fullNameText}>{item.full_name}</Text>
         <Text style={styles.usernameText}>@{item.username}</Text>
@@ -54,6 +70,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 19,
     backgroundColor: '#F7F7F7'
+  },
+  avatar: {
+    width: 55,
+    height: 55,
+    borderRadius: 27
   },
   userInfo: {
     flexDirection: 'column',
