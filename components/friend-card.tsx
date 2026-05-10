@@ -72,11 +72,12 @@ export default function FriendCard(friend: Friend) {
 
             <View style={styles.contentContainer}>
                 <Text style={styles.nameText}>{friend.full_name}</Text>
-                <Text style={styles.detailText}>Location: {location}</Text>
-                <Text style={styles.detailText}>Note: {friend.note}</Text>                
+                <Text style={styles.detailText} numberOfLines={2} ellipsizeMode="tail">Location: {location}</Text>
+                <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">Note: {friend.note}</Text>                
             </View>
 
-            <View style={[styles.statusBadge, 
+            <View style={styles.rightColumn}>
+                <View style={[styles.statusBadge, 
                     !friend.is_active && styles.inactiveBadge]}>
                     <Text style={styles.statusText}>
                         {friend.is_active ? 'Active' : 'Inactive'}
@@ -89,6 +90,8 @@ export default function FriendCard(friend: Friend) {
                         <ClockIcon />
                         <Text style={styles.metricText}>{formatTime()}{ ! friend.is_active && formatTime() !== "Just now" && ' ago'}</Text>
                     </View>
+                </View>
+
             </View>
         </View>
     );
@@ -97,9 +100,10 @@ export default function FriendCard(friend: Friend) {
 const styles = StyleSheet.create({
     card: {
         marginVertical: 8,
-        gap: 21,
-        paddingVertical: 9,
-        paddingHorizontal: 14,
+        gap: 20,
+        paddingVertical: 3,
+        paddingLeft: 14,
+        paddingRight: 3,
         backgroundColor: '#FFFFFF',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 2},
@@ -116,6 +120,7 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
         justifyContent: 'center',
+        marginRight: 10,
         gap: 5
     },
     avatar: {
@@ -135,8 +140,12 @@ const styles = StyleSheet.create({
         fontFamily: 'Rethink Sans',
         color: '#000',
     },
+    rightColumn: {
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        height: '100%',
+    },
     statusBadge: {
-        position: 'absolute',
         top: 9,
         right: 14,
         backgroundColor: '#1C9635',
@@ -153,7 +162,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     metricsContainer: {
-        position: 'absolute',
         bottom: 9,
         right: 14,
         alignItems: 'flex-end',
