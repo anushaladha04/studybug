@@ -43,13 +43,15 @@ export default function ProfileScreen() {
       fetchSessionsByUser(id, id),
       getStreakDays(id),
       getLifetimeSeconds(id),
-    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
+      fetchFriendCount(),
+    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs, friendCount]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
       setSessions(sortSessions(userSessions ?? []));
       setStreak(streakDays);
       setLifetimeSeconds(lifetimeSecs);
+      setFriendCount(friendCount);
     });
   }, [session?.user?.id]);
 

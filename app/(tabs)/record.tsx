@@ -37,6 +37,8 @@ export default function RecordScreen() {
 
   const [endSessionConfirmation, setEndSessionConfirmation] = useState(false);
   const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
+  const [ secondLastStudySession, setSecondLastStudySession ] = useState<StudySessionProps | null>(null);
+
 
   const isPrivacyChosen = useRef(false);
   const [ isLocating, setIsLocating ] = useState(false);
@@ -255,7 +257,11 @@ const startSessionTrigger = async () => {
         return;
 
       try {
-        const data = await fetchUserLastSession();
+        const [data, data2] = await Promise.all([
+          fetchUserLastSession(),
+          fetchUserLastSession(1),
+        ]);
+
         if (data) {
           const formattedDate = format(new Date(data.start_time), 'dd MMM yyyy');
 
@@ -263,7 +269,20 @@ const startSessionTrigger = async () => {
             date: formattedDate,
             totalTime: formatTime(data.duration),
             location: data.location_name,
-            topic: data.session_name
+            topic: data.session_name,
+            note: data.note
+          });
+        }
+
+        if (data2) {
+          const formattedDate = format(new Date(data2.start_time), 'dd MMM yyyy');
+
+          setSecondLastStudySession({
+            date: formattedDate,
+            totalTime: formatTime(data2.duration),
+            location: data2.location_name,
+            topic: data2.session_name,
+            note: data2.note
           });
         }
       } catch (error) {
@@ -356,7 +375,7 @@ const startSessionTrigger = async () => {
           locations={[0.05, 1]}
           style={styles.timerCircle}>
             <View style={{ position: 'relative', alignItems: 'center', marginTop: 32}}>
-              <StudyBugLogo style={{ position: 'absolute', top: -68, zIndex: 1 }} />
+              <StudyBugLogo style={{ position: 'absolute', top: -70, zIndex: 1 }} />
               <View style={styles.timerRect}>
                 <Text style={styles.timerText}>{formatTime(seconds)}</Text>
               </View>
@@ -382,14 +401,24 @@ const startSessionTrigger = async () => {
               {lastStudySession && (
                 <View style={styles.lastFocusSessionContainer}>
                   <Text style={styles.lastFocusSessionHeader}>
-                    Last Focus Session
+                    Previous Sessions
                   </Text>
                   <LastFocusSession 
                     date={lastStudySession.date}
                     totalTime={lastStudySession.totalTime}
                     location={lastStudySession.location}
                     topic={lastStudySession.topic}
+                    note={lastStudySession.note}
                   />
+                  {secondLastStudySession && (
+                  <LastFocusSession 
+                    date={secondLastStudySession.date}
+                    totalTime={secondLastStudySession.totalTime}
+                    location={secondLastStudySession.location}
+                    topic={secondLastStudySession.topic}
+                    note={secondLastStudySession.note}
+                  />
+                  )}
                 </View>
               )}
           </>
@@ -468,8 +497,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    marginTop: 190,
-    gap: 40, 
+    marginTop: 180,
+    gap: 30, 
   },
   timerCircle: {
     width: 300,
@@ -493,7 +522,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   timerText: {
-    fontSize: 40,
+    fontSize: 36,
     fontFamily: 'Rethink Sans',
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
@@ -573,7 +602,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   lastFocusSessionHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 500,
     fontFamily: 'Rethink Sans',
     color: '#000',

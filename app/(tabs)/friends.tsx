@@ -221,7 +221,7 @@ export default function FriendsScreen() {
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
-                  contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16 }}
+                  contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16, paddingBottom: 110 }}
                   renderItem={({ item }) => (
                     <FriendCard
                       pfp = {item.profile_image_path}
