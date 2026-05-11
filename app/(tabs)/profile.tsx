@@ -1,5 +1,4 @@
 import SessionPost from '@/components/session-component';
-import { fetchFriendCount } from '@/controllers/friends';
 import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
@@ -167,6 +166,7 @@ export default function ProfileScreen() {
                   likeCount={s.like_count}
                   isLiked={s.is_liked}
                   onLikeToggle={(newStatus) => handleLocalLikeUpdate(s.session_id, newStatus)}
+                  commentCount={s.comment_count}
                 />
               ))
             )}

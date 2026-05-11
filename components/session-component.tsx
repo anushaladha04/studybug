@@ -151,9 +151,9 @@ export default function SessionPost({
                 onPress={() => handleNavigate()}
             >
                 <View style={styles.infoRow}>
-                    <View>
-                        <Text style={styles.title}>{title}</Text>
-                        <Text style={styles.location}>{location} </Text>
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+                        <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">{location}</Text>
                     </View>
                     <View style={styles.totalTimeBlock}>
                         <Text style={styles.totalTimeLabel}>Total Time</Text>
@@ -219,9 +219,10 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     infoRow: {
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         marginBottom: 4,
     },
     title: {

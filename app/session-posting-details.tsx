@@ -49,6 +49,8 @@ export default function SessionPostDetailsScreen() {
   const [ comments, setComments ] = useState<any[]>([]);
   const [ isLoadingComments, setIsLoadingComments ] = useState(true);
   const [ isPostingNewComment, setIsPostingNewComment ] = useState(false);
+  const [ isLocationExpanded, setIsLocationExpanded] = useState(false);
+  const [ showMoreBtn, setShowMoreBtn ] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -152,15 +154,15 @@ export default function SessionPostDetailsScreen() {
             </View>
 
             <View style={styles.infoRow}>
-              <View>
+              <View style={{ flex: 1, marginRight: 10 }}>
                   <Text style={styles.title}>{title}</Text>
-                  <Text style={styles.location}>{location} </Text>
+                  <Text style={styles.location}>{location}</Text>
               </View>
               <View style={styles.totalTimeBlock}>
                   <Text style={styles.totalTimeLabel}>Total Time</Text>
                   <Text style={styles.totalTimeValue}>{duration}</Text>
               </View>
-            </View>
+          </View>
 
             {image ? (
               <Image 
@@ -318,10 +320,16 @@ const styles = StyleSheet.create({
       color: '#000',
   },
   location: {
-      fontSize: 16,
-      fontWeight: 400,
-      fontFamily: 'Rethink Sans',
-      color: '#000'
+    fontSize: 16,
+    fontWeight: 400,
+    fontFamily: 'Rethink Sans',
+    color: '#000'
+  },
+  moreText: {
+    fontSize: 16,
+    fontWeight: 400,
+    fontFamily: 'Rethink Sans',
+    color: '#888',
   },
   totalTimeBlock: {
       alignItems: 'flex-end',

@@ -1,9 +1,10 @@
+import AvatarIcon from '@/assets/icons/avatar.svg';
 import BackArrow from '@/assets/icons/back-arrow.svg';
 import { acceptFriendRequest, fetchFriendRequests } from '@/controllers/friends';
 import { useFriendRequestsContext } from '@/hooks/use-friend-requests-context';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function FriendRequestsScreen() {
     const [ friendRequests, setFriendRequests ] = useState<any[]>([]);
@@ -34,6 +35,14 @@ export default function FriendRequestsScreen() {
         fetchRequests();
     }, []);
 
+    const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
+
+    const getPublicUrl = (path: string) => {
+        if (!path) 
+            return 'default_avatar_url_here';
+        return `${SUPABASE_URL}/storage/v1/object/public/profile_pictures/${path}`;
+    };
+
     return (
         <View style={styles.container}>
           <View style={styles.headerContainer}>
@@ -53,6 +62,15 @@ export default function FriendRequestsScreen() {
             contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}
             renderItem={({ item }) => (
             <View style={styles.resultItem}>
+                { item.profile_image_path ? (
+                  <Image 
+                      source={{ uri: getPublicUrl(item.profile_image_path) }} 
+                      style={styles.avatar}
+                      resizeMode="cover"
+                  />
+                ) : (
+                  <AvatarIcon />
+                )}
                 <View style={styles.userInfo}>
                 <Text style={styles.fullNameText}>{item.full_name}</Text>
                 <Text style={styles.usernameText}>@{item.username}</Text>
@@ -113,7 +131,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     marginBottom: 6,
+    gap: 19,
     backgroundColor: '#F7F7F7'
+  },
+  avatar: {
+    width: 55,
+    height: 55,
+    borderRadius: 27
   },
   userInfo: {
     flexDirection: 'column',
@@ -135,11 +159,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#1C9635',
-    backgroundColor: 'rgba(174, 232, 71, 0.36)'
+    backgroundColor: '#8DBF58',
+    borderColor: '#8DBF58'
   },
   acceptButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontWeight: '400',
     fontSize: 14,
     fontFamily: 'Rethink Sans'

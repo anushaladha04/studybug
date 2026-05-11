@@ -2,8 +2,9 @@ import AvatarIcon from '@/assets/icons/avatar.svg';
 import { LocationUser, StudyMap } from '@/components/map';
 import { fetchAllFriends } from '@/controllers/friends';
 import { supabase } from '@/lib/supabase';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { intervalToDuration } from 'date-fns';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
@@ -26,6 +27,7 @@ type FriendRow = {
   is_active?: boolean | null;
   location_name?: string | null;
   start_time?: string | null;
+  end_time?: string | null;
   profile_image_path?: string | null
 };
 
@@ -82,28 +84,6 @@ const pickDeterministic = <T,>(seed: string, options: T[]): T => {
   return options[hashString(seed) % options.length];
 };
 
-const formatDurationLabel = (startTime?: string | null) => {
-  if (!startTime) return '1 hr 30 min';
-  const start = new Date(startTime);
-  if (Number.isNaN(start.getTime())) return '1 hr 30 min';
-  const minutes = Math.max(1, Math.floor((Date.now() - start.getTime()) / 60000));
-  const hours = Math.floor(minutes / 60);
-  const rem = minutes % 60;
-  if (hours <= 0) return `${rem} min`;
-  if (rem === 0) return `${hours} hr`;
-  return `${hours} hr ${rem} min`;
-};
-
-const getAwayLabel = (startTime?: string | null) => {
-  if (!startTime) return 'Last active 2 days ago';
-  const dt = new Date(startTime);
-  if (Number.isNaN(dt.getTime())) return 'Last active recently';
-  const hours = Math.max(1, Math.floor((Date.now() - dt.getTime()) / 3600000));
-  if (hours < 24) return `Last active ${hours} hr ago`;
-  const days = Math.floor(hours / 24);
-  return `Last active ${days} day${days === 1 ? '' : 's'} ago`;
-};
-
 const matchesSearch = (friend: ActiveFriendMapItem, query: string) => {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return true;
@@ -145,6 +125,42 @@ export default function MapScreen() {
   expandedSheetHeightRef.current = expandedSheetHeight;
   collapsedSheetHeightRef.current = collapsedSheetHeight;
   friendsSheetModeRef.current = friendsSheetMode;
+
+  const [ now, setNow ] = useState(new Date());
+  useEffect(() => {
+      const timer = setInterval(() => setNow(new Date()), 60000);
+      return () => clearInterval(timer);
+  }, []);
+
+  const formatDurationLabel = (referenceTime?: string | null) => {
+    if (!referenceTime) return '1 hr 30 min';
+    const start = new Date(referenceTime);
+    const duration = intervalToDuration({start: start, end: now});
+    const { months, days, hours, minutes } = duration;
+
+    if (months && months > 0) {
+        return `${months} ${months === 1 ? 'month' : 'months'}`;
+    }
+
+    if (days && days > 0) {
+        return `${days} ${days === 1 ? 'day' : 'days'}`;
+    }
+
+    const parts = [];
+    if (! hours && ! minutes) 
+        return 'Just now';
+    if (hours && hours > 0) 
+        parts.push(`${hours} hr`);
+    if (minutes !== undefined && (minutes > 0 || ! hours)) 
+        parts.push(`${minutes} min`);
+    
+    return parts.join(' ');
+  };
+
+  const getAwayLabel = (endTime?: string | null, startTime?: string | null) => {
+    if (!startTime) return 'Last active 2 days ago';
+    return `Last active ${formatDurationLabel(endTime || startTime)} ago`;
+  };
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -266,7 +282,7 @@ export default function MapScreen() {
 
         const { data, error } = await supabase
           .from('study_sessions')
-          .select('session_id, user_id, session_name, subject, location_name, latitude, longitude, start_time, focus_level, note')
+          .select('session_id, user_id, session_name, subject, location_name, latitude, longitude, start_time, end_time, focus_level, note')
           .in('user_id', friendIds)
           .eq('is_active', true)
           .eq('is_public', true)
@@ -281,7 +297,7 @@ export default function MapScreen() {
               friends.map((friend) => ({
                 friendUserId: friend.friend_id,
                 name: friend.full_name?.trim() || 'Friend',
-                lastActiveLabel: getAwayLabel(friend.start_time),
+                lastActiveLabel: getAwayLabel(friend.end_time, friend.start_time),
               }))
             );
           }
@@ -351,7 +367,7 @@ export default function MapScreen() {
               friendUserId: friend.friend_id,
               name: friend.full_name?.trim() || 'Friend',
               pfpUrl: publicPfpUrl,
-              lastActiveLabel: getAwayLabel(friend.start_time),
+              lastActiveLabel: getAwayLabel(friend.end_time, friend.start_time),
             };
           });
 
