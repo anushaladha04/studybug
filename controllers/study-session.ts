@@ -80,7 +80,7 @@ export async function fetchSessionsByUser(ownerId: string, currUserId: string) {
     }));
 }
 
-export async function fetchUserLastSession() {
+export async function fetchUserLastSession(offset: number = 0) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (! user) {
@@ -90,10 +90,10 @@ export async function fetchUserLastSession() {
 
     const { data, error } = await supabase
         .from('study_sessions')
-        .select('start_time, duration, location_name, session_name')
+        .select('start_time, duration, location_name, session_name, note')
         .eq('user_id', user.id)
         .order('start_time', { ascending: false })
-        .limit(1)
+        .range(offset, offset)
         .single();
     
     if (error) {

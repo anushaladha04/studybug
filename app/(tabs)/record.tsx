@@ -2,6 +2,7 @@ import MinimizeIcon from '@/assets/icons/minimize.svg';
 import PlusSign from '@/assets/icons/plus.svg';
 import PubPrivBg from '@/assets/icons/pub-priv-bg.svg';
 import PubPrivToggle from '@/assets/icons/pub-priv-toggle.svg';
+import StudyBugLogo from '@/assets/icons/studybuglogo.svg';
 import EndSessionPopup from "@/components/end-session-popup";
 import LastFocusSession, { StudySessionProps } from '@/components/last-focus-session';
 import { endStudySession, fetchUserLastSession, startStudySession } from "@/controllers/study-session";
@@ -10,11 +11,12 @@ import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { getLastActiveTab } from './_layout';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { getLastActiveTab } from './_layout';
 
 interface LocationCoords {
   latitude: number;
@@ -31,9 +33,12 @@ export default function RecordScreen() {
   const [timerIsActive, setTimerIsActive] = useState(false);
   const [currentSessionId, setCurrentSessionId ] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
   const [endSessionConfirmation, setEndSessionConfirmation] = useState(false);
   const [ lastStudySession, setLastStudySession ] = useState<StudySessionProps | null>(null);
+  const [ secondLastStudySession, setSecondLastStudySession ] = useState<StudySessionProps | null>(null);
+
 
   const isPrivacyChosen = useRef(false);
   const [ isLocating, setIsLocating ] = useState(false);
@@ -166,6 +171,7 @@ const startSessionTrigger = async () => {
     setIsLocating(true);
     try {
       const startTime = new Date();
+      setSessionStartTime(startTime);
       const savedVisibility = await AsyncStorage.getItem('preferredVisibility');
       
       const currentIsPublic = savedVisibility !== null 
@@ -251,7 +257,11 @@ const startSessionTrigger = async () => {
         return;
 
       try {
-        const data = await fetchUserLastSession();
+        const [data, data2] = await Promise.all([
+          fetchUserLastSession(),
+          fetchUserLastSession(1),
+        ]);
+
         if (data) {
           const formattedDate = format(new Date(data.start_time), 'dd MMM yyyy');
 
@@ -259,7 +269,20 @@ const startSessionTrigger = async () => {
             date: formattedDate,
             totalTime: formatTime(data.duration),
             location: data.location_name,
-            topic: data.session_name
+            topic: data.session_name,
+            note: data.note
+          });
+        }
+
+        if (data2) {
+          const formattedDate = format(new Date(data2.start_time), 'dd MMM yyyy');
+
+          setSecondLastStudySession({
+            date: formattedDate,
+            totalTime: formatTime(data2.duration),
+            location: data2.location_name,
+            topic: data2.session_name,
+            note: data2.note
           });
         }
       } catch (error) {
@@ -305,7 +328,12 @@ const startSessionTrigger = async () => {
   }, [timerIsActive]);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient 
+    colors={['#FFFFFF', '#A3E2FF']}
+    locations={[0.5, 1]}
+    start = {{ x:0, y:0.25 }}
+    end = {{ x:1, y:1 }}
+    style={styles.container}>
       <Pressable 
         style={styles.backButton} 
         onPress={() => {
@@ -319,7 +347,7 @@ const startSessionTrigger = async () => {
 
       {/* public/private toggle */}
       <Pressable style={{ position: 'absolute', top: 100, alignSelf: 'center' }} onPress={() => togglePublic()}>
-        <PubPrivBg width={165} height={42} />
+        <PubPrivBg width={162} height={40} />
         <PubPrivToggle
           width={85}
           height={39}
@@ -335,18 +363,27 @@ const startSessionTrigger = async () => {
           }}
         />
         <View style={styles.toggleRow}>
-          <Text style={[styles.toggleText, isPublic && styles.toggleActive]}>public</Text>
-          <Text style={[styles.toggleText, !isPublic && styles.toggleActive]}>private</Text>
+          <Text style={styles.toggleText}>public</Text>
+          <Text style={styles.toggleText}>private</Text>
         </View>
       </Pressable>
 
       <View style={styles.mainContent}>
         {/* our beautiful timer */}
-        <View style={styles.timerCircle}>
-          <View style={styles.timerRect}>
-            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-          </View>
-        </View>
+        <LinearGradient
+          colors={['#FFF7ED', '#A3E2FF']}
+          locations={[0.05, 1]}
+          style={styles.timerCircle}>
+            <View style={{ position: 'relative', alignItems: 'center', marginTop: 32}}>
+              <StudyBugLogo style={{ position: 'absolute', top: -70, zIndex: 1 }} />
+              <View style={styles.timerRect}>
+                <Text style={styles.timerText}>{formatTime(seconds)}</Text>
+              </View>
+              {isSessionActive && sessionStartTime && (
+              <Text style={{fontWeight: '500', marginTop: 16}}>Started at {format(sessionStartTime, 'h:mm a')}</Text>
+            )}
+            </View>
+        </LinearGradient>
 
         {!isSessionActive ? (
           <>
@@ -364,14 +401,24 @@ const startSessionTrigger = async () => {
               {lastStudySession && (
                 <View style={styles.lastFocusSessionContainer}>
                   <Text style={styles.lastFocusSessionHeader}>
-                    Last Focus Session
+                    Previous Sessions
                   </Text>
                   <LastFocusSession 
                     date={lastStudySession.date}
                     totalTime={lastStudySession.totalTime}
                     location={lastStudySession.location}
                     topic={lastStudySession.topic}
+                    note={lastStudySession.note}
                   />
+                  {secondLastStudySession && (
+                  <LastFocusSession 
+                    date={secondLastStudySession.date}
+                    totalTime={secondLastStudySession.totalTime}
+                    location={secondLastStudySession.location}
+                    topic={secondLastStudySession.topic}
+                    note={secondLastStudySession.note}
+                  />
+                  )}
                 </View>
               )}
           </>
@@ -412,7 +459,7 @@ const startSessionTrigger = async () => {
           onConfirm={endSessionTrigger}
         />
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -442,9 +489,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Rethink Sans',
     color: '#0c0b0b',
-    opacity: 0.4,
-  },
-  toggleActive: {
     opacity: 1,
     fontWeight: '700',
   },
@@ -453,8 +497,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    marginTop: 200,
-    gap: 60, 
+    marginTop: 180,
+    gap: 30, 
   },
   timerCircle: {
     width: 300,
@@ -463,6 +507,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 6,
+    borderColor: '#8DBF58'
   },
   timerRect: {
     backgroundColor: '#fff',
@@ -471,16 +517,16 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.22,
     shadowRadius: 6,
     elevation: 4,
   },
   timerText: {
-    fontSize: 40,
+    fontSize: 36,
     fontFamily: 'Rethink Sans',
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
-    color: '#222',
+    color: '#71AF2E',
   },
   controlsContainer: {
     alignSelf: 'center',
@@ -511,10 +557,10 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   pauseButton: {
-    width: 184,
+    width: 160,
     height: 43,
     borderRadius: 38,
     backgroundColor: '#8DBF58',
@@ -531,7 +577,7 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   stopButton: {
-    width: 184,
+    width: 160,
     height: 43,
     borderRadius: 38,
     color: '#FFF',
@@ -556,7 +602,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   lastFocusSessionHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 500,
     fontFamily: 'Rethink Sans',
     color: '#000',
