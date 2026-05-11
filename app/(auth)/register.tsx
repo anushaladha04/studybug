@@ -60,7 +60,10 @@ export default function RegisterScreen() {
       Alert.alert(
         "Registration successful! Please check your email to verify your account.",
       );
+      setLoading(false);
+      return;
     }
+
     setLoading(false);
   }
 
