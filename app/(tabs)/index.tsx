@@ -3,16 +3,25 @@ import { fetchPostsRandomOrder } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
 
 import { Image } from 'expo-image';
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useFocusEffect, useNavigation } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const { session } = useAuthContext();
+  const navigation = useNavigation();
+  const listRef = useRef<FlatList>(null);
 
   const [ posts, setPosts ] = useState<any>([]);
   const [ seed, setSeed ] = useState(Math.random());
   const [ refreshing, setRefreshing ] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -65,6 +74,7 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Home Feed</Text>
       </View>
       <FlatList
+	  ref={listRef}
           data={posts}
           extraData={posts}
           keyExtractor={(item) => String(item.session_id)}

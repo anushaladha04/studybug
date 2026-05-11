@@ -243,41 +243,52 @@ function formatDuration(seconds: number): string {
 const CARD_WIDTH = Dimensions.get('window').width - 60;
 const BAR_MAX_HEIGHT = 120;
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; lastWeekTotal: number | null }) {
   const max = Math.max(...durations, 1);
   const todayIndex = new Date().getDay();
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const thisWeekTotal = durations.reduce((sum, v) => sum + v, 0);
   const avgSeconds = Math.round(thisWeekTotal / (todayIndex + 1));
   const avgHours = Math.floor(avgSeconds / 3600);
   const avgMins = Math.floor((avgSeconds % 3600) / 60);
-  const subtitleText = avgHours > 0 ? `${avgHours}hr ${avgMins}m` : `${avgMins}m`;
+  const avgText = avgHours > 0 ? `${avgHours}hr ${avgMins}m` : `${avgMins}m`;
   const totalHours = Math.floor(thisWeekTotal / 3600);
   const totalMins = Math.floor((thisWeekTotal % 3600) / 60);
   const totalText = totalHours > 0 ? `${totalHours}hr ${totalMins}m` : `${totalMins}m`;
 
+  let titleText = 'Daily Average';
+  let subtitleText = avgText;
+  if (selectedIndex !== null) {
+    const dayHours = Math.floor(durations[selectedIndex] / 3600);
+    const dayMins = Math.floor((durations[selectedIndex] % 3600) / 60);
+    titleText = DAY_NAMES[selectedIndex];
+    subtitleText = dayHours > 0 ? `${dayHours}hr ${dayMins}m` : `${dayMins}m`;
+  }
+
   return (
-    <View style={chartStyles.card}>
-      <Text style={chartStyles.cardTitle}>Daily Average</Text>
+    <Pressable style={chartStyles.card} onPress={() => setSelectedIndex(null)}>
+      <Text style={chartStyles.cardTitle}>{titleText}</Text>
       <Text style={chartStyles.cardSubtitle}>{subtitleText}</Text>
       <View style={chartStyles.barsRow}>
         {durations.map((val, i) => {
           const barHeight = Math.max(4, (val / max) * BAR_MAX_HEIGHT);
-          const isToday = i === todayIndex;
+          const isSelected = i === selectedIndex;
           return (
-            <View key={i} style={chartStyles.barColumn}>
+            <Pressable key={i} style={chartStyles.barColumn} onPress={() => setSelectedIndex(i)}>
               <View
                 style={[
                   chartStyles.bar,
                   { height: barHeight },
-                  isToday ? chartStyles.barToday : chartStyles.barDefault,
+                  isSelected ? chartStyles.barToday : chartStyles.barDefault,
                 ]}
               />
-              <Text style={[chartStyles.dayLabel, isToday && chartStyles.dayLabelToday]}>
+              <Text style={[chartStyles.dayLabel, isSelected && chartStyles.dayLabelToday]}>
                 {DAY_LABELS[i]}
               </Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>
@@ -285,7 +296,7 @@ function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; las
         <Text style={chartStyles.totalLabel}>Total Study Time</Text>
         <Text style={chartStyles.totalValue}>{totalText}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
