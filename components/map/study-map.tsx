@@ -38,6 +38,8 @@ interface StudyMapProps {
   recenterTrigger?: number;
   showMarkerLabels?: boolean;
   onCenterStateChange?: (isCentered: boolean) => void;
+  focusCoordinate?: { latitude: number; longitude: number } | null;
+  focusTrigger?: number;
 }
 
 const DEFAULT_LOCATION = {
@@ -56,6 +58,8 @@ export function StudyMap({
   recenterTrigger = 0,
   showMarkerLabels = true,
   onCenterStateChange,
+  focusCoordinate,
+  focusTrigger = 0,
 }: StudyMapProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? 'light';
@@ -104,6 +108,22 @@ export function StudyMap({
     lastRecenterTriggerRef.current = recenterTrigger;
     handleCenterOnUser();
   }, [recenterTrigger, userLocation]);
+
+  const lastFocusTriggerRef = React.useRef(focusTrigger);
+
+  React.useEffect(() => {
+    if (focusTrigger === lastFocusTriggerRef.current) {
+      return;
+    }
+    lastFocusTriggerRef.current = focusTrigger;
+    if (!focusCoordinate) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: [focusCoordinate.longitude, focusCoordinate.latitude],
+      zoomLevel: 16,
+      animationDuration: 700,
+    });
+    setZoomLevel(16);
+  }, [focusTrigger, focusCoordinate]);
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoomLevel + 1, 20);

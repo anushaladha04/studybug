@@ -109,6 +109,8 @@ export default function MapScreen() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const [isMapCentered, setIsMapCentered] = useState(false);
+  const [focusTrigger, setFocusTrigger] = useState(0);
+  const [focusCoordinate, setFocusCoordinate] = useState<{ latitude: number; longitude: number } | null>(null);
   const tabBarOffset = useBottomTabBarHeight();
   const availableHeight = windowHeight - tabBarOffset;
   const defaultSheetHeight = Math.max(300, Math.round(availableHeight * 0.4));
@@ -427,6 +429,8 @@ export default function MapScreen() {
       animateSheetToHeight(defaultSheetHeight);
     }
     setSelectedUser(user);
+    setFocusCoordinate({ latitude: user.latitude, longitude: user.longitude });
+    setFocusTrigger((value) => value + 1);
   };
 
   const handleMapUserPress = (pressedUser: LocationUser) => {
@@ -558,6 +562,8 @@ export default function MapScreen() {
         recenterTrigger={recenterTrigger}
         showMarkerLabels={false}
         onCenterStateChange={setIsMapCentered}
+        focusCoordinate={focusCoordinate}
+        focusTrigger={focusTrigger}
       />
 
       <View pointerEvents="box-none" style={styles.overlayLayer}>
