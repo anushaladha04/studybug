@@ -1,7 +1,7 @@
 import { isMapboxEnabled } from '@/lib/mapbox-config';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 let MapboxGL: any = null;
 try {
@@ -216,21 +216,21 @@ export function StudyMap({
         )}
 
         {users.map((user) => (
-          <MapboxGL.PointAnnotation
+          <MapboxGL.MarkerView
             key={user.id}
             id={user.id}
             coordinate={[user.longitude, user.latitude]}
-            onSelected={() => onUserPress?.(user)}>
-            <View collapsable={false} style={styles.pinMarkerWrap}>
+            anchor={{ x: 0.5, y: 0.5 }}
+            allowOverlap>
+            <Pressable onPress={() => onUserPress?.(user)} style={styles.pinMarkerWrap}>
               {showMarkerLabels && (
-                <View collapsable={false} style={[styles.pinLabel, compactLabel && styles.pinLabelCompact]}>
+                <View style={[styles.pinLabel, compactLabel && styles.pinLabelCompact]}>
                   <Text numberOfLines={1} style={styles.pinLabelText}>
                     {getPinLabel(user.name)}
                   </Text>
                 </View>
               )}
               <View
-                collapsable={false}
                 style={[
                   styles.userPin,
                   user.pinColor
@@ -240,11 +240,11 @@ export function StudyMap({
                 {user.imageUrl ? (
                   <Image source={{ uri: user.imageUrl }} style={styles.pinImage} />
                 ) : (
-                  <View collapsable={false} style={styles.pinDot} />
+                  <View style={styles.pinDot} />
                 )}
               </View>
-            </View>
-          </MapboxGL.PointAnnotation>
+            </Pressable>
+          </MapboxGL.MarkerView>
         ))}
       </MapboxGL.MapView>
 
