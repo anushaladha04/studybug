@@ -1,5 +1,6 @@
 import SessionPost from '@/components/session-component';
 import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
+import {fetchFriendCount} from "@/controllers/friends"
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
