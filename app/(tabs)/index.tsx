@@ -3,42 +3,70 @@ import { fetchPostsRandomOrder } from '@/controllers/feed';
 import { useAuthContext } from '@/hooks/use-auth-context';
 
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const { session } = useAuthContext();
+  const navigation = useNavigation();
+  const listRef = useRef<FlatList>(null);
 
   const [ posts, setPosts ] = useState<any>([]);
   const [ seed, setSeed ] = useState(Math.random());
   const [ refreshing, setRefreshing ] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     setSeed(Math.random());
   };
 
-  useEffect(() => {
-    const fetchFeed = async () => {
-      try {
-        const data = await fetchPostsRandomOrder(seed);
-        const SUPABASE_BASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co/storage/v1/object/public/profile_pictures/';
+  const fetchFeed = useCallback(async () => {
+    try {
+      const data = await fetchPostsRandomOrder(seed);
+      const SUPABASE_BASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co/storage/v1/object/public/profile_pictures/';
 
-        const pfpUrls = data
-          .filter((item: any) => item.profile_image_path)
-          .map((item: any) => `${SUPABASE_BASE_URL}${item.profile_image_path}`);
-        Image.prefetch(pfpUrls);
+      const pfpUrls = data
+        .filter((item: any) => item.profile_image_path)
+        .map((item: any) => `${SUPABASE_BASE_URL}${item.profile_image_path}`);
+      Image.prefetch(pfpUrls);
 
-        setPosts(data);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setRefreshing(false);
-      }
-    };
-
-    fetchFeed();
+      setPosts([...data]);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setRefreshing(false);
+    }
   }, [seed]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchFeed();
+    }, [fetchFeed])
+  );
+
+  const handleLocalLikeUpdate = (sessionId: string, newIsLiked: boolean) => {
+  setPosts((currentPosts: any) =>
+    currentPosts.map((post: any) => {
+      if (post.session_id === sessionId) {
+        return {
+          ...post,
+          is_liked: newIsLiked,
+          // If liked, add 1; if unliked, subtract 1
+          like_count: newIsLiked ? post.like_count + 1 : post.like_count - 1,
+        };
+      }
+      return post;
+    })
+  );
+};
 
   return (
     <View style={styles.container}>
@@ -46,7 +74,9 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Home Feed</Text>
       </View>
       <FlatList
+	  ref={listRef}
           data={posts}
+          extraData={posts}
           keyExtractor={(item) => String(item.session_id)}
           style={{ width: '100%' }}
           contentContainerStyle={styles.listContent}
@@ -54,6 +84,8 @@ export default function HomeScreen() {
           onRefresh={handleRefresh}
           renderItem={({ item }) =>  (
               <SessionPost
+                  key={`${item.session_id}`}
+                  id = {item.session_id}
                   pfp = {item.profile_image_path}
                   name = {item.full_name}
                   time = {item.start_time}
@@ -61,6 +93,10 @@ export default function HomeScreen() {
                   location = {item.location_name}
                   totalTime = {item.duration}
                   image = {item.image_url}
+                  likeCount={item.like_count}
+                  isLiked={item.is_liked}
+                  onLikeToggle={(newStatus) => handleLocalLikeUpdate(item.session_id, newStatus)}
+                  commentCount={item.comment_count}
               />
             )
           }

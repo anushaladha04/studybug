@@ -1,5 +1,6 @@
 import { useAuthContext } from '@/hooks/use-auth-context';
 import AuthProvider from '@/providers/auth-provider';
+import FriendRequestsProvider from '@/providers/friend-requests-provider';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
@@ -11,25 +12,29 @@ import 'react-native-reanimated';
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { session, isLoading } = useAuthContext();
+  const { session, isLoading, profile } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoading) return;
+    if (session && profile === undefined) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inIntroScreen = segments[1] === "intro";
+    const inSplashScreen = segments[1] === "splash";
+    const seen = profile?.has_completed_onboarding === true;
 
     if (!session && !inAuthGroup) {
-      // Not logged in, redirect to login
       router.replace("/(auth)/splash");
-    } else if (session && inAuthGroup) {
-      // Logged in but on auth page, redirect to home
+    } else if (session && !seen && !inIntroScreen && !inSplashScreen) {
+      router.replace("/(auth)/intro");
+    } else if (session && seen && inAuthGroup && !inSplashScreen) {
       router.replace("/(tabs)");
     }
-  }, [session, isLoading, segments]);
+  }, [session, isLoading, profile, segments[0], segments[1]]);
 
-  if (isLoading) {
+  if (isLoading || (session && profile === undefined)) {
     return (
       <View
         style={{
@@ -68,7 +73,6 @@ function RootLayoutNav() {
             title: "New Session",
           }}
         />
-
         <Stack.Screen
           name="session-summary"
           options={{
@@ -86,6 +90,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'RethinkSans-Regular': require('../assets/fonts/RethinkSans-Regular.ttf'),
     'RethinkSans-Medium': require('../assets/fonts/RethinkSans-Medium.ttf'),
+    'RethinkSans-SemiBold': require('../assets/fonts/RethinkSans-SemiBold.ttf'),
+    'RethinkSans-Bold': require('../assets/fonts/RethinkSans-Bold.ttf'),
   });
 
   useEffect(() => {
@@ -98,7 +104,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <FriendRequestsProvider>
+        <RootLayoutNav />
+      </FriendRequestsProvider>
     </AuthProvider>
   );
 }

@@ -1,9 +1,9 @@
 import X from '@/assets/icons/X.svg';
+import { getDistanceMiles, getNearbyPlaces, PlaceResult } from '@/controllers/nearby-places';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, PanResponder, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
-import { getNearbyPlaces, getDistanceMiles, PlaceResult } from '@/controllers/nearby-places';
-import * as Location from 'expo-location';
+import { Animated, KeyboardAvoidingView, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 
 
 export default function SessionDetails() {
@@ -20,7 +20,7 @@ export default function SessionDetails() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [closestPlaceName, setClosestPlaceName] = useState('');
 
-    // Fetch location + all nearby places once on mount
+    // get list of all nearby places on mount.
     useEffect(() => {
         (async () => {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -39,7 +39,7 @@ export default function SessionDetails() {
         })();
     }, []);
 
-    // Filter cached places locally on each keystroke
+    // show location suggestions based on the current (possible incomplete) location name. ie ('rie') -> ['rieber terrace', ...]
     useEffect(() => {
         if (!allPlaces.length) return;
         const q = location.trim().toLowerCase();
@@ -75,6 +75,7 @@ export default function SessionDetails() {
             return;
         }
 
+        console.log('session-details.tsx: navigating back to record');
         router.replace({
             params: { sessionName: sessionName || sessionTimePlaceholder, location: finalLocation, focusLevel, note, area, refresh: 'true' },
             pathname: '/(tabs)/record',
@@ -87,8 +88,6 @@ export default function SessionDetails() {
     const DOT_SIZE = 16;
 
     const segmentWidth = TRACK_WIDTH / (FOCUS_LEVELS.length - 1);
-
-    const [activeIndex, setActiveIndex] = useState(0);
 
     const xPos = useRef(new Animated.Value(0)).current;
 
@@ -126,7 +125,6 @@ export default function SessionDetails() {
                     }).start();
 
                     setFocusLevel(FOCUS_LEVELS[snappedIndex]);
-                    setActiveIndex(snappedIndex);
                 });
             },
         })
@@ -134,157 +132,169 @@ export default function SessionDetails() {
 
     const [fillPosition, setFillPosition] = useState(0);
 
-useRef(
-    xPos.addListener(({ value }) => {
-        setFillPosition(value);
-    })
-).current;
+    useRef(
+        xPos.addListener(({ value }) => {
+            setFillPosition(value);
+        })
+    ).current;
 
     const fillWidth = Animated.add(xPos, THUMB_SIZE / 2);
 
     return (
-        <View style={styles.container}>
-            <View style={styles.headerContainer}>
-                <Text style={styles.headerTitle}>New Timer</Text>
-                <Pressable style={styles.closeButton} onPress={() => router.back()}>
-                    <X />
-                </Pressable>
-            </View>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+        >
+            <ScrollView 
+                contentContainerStyle={{ flexGrow: 1 }} 
+                keyboardShouldPersistTaps="handled"
+            >
+                <View style={styles.container}>
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.headerTitle}>New Timer</Text>
+                        <Pressable style={styles.closeButton} onPress={() => router.back()}>
+                            <X />
+                        </Pressable>
+                    </View>
 
-            <Text style={styles.label}>Session Name</Text>
-            <TextInput style={styles.input} value={sessionName} onChangeText={setSessionName} placeholder={sessionTimePlaceholder} placeholderTextColor='#000000' autoCorrect={false} />
+                    <Text style={styles.label}>Session Name</Text>
+                    <TextInput style={styles.input} value={sessionName} onChangeText={setSessionName} placeholder={sessionTimePlaceholder} placeholderTextColor='#000000' autoCorrect={false} />
 
-            <Text style={styles.label}>Location</Text>
-            <TextInput
-                style={styles.input}
-                value={location}
-                placeholder={closestPlaceName}
-                placeholderTextColor='#000000'
-                autoCorrect={false}
-                onChangeText={(text) => { setLocation(text); setShowSuggestions(true); }}
-                onFocus={() => {
-                    setShowSuggestions(true);
-                    if (!location.trim() && allPlaces.length) {
-                        setSuggestions(allPlaces.slice(0, 5));
-                    }
-                }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            />
-            {showSuggestions && suggestions.length > 0 && (
-                <View style={styles.suggestionsContainer}>
-                    {suggestions.map((place) => {
-                        const dist = userCoords ? getDistanceMiles(userCoords, place) : null;
-                        return (
-                            <Pressable
-                                key={place.id}
-                                style={styles.suggestionItem}
-                                onPress={() => {
-                                    setLocation(place.name);
-                                    setShowSuggestions(false);
-                                }}
-                            >
-                                <Text style={styles.suggestionName} numberOfLines={1}>{place.name}</Text>
-                                {dist !== null && (
-                                    <Text style={styles.suggestionDist}>
-                                        {dist < 0.1 ? `${Math.round(dist * 5280)} ft` : `${dist.toFixed(1)} mi`}
-                                    </Text>
-                                )}
-                            </Pressable>
-                        );
-                    })}
-                </View>
-            )}
-
-            <Text style={styles.label}>Area of Work</Text>
-            <View style={styles.toggleRow}>
-                <TouchableOpacity
-                    style={[styles.toggleButton, area === 'Academic' && styles.toggleButtonActive]}
-                    onPress={() => setArea('Academic')}>
-                    <Text style={[styles.toggleText, area === 'Academic' && styles.toggleTextActive]}>
-                        Academic
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.toggleButton, area === 'Career' && styles.toggleButtonActive]}
-                    onPress={() => setArea('Career')}
-                >
-                    <Text style={[styles.toggleText, area === 'Career' && styles.toggleTextActive]}>
-                        Career
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
-            <Text style={styles.label}>Focus Level</Text>
-
-            <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                <View style={{ width: TRACK_WIDTH, height: 30, justifyContent: 'center' }}>
-
-                    {/* Track */}
-                    <View style={[styles.track, { width: TRACK_WIDTH + DOT_SIZE, left: -DOT_SIZE / 2 }]} />
-
-                    {/* Fill */}
-                    <Animated.View
-                    style={[
-                        styles.trackFill,
-                        { width: Animated.add(fillWidth, DOT_SIZE / 2), left: -DOT_SIZE / 2  },
-                    ]}
+                    <Text style={styles.label}>Location</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={location}
+                        placeholder={closestPlaceName}
+                        placeholderTextColor='#000000'
+                        autoCorrect={false}
+                        onChangeText={(text) => { setLocation(text); setShowSuggestions(true); }}
+                        onFocus={() => {
+                            setShowSuggestions(true);
+                            if (!location.trim() && allPlaces.length) {
+                                setSuggestions(allPlaces.slice(0, 5));
+                            }
+                        }}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     />
+                    {showSuggestions && suggestions.length > 0 && (
+                        <View style={styles.suggestionsContainer}>
+                            {suggestions.map((place) => {
+                                const dist = userCoords ? getDistanceMiles(userCoords, place) : null;
+                                return (
+                                    <Pressable
+                                        key={place.id}
+                                        style={styles.suggestionItem}
+                                        onPress={() => {
+                                            setLocation(place.name);
+                                            setShowSuggestions(false);
+                                        }}
+                                    >
+                                        <Text style={styles.suggestionName} numberOfLines={1}>{place.name}</Text>
+                                        {dist !== null && (
+                                            <Text style={styles.suggestionDist}>
+                                                {dist < 0.1 ? `${Math.round(dist * 5280)} ft` : `${dist.toFixed(1)} mi`}
+                                            </Text>
+                                        )}
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+                    )}
 
-                    {/* Dots */}
-                    {FOCUS_LEVELS.map((_, i) => (
-                        <View
-                            key={i}
-                            style={[ 
-                                styles.dot,
-                                { left: i * segmentWidth - DOT_SIZE / 2, },
-                                { borderColor: fillPosition >= i * segmentWidth ? '#1EA1FF' : '#BBE3FF' },
-                            ]}
-                        />
-                    ))}
+                    <Text style={styles.label}>Area of Work</Text>
+                    <View style={styles.toggleRow}>
+                        <TouchableOpacity
+                            style={[styles.toggleButton, area === 'Academic' && styles.toggleButtonActive]}
+                            onPress={() => setArea('Academic')}>
+                            <Text style={[styles.toggleText, area === 'Academic' && styles.toggleTextActive]}>
+                                Academic
+                            </Text>
+                        </TouchableOpacity>
 
-                    {/* Thumb */}
-                    <Animated.View
-                        {...panResponder.panHandlers}
-                        style={[
-                            styles.thumb,
-                            { transform: [{ translateX: Animated.add(xPos, -THUMB_SIZE / 2) }], },
-                        ]}
-                    />
-                </View>
-
-                {/* Labels */}
-                <View style={{ width: TRACK_WIDTH, height: 20, marginTop: 6 }}>
-                    {FOCUS_LEVELS.map((level, i) => (
-                        <Text
-                            key={level}
-                            style={{
-                                position: 'absolute',
-                                left: i * segmentWidth - 25,
-                                width: 50,
-                                textAlign: 'center',
-                                fontSize: 12,
-                                fontFamily: 'Rethink Sans',
-                            }}
+                        <TouchableOpacity
+                            style={[styles.toggleButton, area === 'Career' && styles.toggleButtonActive]}
+                            onPress={() => setArea('Career')}
                         >
-                            {level}
-                        </Text>
-                    ))}
-                </View>
-            </View>
+                            <Text style={[styles.toggleText, area === 'Career' && styles.toggleTextActive]}>
+                                Career
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
 
-            <Text style={styles.label}>Add a Note</Text>
-            <TextInput style={styles.input} value={note} onChangeText={setNote} autoCorrect={false}/>
+                    <Text style={styles.label}>Focus Level</Text>
 
-            <View style={styles.line}/>
+                    <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                        <View style={{ width: TRACK_WIDTH, height: 30, justifyContent: 'center' }}>
 
-            <Pressable
-                      style={styles.sessionButton}
-                      onPress={() => handleStartSession()}
+                            {/* Track */}
+                            <View style={[styles.track, { width: TRACK_WIDTH + DOT_SIZE, left: -DOT_SIZE / 2 }]} />
+
+                            {/* Fill */}
+                            <Animated.View
+                            style={[
+                                styles.trackFill,
+                                { width: Animated.add(fillWidth, DOT_SIZE / 2), left: -DOT_SIZE / 2  },
+                            ]}
+                            />
+
+                            {/* Dots */}
+                            {FOCUS_LEVELS.map((_, i) => (
+                                <View
+                                    key={i}
+                                    style={[ 
+                                        styles.dot,
+                                        { left: i * segmentWidth - DOT_SIZE / 2, },
+                                        { borderColor: fillPosition >= i * segmentWidth ? '#1EA1FF' : '#BBE3FF' },
+                                    ]}
+                                />
+                            ))}
+
+                            {/* Thumb */}
+                            <Animated.View
+                                {...panResponder.panHandlers}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10}}
+                                style={[
+                                    styles.thumb,
+                                    { transform: [{ translateX: Animated.add(xPos, -THUMB_SIZE / 2) }], },
+                                ]}
+                            />
+                        </View>
+
+                        {/* Labels */}
+                        <View style={{ width: TRACK_WIDTH, height: 20, marginTop: 6 }}>
+                            {FOCUS_LEVELS.map((level, i) => (
+                                <Text
+                                    key={level}
+                                    style={{
+                                        position: 'absolute',
+                                        left: i * segmentWidth - 25,
+                                        width: 50,
+                                        textAlign: 'center',
+                                        fontSize: 12,
+                                        fontFamily: 'Rethink Sans',
+                                    }}
+                                >
+                                    {level}
+                                </Text>
+                            ))}
+                        </View>
+                    </View>
+
+                    <Text style={styles.label}>Add a Note</Text>
+                    <TextInput style={styles.input} value={note} onChangeText={setNote} autoCorrect={false}/>
+
+                    <View style={styles.line}/>
+                    
+                    {/* the final start session button */}
+                    <Pressable
+                        style={styles.sessionButton}
+                        onPress={() => handleStartSession()}
                     >
-                      <Text style={styles.buttonText}>Start Session</Text>
+                        <Text style={styles.buttonText}>Start Session</Text>
                     </Pressable>
-        </View>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

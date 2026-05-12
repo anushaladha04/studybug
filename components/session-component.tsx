@@ -1,27 +1,46 @@
+import Comment from '@/assets/icons/comment.svg';
+import EmptyHeart from '@/assets/icons/empty-heart.svg';
+import FilledHeart from '@/assets/icons/filled-heart.svg';
+import { likePost } from '@/controllers/post-interactions';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 
 interface SessionPostProps {
+    id: string,
     pfp: string,
-    name: string;
-    time: string;
-    title: string;
-    location: string;
-    totalTime: number;
-    image: string
+    name: string,
+    time: string,
+    title: string,
+    location: string,
+    totalTime: number,
+    image: string,
+    likeCount: number,
+    isLiked: boolean,
+    onLikeToggle?: (newLikeStatus: boolean) => void,
+    commentCount: number
 }
 
 export default function SessionPost({
+    id,
     pfp,
     name,
     time,
     title,
     location,
     totalTime,
-    image
+    image,
+    likeCount,
+    isLiked,
+    onLikeToggle,
+    commentCount
 }: SessionPostProps) {
+    const [ numLikes, setNumLikes ] = useState(likeCount);
+    const [ likeStatus, setLikeStatus ] = useState(isLiked);
+    const [numComments, setNumComments] = useState(commentCount);
+
     const router = useRouter();
     const SUPABASE_URL = 'https://eabnnwzgebqtarbubyat.supabase.co';
 
@@ -56,6 +75,60 @@ export default function SessionPost({
         return `${hours} hr ${minutes} min`;
     }
 
+    const handleLike = async () => {
+        const previousState = likeStatus;
+        const previousCount = numLikes;
+        const newState = !previousState;
+
+        // 1. Update local UI state
+        setLikeStatus(newState);
+        setNumLikes(newState ? previousCount + 1 : previousCount - 1);
+
+        // 2. Notify the parent (ProfileScreen) immediately
+        if (onLikeToggle) {
+            onLikeToggle(newState);
+        }
+
+        try {
+            await likePost(id);
+        } catch (err) {
+            // Rollback local state on error
+            setLikeStatus(previousState);
+            setNumLikes(previousCount);
+            if (onLikeToggle) {
+                onLikeToggle(previousState);
+            }
+        }
+    }
+
+    const handleNavigate = useCallback((shouldFocus: boolean = false) => {
+        router.push({
+            pathname: '/session-posting-details',
+            params: {
+                id,
+                pfp,
+                name,
+                title,
+                location,
+                postedTime: formatPostedTime(),
+                duration: formattedDuration(),
+                image,
+                likeCount: numLikes, // Use the state variable, not the initial prop
+                isLiked: likeStatus.toString(), // Use the state variable
+                focusKeyboard: shouldFocus.toString()
+            }
+        });
+    }, [id, pfp, name, title, location, numLikes, likeStatus]);
+
+    useEffect(() => {
+        setLikeStatus(isLiked);
+        setNumLikes(likeCount);
+    }, [isLiked, likeCount]);
+
+    useEffect(() => {
+        setNumComments(commentCount);
+    }, [commentCount]);
+
     return (
         <View style={styles.card}>
             <View style={styles.header}>
@@ -75,23 +148,12 @@ export default function SessionPost({
             </View>
 
             <Pressable 
-                onPress={() => router.push({
-                    pathname: '/session-posting-details',
-                    params: {
-                        pfp,
-                        name,
-                        title,
-                        location,
-                        postedTime: formatPostedTime(),
-                        duration: formattedDuration(),
-                        image
-                    }
-                })}
+                onPress={() => handleNavigate()}
             >
                 <View style={styles.infoRow}>
-                    <View>
-                        <Text style={styles.title}>{title}</Text>
-                        <Text style={styles.location}>{location} </Text>
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+                        <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">{location}</Text>
                     </View>
                     <View style={styles.totalTimeBlock}>
                         <Text style={styles.totalTimeLabel}>Total Time</Text>
@@ -111,14 +173,21 @@ export default function SessionPost({
             )}
 
             <View style={styles.actions}>
-                <Text style={styles.icon}>♡</Text>
+                <Pressable onPress={handleLike} style={styles.actionItem}>
+                    { likeStatus ?  <FilledHeart /> : <EmptyHeart /> }
+                    <Text style={styles.actionText}>{numLikes || ''}</Text>
+                </Pressable>
+                <Pressable onPress={() => handleNavigate(true)} style={styles.actionItem}>
+                    <Comment />
+                    <Text style={styles.actionText}>{numComments || ''}</Text>
+                </Pressable>
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-      card: {
+    card: {
         backgroundColor: '#fff',
         paddingHorizontal: 29,
         paddingVertical: 19,
@@ -150,9 +219,10 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     infoRow: {
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         marginBottom: 4,
     },
     title: {
@@ -197,8 +267,18 @@ const styles = StyleSheet.create({
     actions: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        gap: 20,
+        gap: 5,
         marginTop: 12,
+    },
+    actionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    actionText: {
+        marginLeft: 5,
+        fontSize: 14,
+        color: '#000',
+        fontFamily: 'Rethink Sans',
     },
     icon: {
         fontSize: 24,

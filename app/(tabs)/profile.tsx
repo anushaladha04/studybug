@@ -1,10 +1,11 @@
 import SessionPost from '@/components/session-component';
 import { fetchSessionsByUser, getLifetimeSeconds, getStreakDays, getWeeklyDurations } from "@/controllers/study-session";
+import {fetchFriendCount} from "@/controllers/friends"
 import { useAuthContext } from '@/hooks/use-auth-context';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const avatarUrl = `${avatarUrlBase}?v=${profileImageVersion}`;
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [bioInput, setBioInput] = useState(profile?.bio ?? '');
+  const [friendCount, setFriendCount] = useState(0);
 
   const [weeklyDurations, setWeeklyDurations] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [lastWeekTotal, setLastWeekTotal] = useState<number | null>(null);
@@ -26,27 +28,57 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState<number>(0);
   const [lifetimeSeconds, setLifetimeSeconds] = useState<number>(0);
 
+  const sortSessions = (sessions: any[]) => {
+    return [...sessions] // Spread to avoid mutating the original array
+      .filter((s: any) => s.end_time !== null)
+      .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  };
+
   useEffect(() => {
     if (!session?.user?.id) return;
     const id = session.user.id;
     Promise.all([
       getWeeklyDurations(id, 0),
       getWeeklyDurations(id, 1),
-      fetchSessionsByUser(id),
+      fetchSessionsByUser(id, id),
       getStreakDays(id),
       getLifetimeSeconds(id),
-    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs]) => {
+      fetchFriendCount(),
+    ]).then(([thisWeek, lastWeek, userSessions, streakDays, lifetimeSecs, friendCount]) => {
       console.log('weekly durations:', thisWeek);
       setWeeklyDurations(thisWeek);
       setLastWeekTotal(lastWeek.reduce((sum, v) => sum + v, 0));
-      const completed = (userSessions ?? [])
-        .filter((s: any) => s.end_time !== null)
-        .sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
-      setSessions(completed);
+      setSessions(sortSessions(userSessions ?? []));
       setStreak(streakDays);
       setLifetimeSeconds(lifetimeSecs);
+      setFriendCount(friendCount);
     });
   }, [session?.user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!session?.user?.id) return;
+
+      fetchSessionsByUser(session.user.id, session.user.id).then((data) => {
+        setSessions(sortSessions(data ?? []));
+      });
+    }, [session?.user?.id])
+  );
+
+  const handleLocalLikeUpdate = (sessionId: string, newIsLiked: boolean) => {
+  setSessions((prevSessions) =>
+    prevSessions.map((s) => {
+      if (s.session_id === sessionId) {
+        return {
+          ...s,
+          is_liked: newIsLiked,
+          like_count: newIsLiked ? s.like_count + 1 : s.like_count - 1,
+        };
+      }
+      return s;
+    })
+  );
+};
 
   async function handleSaveBio() {
     if (!session?.user?.id) return;
@@ -84,6 +116,7 @@ export default function ProfileScreen() {
               <Ionicons name="pencil" size={11} color="#666" />
             </View>
           </Pressable>
+          <Text style={styles.bioText}>Friends: {friendCount}</Text>
         </View>
       </View>
 
@@ -125,13 +158,18 @@ export default function ProfileScreen() {
               sessions.map((s) => (
                 <SessionPost
                   key={s.session_id}
+                  id={s.session_id}
                   pfp={`${imagePath}?v=${profileImageVersion}`}
                   name={profile?.full_name ?? '-'}
                   time={s.end_time}
                   title={s.session_name}
-                  location={s.subject ?? ''}
+                  location={s.location_name ?? ''}
                   totalTime={s.duration}
                   image={s.image_url}
+                  likeCount={s.like_count}
+                  isLiked={s.is_liked}
+                  onLikeToggle={(newStatus) => handleLocalLikeUpdate(s.session_id, newStatus)}
+                  commentCount={s.comment_count}
                 />
               ))
             )}
@@ -206,41 +244,52 @@ function formatDuration(seconds: number): string {
 const CARD_WIDTH = Dimensions.get('window').width - 60;
 const BAR_MAX_HEIGHT = 120;
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; lastWeekTotal: number | null }) {
   const max = Math.max(...durations, 1);
   const todayIndex = new Date().getDay();
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const thisWeekTotal = durations.reduce((sum, v) => sum + v, 0);
   const avgSeconds = Math.round(thisWeekTotal / (todayIndex + 1));
   const avgHours = Math.floor(avgSeconds / 3600);
   const avgMins = Math.floor((avgSeconds % 3600) / 60);
-  const subtitleText = avgHours > 0 ? `${avgHours}hr ${avgMins}m` : `${avgMins}m`;
+  const avgText = avgHours > 0 ? `${avgHours}hr ${avgMins}m` : `${avgMins}m`;
   const totalHours = Math.floor(thisWeekTotal / 3600);
   const totalMins = Math.floor((thisWeekTotal % 3600) / 60);
   const totalText = totalHours > 0 ? `${totalHours}hr ${totalMins}m` : `${totalMins}m`;
 
+  let titleText = 'Daily Average';
+  let subtitleText = avgText;
+  if (selectedIndex !== null) {
+    const dayHours = Math.floor(durations[selectedIndex] / 3600);
+    const dayMins = Math.floor((durations[selectedIndex] % 3600) / 60);
+    titleText = DAY_NAMES[selectedIndex];
+    subtitleText = dayHours > 0 ? `${dayHours}hr ${dayMins}m` : `${dayMins}m`;
+  }
+
   return (
-    <View style={chartStyles.card}>
-      <Text style={chartStyles.cardTitle}>Daily Average</Text>
+    <Pressable style={chartStyles.card} onPress={() => setSelectedIndex(null)}>
+      <Text style={chartStyles.cardTitle}>{titleText}</Text>
       <Text style={chartStyles.cardSubtitle}>{subtitleText}</Text>
       <View style={chartStyles.barsRow}>
         {durations.map((val, i) => {
           const barHeight = Math.max(4, (val / max) * BAR_MAX_HEIGHT);
-          const isToday = i === todayIndex;
+          const isSelected = i === selectedIndex;
           return (
-            <View key={i} style={chartStyles.barColumn}>
+            <Pressable key={i} style={chartStyles.barColumn} onPress={() => setSelectedIndex(i)}>
               <View
                 style={[
                   chartStyles.bar,
                   { height: barHeight },
-                  isToday ? chartStyles.barToday : chartStyles.barDefault,
+                  isSelected ? chartStyles.barToday : chartStyles.barDefault,
                 ]}
               />
-              <Text style={[chartStyles.dayLabel, isToday && chartStyles.dayLabelToday]}>
+              <Text style={[chartStyles.dayLabel, isSelected && chartStyles.dayLabelToday]}>
                 {DAY_LABELS[i]}
               </Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>
@@ -248,7 +297,7 @@ function WeeklyBarChart({ durations, lastWeekTotal }: { durations: number[]; las
         <Text style={chartStyles.totalLabel}>Total Study Time</Text>
         <Text style={chartStyles.totalValue}>{totalText}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -373,7 +422,7 @@ const styles = StyleSheet.create({
   profileText: {
     marginLeft: 16,
     flex: 1,
-    height: 89,
+    height: 110,
     overflow: 'hidden',
   },
   nameText: {
@@ -392,7 +441,7 @@ const styles = StyleSheet.create({
   bioRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 2,
     gap: 6,
   },
   bioText: {
@@ -400,7 +449,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'RethinkSans-Regular',
     color: '#333',
-
+    marginTop: 2,
   },
   editIconCircle: {
     width: 18,

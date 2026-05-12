@@ -2,6 +2,7 @@
 import FriendCard from '@/components/friend-card';
 import SearchBar from '@/components/search-bar';
 import { fetchAllFriends } from '@/controllers/friends';
+import { useFriendRequestsContext } from '@/hooks/use-friend-requests-context';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ export default function FriendsScreen() {
   const [ friends, setFriends ] = useState<any[]>([]);
   
   const router = useRouter();
+  const { pendingCount } = useFriendRequestsContext();
 
   const isSearching = searchQuery.length > 0;
 
@@ -115,11 +117,22 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>Friends</Text>
-        <Pressable 
-          style={styles.addFriendContainer} 
+        <Pressable
+          style={styles.addFriendContainer}
           onPress={() => router.push('/add-friends')}
         >
           <AddFriend />
+          {pendingCount > 0 && (
+            <View style={{
+              position: 'absolute',
+              top: -1,
+              right: -1,
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: '#FE585B',
+            }} />
+          )}
         </Pressable>
       </View>
       <SearchBar 
@@ -208,7 +221,7 @@ export default function FriendsScreen() {
                   data={friends}
                   keyExtractor={(item) => item.friend_id}
                   style={{ width: '100%' }}
-                  contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16 }}
+                  contentContainerStyle={{ flexGrow: 1, alignItems: 'center', paddingTop: 16, paddingBottom: 110 }}
                   renderItem={({ item }) => (
                     <FriendCard
                       pfp = {item.profile_image_path}

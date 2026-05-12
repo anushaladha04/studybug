@@ -1,72 +1,115 @@
-import { StyleSheet, Text, View } from 'react-native';
+import ClockIcon from '@/assets/icons/clock.svg';
+import { useAuthContext } from '@/hooks/use-auth-context';
+import { supabase } from '@/lib/supabase';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 export interface StudySessionProps {
   date: string;
   totalTime: string;
   location: string;
   topic: string;
+  note: string;
 }
 
-export default function LastFocusSession({ date, totalTime, location, topic }: StudySessionProps) {
+export default function LastFocusSession({ date, totalTime, location, topic, note }: StudySessionProps) {
+  const formatDuration = (timeStr: string) => {
+  const [hh, mm, ss] = timeStr.split(':').map(Number);
+
+  if (hh > 0) {
+    return `${hh} hr ${mm} min`;
+  } else if (mm == 0) {
+    return `${ss} sec`;
+  }
+  return `${mm} min ${ss} sec`;
+  };
+
+  const { profile, profileImageVersion } = useAuthContext();
+
+  const imagePath = profile?.profile_image_path ?? 'avatar_4.jpg';
+  const { data: { publicUrl } } = supabase.storage
+    .from('profile_pictures')
+    .getPublicUrl(imagePath);
+  const avatarUrl = `${publicUrl}?v=${profileImageVersion}`;
+
+
   return (
-    <View style={styles.cardContainer}>
-      <Text style={styles.dateHeader}>{date}</Text>
-      
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Total Time: </Text>
-        <Text style={styles.value}>{totalTime}</Text>
+    <View style={styles.card}>
+      <Image 
+        source={{ uri: avatarUrl }}
+        style={styles.avatar}
+        resizeMode="cover"
+      />
+
+      <View style={styles.contentContainer}>
+        <Text style={styles.nameText}>{date}</Text>
+        <Text style={styles.detailText}>Location: {location}</Text>
+        <Text style={styles.detailText}>Note: {note}</Text>
       </View>
 
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Location: </Text>
-        <Text style={styles.value}>{location}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.label}>Topic: </Text>
-        <Text style={styles.value}>{topic}</Text>
+      <View style={styles.metricsContainer}>
+        <View style={styles.timeContainer}>
+          <ClockIcon />
+          <Text style={styles.metricText}>{formatDuration(totalTime)}</Text>
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    width: 373,
-    height: 108,
+  card: {
+    marginTop: 12,
+    gap: 20,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 23,
-    paddingHorizontal: 35,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 5,
+    height: 76,
+    width: '90%',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
   },
-  dateHeader: {
-    fontSize: 16,
-    fontWeight: 500,
-    fontFamily: 'Rethink Sans',
-    color: '#000'
+  avatar: {
+    width: 55,
+    height: 55,
+    borderRadius: 27,
   },
-  infoRow: {
-    flexDirection: 'row'
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 5,
   },
-  label: {
-    fontSize: 12,
-    fontWeight: 400,
-    fontFamily: 'Rethink Sans',
-    color: '#000', // Lighter grey for the label
-  },
-  value: {
-    fontSize: 12,
-    fontWeight: 400,
+  nameText: {
+    fontSize: 14,
+    fontWeight: '500',
     fontFamily: 'Rethink Sans',
     color: '#000',
+  },
+  detailText: {
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'Rethink Sans',
+    color: '#000',
+  },
+  metricsContainer: {
+    position: 'absolute',
+    bottom: 9,
+    right: 14,
+    alignItems: 'flex-end',
+  },
+  metricText: {
+    fontSize: 12,
+    color: '#555',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
 });
