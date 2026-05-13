@@ -163,14 +163,12 @@ export default function SessionPost({
             </Pressable>
 
             {image ? (
-                <Image 
-                    source={{ uri: getPublicUrl('session_pictures', image) }} 
+                <Image
+                    source={{ uri: getPublicUrl('session_pictures', image) }}
                     style={styles.postImage}
                     resizeMode="cover"
                 />
-            ) : (
-                <View style={styles.chartPlaceholder} />
-            )}
+            ) : null}
 
             <View style={styles.actions}>
                 <Pressable onPress={handleLike} style={styles.actionItem}>
